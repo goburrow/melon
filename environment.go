@@ -26,8 +26,10 @@ type LifecycleEnvironment struct {
 	ManagedObjects []Managed
 }
 
-func NewEnvironment() *Environment {
-	return &Environment{}
+func NewEnvironment(name string) *Environment {
+	return &Environment{
+		Name: name,
+	}
 }
 
 // AddTask adds a new task to admin environment

@@ -13,8 +13,7 @@ func Run(app Application, args []string) error {
 		ServerFactory:        &DefaultServerFactory{},
 	}
 	app.Initialize(bootstrap)
-
-	if len(args) > 1 {
+	if len(args) > 0 {
 		for _, command := range bootstrap.Commands {
 			if command.Name() == args[0] {
 				return command.Run(bootstrap)
