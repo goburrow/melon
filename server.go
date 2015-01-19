@@ -57,8 +57,8 @@ type DefaultServer struct {
 	configuration *ServerConfiguration
 }
 
-// newDefaultServer allocates and returns a new DefaultServer.
-func newDefaultServer(configuration *ServerConfiguration) *DefaultServer {
+// NewDefaultServer allocates and returns a new DefaultServer.
+func NewDefaultServer(configuration *ServerConfiguration) *DefaultServer {
 	return &DefaultServer{
 		configuration: configuration,
 	}
@@ -93,7 +93,7 @@ func (server *DefaultServer) Stop() error {
 }
 
 // addConnectors adds a new connector to the server.
-func (server *DefaultServer) addConnectors(handler http.Handler, configurations []ConnectorConfiguration) {
+func (server *DefaultServer) AddConnectors(handler http.Handler, configurations []ConnectorConfiguration) {
 	count := len(configurations)
 	// Does "range" copy struct value?
 	for i := 0; i < count; i++ {
@@ -104,11 +104,12 @@ func (server *DefaultServer) addConnectors(handler http.Handler, configurations 
 
 // DefaultServerHandler implements ServerHandler and http.Handler interface.
 type DefaultServerHandler struct {
-	ServeMux *http.ServeMux
+	ContextPath string
+	ServeMux    *http.ServeMux
 }
 
-// newDefaultServerHandler allocates and returns a new DefaultServerHandler.
-func newDefaultServerHandler() *DefaultServerHandler {
+// NewDefaultServerHandler allocates and returns a new DefaultServerHandler.
+func NewDefaultServerHandler() *DefaultServerHandler {
 	return &DefaultServerHandler{
 		ServeMux: http.NewServeMux(),
 	}
@@ -121,7 +122,8 @@ func (server *DefaultServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 // Handle registers the handler for the given pattern.
 func (server *DefaultServerHandler) Handle(pattern string, handler http.Handler) {
-	server.ServeMux.Handle(pattern, handler)
+	path := server.ContextPath + pattern
+	server.ServeMux.Handle(path, handler)
 }
 
 // DefaultServerFactory implements ServerFactory interface.
@@ -130,15 +132,16 @@ type DefaultServerFactory struct {
 
 // BuildServer creates a new Server.
 func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, environment *Environment) (Server, error) {
-	server := newDefaultServer(&configuration.Server)
+	server := NewDefaultServer(&configuration.Server)
 	// Application
-	handler := newDefaultServerHandler()
-	server.addConnectors(handler, server.configuration.ApplicationConnectors)
+	handler := NewDefaultServerHandler()
+	server.AddConnectors(handler, server.configuration.ApplicationConnectors)
 	environment.ServerHandler = handler
 	// Admin
-	handler = newDefaultServerHandler()
-	server.addConnectors(handler, server.configuration.AdminConnectors)
+	handler = NewDefaultServerHandler()
+	server.AddConnectors(handler, server.configuration.AdminConnectors)
 	environment.Admin.ServerHandler = handler
+	environment.Admin.Initialize(handler.ContextPath)
 	return server, nil
 }
 

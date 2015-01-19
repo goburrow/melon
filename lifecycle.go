@@ -7,3 +7,12 @@ type Managed interface {
 	Start() error
 	Stop() error
 }
+
+type LifecycleEnvironment struct {
+	ManagedObjects []Managed
+}
+
+// NewAdminHTTPHandler allocates and returns a new LifecycleEnvironment
+func NewLifecycleEnvironment() *LifecycleEnvironment {
+	return &LifecycleEnvironment{}
+}

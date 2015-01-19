@@ -8,6 +8,5 @@ import (
 )
 
 type Task interface {
-	Name() string
 	http.Handler
 }

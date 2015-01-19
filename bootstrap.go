@@ -16,8 +16,6 @@ type Bootstrap struct {
 
 func NewBootstrap() *Bootstrap {
 	bootstrap := &Bootstrap{}
-	bootstrap.Bundles = make([]Bundle, 5)
-	bootstrap.Commands = make([]Command, 5)
 	return bootstrap
 }
 
