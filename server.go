@@ -4,7 +4,12 @@
 package gows
 
 import (
+	"github.com/goburrow/gol"
 	"net/http"
+)
+
+const (
+	serverLoggerName = "gows.server"
 )
 
 // Server is a managed HTTP server handling incoming connections to both application and admin.
@@ -132,6 +137,7 @@ type DefaultServerFactory struct {
 
 // BuildServer creates a new Server.
 func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, environment *Environment) (Server, error) {
+	printServerBanner(environment.Name)
 	server := NewDefaultServer(&configuration.Server)
 	// Application
 	handler := NewDefaultServerHandler()
@@ -143,6 +149,15 @@ func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, e
 	environment.Admin.ServerHandler = handler
 	environment.Admin.Initialize(handler.ContextPath)
 	return server, nil
+}
+
+func printServerBanner(name string) {
+	banner := readBanner()
+	if banner != "" {
+		gol.GetLogger(serverLoggerName).Info("Starting %s\n%s", name, banner)
+	} else {
+		gol.GetLogger(serverLoggerName).Info("Starting %s", name)
+	}
 }
 
 // ServerCommand implements Command.
@@ -180,5 +195,8 @@ func (command *ServerCommand) Run(bootstrap *Bootstrap) error {
 	if err = bootstrap.Application.Run(configuration, environment); err != nil {
 		return err
 	}
-	return server.Start()
+	if err = server.Start(); err != nil {
+		gol.GetLogger(serverLoggerName).Error("Unable to start server (Reason: %v), shutting down", err)
+	}
+	return err
 }

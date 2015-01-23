@@ -4,7 +4,6 @@
 package gows
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/goburrow/health"
 	"net/http"
@@ -30,7 +29,6 @@ const (
 </body>
 </html>
 `
-	noCache = "must-revalidate,no-cache,no-store"
 )
 
 type AdminEnvironment struct {
@@ -84,7 +82,7 @@ func (handler *AdminHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		http.NotFound(w, r)
 		return
 	}
-	w.Header().Set("Cache-Control", noCache)
+	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/html")
 
 	fmt.Fprintf(w, adminHTML, handler.MetricsUri, handler.PingUri, handler.HealthCheckUri)
@@ -93,50 +91,7 @@ func (handler *AdminHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 // handleAdminPing handles ping request to admin /ping
 func handleAdminPing(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", noCache)
+	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("pong\n"))
-}
-
-type HealthCheckHTTPHandler struct {
-	registry health.Registry
-}
-
-func NewHealthCheckHTTPHandler(registry health.Registry) *HealthCheckHTTPHandler {
-	return &HealthCheckHTTPHandler{
-		registry: registry,
-	}
-}
-
-func (handler *HealthCheckHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", noCache)
-	w.Header().Set("Content-Type", "text/plain")
-
-	results := handler.registry.RunHealthChecks()
-
-	if len(results) == 0 {
-		w.WriteHeader(http.StatusNotImplemented)
-		w.Write([]byte("No health checks registered."))
-		return
-	}
-	var buf bytes.Buffer
-	isAllHealthy := true
-
-	for name, result := range results {
-		fmt.Fprintf(&buf, "%s:\n", name)
-		fmt.Fprintf(&buf, "  Healthy: %t\n", result.Healthy)
-		if result.Message != "" {
-			fmt.Fprintf(&buf, "  Message: %s\n", result.Message)
-		}
-		if result.Cause != nil {
-			fmt.Fprintf(&buf, "  Cause: %+v\n", result.Cause)
-		}
-		if !result.Healthy {
-			isAllHealthy = false
-		}
-	}
-	if !isAllHealthy {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	w.Write(buf.Bytes())
 }

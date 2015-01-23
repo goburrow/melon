@@ -58,7 +58,7 @@ func (app *MyApplication) Initialize(bootstrap *gows.Bootstrap) error {
 	if err := app.DefaultApplication.Initialize(bootstrap); err != nil {
 		return err
 	}
-	fmt.Printf("Initializing my application: %v\n", app.Name())
+	fmt.Printf("Initializing application: %v\n", app.Name())
 	return nil
 }
 
@@ -76,6 +76,7 @@ func main() {
 
 	app := &MyApplication{}
 	app.SetName("MyApp")
-	err := gows.Run(app, os.Args[1:])
-	fmt.Print(err)
+	if err := gows.Run(app, os.Args[1:]); err != nil {
+		os.Exit(1)
+	}
 }
