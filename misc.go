@@ -15,10 +15,10 @@ const (
 // A banner is a .txt file which has the same name with the running application.
 func readBanner() string {
 	banner, err := readFileContents(os.Args[0]+".txt", maxBannerSize)
-	if err == nil {
-		return banner
+	if err != nil {
+		return ""
 	}
-	return ""
+	return banner
 }
 
 // readFileContents read contents with a limit of maximum bytes

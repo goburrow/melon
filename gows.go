@@ -13,6 +13,7 @@ func printHelp(bootstrap *Bootstrap) {
 // Run executes application with given arguments
 func Run(app Application, args []string) error {
 	bootstrap := NewBootstrap(app)
+	bootstrap.Arguments = args
 	app.Initialize(bootstrap)
 	if len(args) > 0 {
 		for _, command := range bootstrap.Commands {
