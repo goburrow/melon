@@ -34,8 +34,8 @@ type DefaultServerConnector struct {
 	configuration *ConnectorConfiguration
 }
 
-// newServerConnector allocates and returns a new DefaultServerConnector.
-func newServerConnector(handler http.Handler, configuration *ConnectorConfiguration) *DefaultServerConnector {
+// NewServerConnector allocates and returns a new DefaultServerConnector.
+func NewServerConnector(handler http.Handler, configuration *ConnectorConfiguration) *DefaultServerConnector {
 	server := &http.Server{
 		Addr:    configuration.Addr,
 		Handler: handler,
@@ -63,7 +63,7 @@ type DefaultServer struct {
 }
 
 // NewDefaultServer allocates and returns a new DefaultServer.
-func NewDefaultServer(configuration *ServerConfiguration) *DefaultServer {
+func NewServer(configuration *ServerConfiguration) *DefaultServer {
 	return &DefaultServer{
 		configuration: configuration,
 	}
@@ -91,18 +91,18 @@ func (server *DefaultServer) Start() error {
 	return nil
 }
 
-// Start stops all running connectors of the server.
+// Stop stops all running connectors of the server.
 func (server *DefaultServer) Stop() error {
 	// TODO
 	return nil
 }
 
-// addConnectors adds a new connector to the server.
+// AddConnectors adds a new connector to the server.
 func (server *DefaultServer) AddConnectors(handler http.Handler, configurations []ConnectorConfiguration) {
 	count := len(configurations)
 	// Does "range" copy struct value?
 	for i := 0; i < count; i++ {
-		connector := newServerConnector(handler, &configurations[i])
+		connector := NewServerConnector(handler, &configurations[i])
 		server.Connectors = append(server.Connectors, connector)
 	}
 }
@@ -113,8 +113,8 @@ type DefaultServerHandler struct {
 	ServeMux    *http.ServeMux
 }
 
-// NewDefaultServerHandler allocates and returns a new DefaultServerHandler.
-func NewDefaultServerHandler() *DefaultServerHandler {
+// NewServerHandler allocates and returns a new DefaultServerHandler.
+func NewServerHandler() *DefaultServerHandler {
 	return &DefaultServerHandler{
 		ServeMux: http.NewServeMux(),
 	}
@@ -138,13 +138,13 @@ type DefaultServerFactory struct {
 // BuildServer creates a new Server.
 func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, environment *Environment) (Server, error) {
 	printServerBanner(environment.Name)
-	server := NewDefaultServer(&configuration.Server)
+	server := NewServer(&configuration.Server)
 	// Application
-	handler := NewDefaultServerHandler()
+	handler := NewServerHandler()
 	server.AddConnectors(handler, server.configuration.ApplicationConnectors)
 	environment.ServerHandler = handler
 	// Admin
-	handler = NewDefaultServerHandler()
+	handler = NewServerHandler()
 	server.AddConnectors(handler, server.configuration.AdminConnectors)
 	environment.Admin.ServerHandler = handler
 	environment.Admin.Initialize(handler.ContextPath)
@@ -177,12 +177,12 @@ func (command *ServerCommand) Description() string {
 // Run runs the command with the given bootstrap.
 func (command *ServerCommand) Run(bootstrap *Bootstrap) error {
 	// Parse configuration
-	configuration, err := bootstrap.ConfigurationFactory.BuildConfiguration(bootstrap.Arguments[1:])
+	configuration, err := bootstrap.ConfigurationFactory.BuildConfiguration(bootstrap)
 	if err != nil {
 		return err
 	}
 	// Create environment
-	environment := NewEnvironment(bootstrap.Application.Name())
+	environment := bootstrap.EnvironmentFactory.BuildEnvironment(bootstrap)
 	server, err := bootstrap.ServerFactory.BuildServer(configuration, environment)
 	if err != nil {
 		return err

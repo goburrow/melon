@@ -13,10 +13,23 @@ type Environment struct {
 	Admin *AdminEnvironment
 }
 
-func NewEnvironment(name string) *Environment {
+// NewEnvironment allocates and returns new Environment
+func NewEnvironment() *Environment {
 	return &Environment{
-		Name:      name,
 		Lifecycle: NewLifecycleEnvironment(),
 		Admin:     NewAdminEnvironment(),
 	}
+}
+
+type EnvironmentFactory interface {
+	BuildEnvironment(bootstrap *Bootstrap) *Environment
+}
+
+type DefaultEnvironmentFactory struct {
+}
+
+func (factory *DefaultEnvironmentFactory) BuildEnvironment(bootstrap *Bootstrap) *Environment {
+	env := NewEnvironment()
+	env.Name = bootstrap.Application.Name()
+	return env
 }

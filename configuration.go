@@ -34,14 +34,14 @@ type MetricsConfiguration struct {
 }
 
 type ConfigurationFactory interface {
-	BuildConfiguration(args []string) (*Configuration, error)
+	BuildConfiguration(bootstrap *Bootstrap) (*Configuration, error)
 }
 
-// DefaultFactory implements ConfigurationFactory and ServerFactory
+// DefaultConfigurationFactory implements ConfigurationFactory and ServerFactory
 type DefaultConfigurationFactory struct {
 }
 
-func (_ *DefaultConfigurationFactory) BuildConfiguration(_ []string) (*Configuration, error) {
+func (_ *DefaultConfigurationFactory) BuildConfiguration(bootstrap *Bootstrap) (*Configuration, error) {
 	configuration := &Configuration{}
 	configuration.Server.ApplicationConnectors = []ConnectorConfiguration{
 		ConnectorConfiguration{

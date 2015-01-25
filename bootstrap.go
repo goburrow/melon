@@ -11,15 +11,21 @@ type Bootstrap struct {
 	Commands    []Command
 
 	ConfigurationFactory ConfigurationFactory
+	EnvironmentFactory   EnvironmentFactory
 	ServerFactory        ServerFactory
 }
 
-func NewBootstrap() *Bootstrap {
-	bootstrap := &Bootstrap{}
+func NewBootstrap(app Application) *Bootstrap {
+	bootstrap := &Bootstrap{
+		Application:          app,
+		ConfigurationFactory: &DefaultConfigurationFactory{},
+		EnvironmentFactory:   &DefaultEnvironmentFactory{},
+		ServerFactory:        &DefaultServerFactory{},
+	}
 	return bootstrap
 }
 
-// Adds the given bundle to the bootstrap.
+// AddBundle adds the given bundle to the bootstrap.
 func (bootstrap *Bootstrap) AddBundle(bundle Bundle) {
 	bundle.Initialize(bootstrap)
 	bootstrap.Bundles = append(bootstrap.Bundles, bundle)

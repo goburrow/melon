@@ -9,17 +9,17 @@ import (
 	"net/http"
 )
 
-type HealthCheckHTTPHandler struct {
+type DefaultHealthCheckHandler struct {
 	registry health.Registry
 }
 
-func NewHealthCheckHTTPHandler(registry health.Registry) *HealthCheckHTTPHandler {
-	return &HealthCheckHTTPHandler{
+func NewHealthCheckHandler(registry health.Registry) *DefaultHealthCheckHandler {
+	return &DefaultHealthCheckHandler{
 		registry: registry,
 	}
 }
 
-func (handler *HealthCheckHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *DefaultHealthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/plain")
 

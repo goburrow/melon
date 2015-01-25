@@ -3,7 +3,7 @@
 // of the BSD license. See the LICENSE file for details.
 package gows
 
-// A basic CLI command
+// Command is a basic CLI command
 type Command interface {
 	Name() string
 	Description() string

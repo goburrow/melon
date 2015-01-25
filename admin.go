@@ -45,8 +45,8 @@ func NewAdminEnvironment() *AdminEnvironment {
 // Initialize registers all required HTTP handlers
 func (env *AdminEnvironment) Initialize(contextPath string) {
 	env.ServerHandler.Handle(pingUri, http.HandlerFunc(handleAdminPing))
-	env.ServerHandler.Handle(healthCheckUri, NewHealthCheckHTTPHandler(env.HealthCheckRegistry))
-	env.ServerHandler.Handle("/", NewAdminHTTPHandler(contextPath))
+	env.ServerHandler.Handle(healthCheckUri, NewHealthCheckHandler(env.HealthCheckRegistry))
+	env.ServerHandler.Handle("/", NewAdminHandler(contextPath))
 }
 
 // AddTask adds a new task to admin environment
@@ -55,27 +55,27 @@ func (env *AdminEnvironment) AddTask(name string, task Task) {
 	env.ServerHandler.Handle(path, task)
 }
 
-// AdminHTTPHandler implement http.Handler
-type AdminHTTPHandler struct {
-	MetricsUri     string
-	PingUri        string
-	HealthCheckUri string
+// DefaultAdminHandler implement http.Handler
+type DefaultAdminHandler struct {
+	metricsUri     string
+	pingUri        string
+	healthCheckUri string
 
 	rootUri string
 }
 
-// NewAdminHTTPHandler allocates and returns a new AdminHTTPHandler
-func NewAdminHTTPHandler(contextPath string) *AdminHTTPHandler {
-	return &AdminHTTPHandler{
-		MetricsUri:     contextPath + metricsUri,
-		PingUri:        contextPath + pingUri,
-		HealthCheckUri: contextPath + healthCheckUri,
+// NewAdminHTTPHandler allocates and returns a new adminHTTPHandler
+func NewAdminHandler(contextPath string) *DefaultAdminHandler {
+	return &DefaultAdminHandler{
+		metricsUri:     contextPath + metricsUri,
+		pingUri:        contextPath + pingUri,
+		healthCheckUri: contextPath + healthCheckUri,
 		rootUri:        contextPath + "/",
 	}
 }
 
 // ServeHTTP handles request to the root of Admin page
-func (handler *AdminHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *DefaultAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// The "/" pattern matches everything, so we need to check
 	// that we're at the root here.
 	if r.URL.Path != handler.rootUri {
@@ -85,7 +85,7 @@ func (handler *AdminHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/html")
 
-	fmt.Fprintf(w, adminHTML, handler.MetricsUri, handler.PingUri, handler.HealthCheckUri)
+	fmt.Fprintf(w, adminHTML, handler.metricsUri, handler.pingUri, handler.healthCheckUri)
 	// TODO: handle error
 }
 
