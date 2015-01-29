@@ -4,6 +4,7 @@
 package gows
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -17,6 +18,7 @@ const (
 	pingUri        = "/ping"
 	runtimeUri     = "/runtime"
 	healthCheckUri = "/healthcheck"
+	tasksUri       = "/tasks"
 
 	adminHTML = `<!DOCTYPE html>
 <html>
@@ -35,37 +37,52 @@ const (
 </html>
 `
 	adminLoggerName = "gows.admin"
+	gcTaskName      = "gc"
 )
 
 type AdminEnvironment struct {
 	ServerHandler       ServerHandler
 	HealthCheckRegistry health.Registry
+
+	tasks map[string]Task
 }
 
 func NewAdminEnvironment() *AdminEnvironment {
-	return &AdminEnvironment{
+	env := &AdminEnvironment{
 		HealthCheckRegistry: health.NewRegistry(),
+		tasks:               make(map[string]Task),
 	}
+	// Default tasks
+	env.AddTask(gcTaskName, TaskFunc(handleAdminGC))
+	return env
 }
 
 // AddTask adds a new task to admin environment
 func (env *AdminEnvironment) AddTask(name string, task Task) {
-	path := "/tasks/" + name
-	env.ServerHandler.Handle(path, task)
+	env.tasks[name] = task
 }
 
-// Initialize registers all required HTTP handlers
+// addHandlers registers all required HTTP handlers
 func (env *AdminEnvironment) addHandlers() {
 	env.ServerHandler.Handle(pingUri, http.HandlerFunc(handleAdminPing))
 	env.ServerHandler.Handle(runtimeUri, http.HandlerFunc(handleAdminRuntime))
 	env.ServerHandler.Handle(healthCheckUri, NewHealthCheckHandler(env.HealthCheckRegistry))
-
 	env.ServerHandler.Handle("/", NewAdminHandler(env.ServerHandler.ContextPath()))
+
+	for name, task := range env.tasks {
+		path := tasksUri + "/" + name
+		env.ServerHandler.Handle(path, task)
+	}
 }
 
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logTasks() {
-	gol.GetLogger(adminLoggerName).Info("tasks = %s", "TODO")
+	var buf bytes.Buffer
+	for name, task := range env.tasks {
+		fmt.Fprintf(&buf, "    %-7s %s/%s (%T)\n", "POST",
+			tasksUri, name, task)
+	}
+	gol.GetLogger(adminLoggerName).Info("tasks =\n\n%s", buf.String())
 }
 
 // logTasks prints all registered tasks to the log
@@ -178,4 +195,11 @@ func handleAdminRuntime(w http.ResponseWriter, r *http.Request) {
 		m.NextGC, m.LastGC, m.PauseTotalNs, m.NumGC, m.EnableGC, m.DebugGC)
 
 	fmt.Fprintf(w, "Version: %s\n", runtime.Version())
+}
+
+// handleAdminGC performs a garbage collection
+func handleAdminGC(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Running GC...\n"))
+	runtime.GC()
+	w.Write([]byte("Done...\n"))
 }
