@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"strings"
 
 	"github.com/goburrow/gol"
 	"github.com/goburrow/health"
@@ -37,7 +38,9 @@ const (
 </html>
 `
 	adminLoggerName = "gows.admin"
-	gcTaskName      = "gc"
+
+	gcTaskName       = "gc"
+	logLevelTaskName = "log-level"
 )
 
 type AdminEnvironment struct {
@@ -54,6 +57,7 @@ func NewAdminEnvironment() *AdminEnvironment {
 	}
 	// Default tasks
 	env.AddTask(gcTaskName, TaskFunc(handleAdminGC))
+	env.AddTask(logLevelTaskName, TaskFunc(handleAdminLogLevel))
 	return env
 }
 
@@ -202,4 +206,57 @@ func handleAdminGC(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Running GC...\n"))
 	runtime.GC()
 	w.Write([]byte("Done...\n"))
+}
+
+// handleAdminLogLevel get and set logger level
+func handleAdminLogLevel(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	// Can have multiple loggers
+	loggers, ok := query["logger"]
+	if !ok {
+		return
+	}
+	// But only one level
+	level := query.Get("level")
+	if level != "" {
+		logLevel, ok := parseLogLevel(level)
+		if !ok {
+			http.Error(w, "Level is not supported", http.StatusBadRequest)
+			return
+		}
+		for _, name := range loggers {
+			logger, ok := gol.GetLogger(name).(*gol.DefaultLogger)
+			if ok {
+				logger.SetLevel(logLevel)
+				fmt.Fprintf(w, "Configured logging level for %s to %s\n",
+					name, gol.LevelString(logLevel))
+			}
+		}
+	} else {
+		// Print level of each logger
+		for _, name := range loggers {
+			logger, ok := gol.GetLogger(name).(*gol.DefaultLogger)
+			if ok {
+				fmt.Fprintf(w, "%s: %s\n", name, gol.LevelString(logger.Level()))
+			}
+		}
+	}
+}
+
+func parseLogLevel(level string) (gol.Level, bool) {
+	var logLevels = []gol.Level{
+		gol.LevelAll,
+		gol.LevelTrace,
+		gol.LevelDebug,
+		gol.LevelInfo,
+		gol.LevelWarn,
+		gol.LevelError,
+		gol.LevelOff,
+	}
+	for _, l := range logLevels {
+		if strings.EqualFold(level, gol.LevelString(l)) {
+			return l, true
+		}
+	}
+	return gol.LevelOff, false
 }
