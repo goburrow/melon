@@ -5,8 +5,10 @@ package gows
 
 import (
 	"fmt"
-	"github.com/goburrow/health"
 	"net/http"
+
+	"github.com/goburrow/gol"
+	"github.com/goburrow/health"
 )
 
 const (
@@ -31,6 +33,7 @@ const (
 </body>
 </html>
 `
+	adminLoggerName = "gows.admin"
 )
 
 type AdminEnvironment struct {
@@ -44,18 +47,29 @@ func NewAdminEnvironment() *AdminEnvironment {
 	}
 }
 
-// Initialize registers all required HTTP handlers
-func (env *AdminEnvironment) Initialize(contextPath string) {
-	env.ServerHandler.Handle(pingUri, http.HandlerFunc(handleAdminPing))
-	env.ServerHandler.Handle(runtimeUri, http.HandlerFunc(handleAdminRuntime))
-	env.ServerHandler.Handle(healthCheckUri, NewHealthCheckHandler(env.HealthCheckRegistry))
-	env.ServerHandler.Handle("/", NewAdminHandler(contextPath))
-}
-
 // AddTask adds a new task to admin environment
 func (env *AdminEnvironment) AddTask(name string, task Task) {
 	path := "/tasks/" + name
 	env.ServerHandler.Handle(path, task)
+}
+
+// Initialize registers all required HTTP handlers
+func (env *AdminEnvironment) addHandlers() {
+	env.ServerHandler.Handle(pingUri, http.HandlerFunc(handleAdminPing))
+	env.ServerHandler.Handle(runtimeUri, http.HandlerFunc(handleAdminRuntime))
+	env.ServerHandler.Handle(healthCheckUri, NewHealthCheckHandler(env.HealthCheckRegistry))
+
+	env.ServerHandler.Handle("/", NewAdminHandler(env.ServerHandler.ContextPath()))
+}
+
+// logTasks prints all registered tasks to the log
+func (env *AdminEnvironment) logTasks() {
+	gol.GetLogger(adminLoggerName).Info("tasks = %s", "TODO")
+}
+
+// logTasks prints all registered tasks to the log
+func (env *AdminEnvironment) logHealthCheck() {
+	gol.GetLogger(adminLoggerName).Info("healthchecks = %s", "TODO")
 }
 
 // DefaultAdminHandler implement http.Handler
@@ -83,7 +97,6 @@ func (handler *DefaultAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "text/html")
 
 	fmt.Fprintf(w, adminHTML, handler.contextPath, metricsUri, pingUri, runtimeUri, healthCheckUri)
-	// TODO: handle error
 }
 
 // handleAdminPing handles ping request to admin /ping

@@ -3,6 +3,8 @@
 // of the BSD license. See the LICENSE file for details.
 package gows
 
+// Environment also implements Managed interface so that it can be initilizen
+// when server starts
 type Environment struct {
 	Name string
 
@@ -21,6 +23,18 @@ func NewEnvironment() *Environment {
 	}
 }
 
+// Start registers all handlers in admin and logs current tasks and health checks
+func (env *Environment) Start() error {
+	env.Admin.addHandlers()
+	env.Admin.logTasks()
+	env.Admin.logHealthCheck()
+	return nil
+}
+
+func (env *Environment) Stop() error {
+	return nil
+}
+
 type EnvironmentFactory interface {
 	BuildEnvironment(bootstrap *Bootstrap) (*Environment, error)
 }
@@ -31,5 +45,8 @@ type DefaultEnvironmentFactory struct {
 func (factory *DefaultEnvironmentFactory) BuildEnvironment(bootstrap *Bootstrap) (*Environment, error) {
 	env := NewEnvironment()
 	env.Name = bootstrap.Application.Name()
+
+	// Manage itself
+	env.Lifecycle.Manage(env)
 	return env, nil
 }

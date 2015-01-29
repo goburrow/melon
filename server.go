@@ -26,6 +26,7 @@ type Server interface {
 type ServerHandler interface {
 	// Handle registers the handler for the given pattern.
 	Handle(pattern string, handler http.Handler)
+	ContextPath() string
 }
 
 // ServerFactory builds Server with given configuration and environment.
@@ -156,8 +157,8 @@ func (server *DefaultServer) AddConnectors(handler http.Handler, configurations 
 
 // DefaultServerHandler implements ServerHandler and http.Handler interface.
 type DefaultServerHandler struct {
-	ContextPath string
 	ServeMux    *http.ServeMux
+	contextPath string
 }
 
 // NewServerHandler allocates and returns a new DefaultServerHandler.
@@ -174,8 +175,18 @@ func (server *DefaultServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 // Handle registers the handler for the given pattern.
 func (server *DefaultServerHandler) Handle(pattern string, handler http.Handler) {
-	path := server.ContextPath + pattern
+	path := server.contextPath + pattern
 	server.ServeMux.Handle(path, handler)
+}
+
+// ContextPath returns server root context path
+func (server *DefaultServerHandler) ContextPath() string {
+	return server.contextPath
+}
+
+// SetContextPath sets root context path for the server
+func (server *DefaultServerHandler) SetContextPath(contextPath string) {
+	server.contextPath = contextPath
 }
 
 // DefaultServerFactory implements ServerFactory interface.
@@ -193,7 +204,6 @@ func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, e
 	handler = NewServerHandler()
 	server.AddConnectors(handler, server.configuration.AdminConnectors)
 	environment.Admin.ServerHandler = handler
-	environment.Admin.Initialize(handler.ContextPath)
 	return server, nil
 }
 
