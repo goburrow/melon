@@ -213,7 +213,7 @@ func handleAdminLogLevel(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	// Can have multiple loggers
 	loggers, ok := query["logger"]
-	if !ok {
+	if !ok || len(loggers) == 0 {
 		return
 	}
 	// But only one level
@@ -228,22 +228,22 @@ func handleAdminLogLevel(w http.ResponseWriter, r *http.Request) {
 			logger, ok := gol.GetLogger(name).(*gol.DefaultLogger)
 			if ok {
 				logger.SetLevel(logLevel)
-				fmt.Fprintf(w, "Configured logging level for %s to %s\n",
-					name, gol.LevelString(logLevel))
 			}
 		}
-	} else {
-		// Print level of each logger
-		for _, name := range loggers {
-			logger, ok := gol.GetLogger(name).(*gol.DefaultLogger)
-			if ok {
-				fmt.Fprintf(w, "%s: %s\n", name, gol.LevelString(logger.Level()))
-			}
+	}
+	// Print level of each logger
+	for _, name := range loggers {
+		logger, ok := gol.GetLogger(name).(*gol.DefaultLogger)
+		if ok {
+			fmt.Fprintf(w, "%s: %s\n", name, gol.LevelString(logger.Level()))
 		}
 	}
 }
 
+// parseLogLevel returns respective gol.Level of the given string
 func parseLogLevel(level string) (gol.Level, bool) {
+	// Changing log level is not executed regularly so it's not worth having
+	// logLevels in static scope
 	var logLevels = []gol.Level{
 		gol.LevelAll,
 		gol.LevelTrace,
