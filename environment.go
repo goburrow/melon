@@ -22,14 +22,14 @@ func NewEnvironment() *Environment {
 }
 
 type EnvironmentFactory interface {
-	BuildEnvironment(bootstrap *Bootstrap) *Environment
+	BuildEnvironment(bootstrap *Bootstrap) (*Environment, error)
 }
 
 type DefaultEnvironmentFactory struct {
 }
 
-func (factory *DefaultEnvironmentFactory) BuildEnvironment(bootstrap *Bootstrap) *Environment {
+func (factory *DefaultEnvironmentFactory) BuildEnvironment(bootstrap *Bootstrap) (*Environment, error) {
 	env := NewEnvironment()
 	env.Name = bootstrap.Application.Name()
-	return env
+	return env, nil
 }

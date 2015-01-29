@@ -5,7 +5,7 @@ package gows
 
 func printHelp(bootstrap *Bootstrap) {
 	println("Available commands:")
-	for _, command := range bootstrap.Commands {
+	for _, command := range bootstrap.commands {
 		println(command.Name(), ":", command.Description())
 	}
 }
@@ -16,7 +16,7 @@ func Run(app Application, args []string) error {
 	bootstrap.Arguments = args
 	app.Initialize(bootstrap)
 	if len(args) > 0 {
-		for _, command := range bootstrap.Commands {
+		for _, command := range bootstrap.commands {
 			if command.Name() == args[0] {
 				return command.Run(bootstrap)
 			}

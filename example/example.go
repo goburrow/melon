@@ -6,16 +6,24 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/goburrow/gows"
-	"github.com/goburrow/health"
 	"math/rand"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/goburrow/gol"
+	"github.com/goburrow/gows"
+	"github.com/goburrow/health"
 )
 
 var myError = errors.New("Generic error")
+var logger gol.Logger
 
+func init() {
+	logger = gol.GetLogger("example")
+}
+
+// MyTask is a task for management
 type MyTask struct {
 	message string
 }
@@ -25,6 +33,7 @@ func (task *MyTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(task.message))
 }
 
+// MyHealthCheck is a health check for a component
 type MyHealthCheck struct {
 	threshold int
 }
@@ -38,6 +47,22 @@ func (healthCheck *MyHealthCheck) Check() *health.Result {
 	return health.ResultHealthy
 }
 
+// MyManaged is a lifecycle listener
+type MyManaged struct {
+	name string
+}
+
+func (managed *MyManaged) Start() error {
+	logger.Info("%s started", managed.name)
+	return nil
+}
+
+func (managed *MyManaged) Stop() error {
+	logger.Info("%s stopped", managed.name)
+	return nil
+}
+
+// MyHandler is a application handler
 type MyHandler struct {
 	last time.Time
 }
@@ -58,7 +83,6 @@ func (app *MyApplication) Initialize(bootstrap *gows.Bootstrap) error {
 	if err := app.DefaultApplication.Initialize(bootstrap); err != nil {
 		return err
 	}
-	fmt.Printf("Initializing application: %v\n", app.Name())
 	return nil
 }
 
@@ -68,6 +92,7 @@ func (app *MyApplication) Run(configuration *gows.Configuration, environment *go
 	// http://localhost:8081/tasks/task1
 	environment.Admin.AddTask("task1", &MyTask{"This is Task 1"})
 	environment.Admin.HealthCheckRegistry.Register("Check 1", &MyHealthCheck{50})
+	environment.Lifecycle.Manage(&MyManaged{"Component 1"})
 	return nil
 }
 

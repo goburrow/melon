@@ -7,12 +7,13 @@ package gows
 type Bootstrap struct {
 	Application Application
 	Arguments   []string
-	Bundles     []Bundle
-	Commands    []Command
 
 	ConfigurationFactory ConfigurationFactory
 	EnvironmentFactory   EnvironmentFactory
 	ServerFactory        ServerFactory
+
+	bundles  []Bundle
+	commands []Command
 }
 
 func NewBootstrap(app Application) *Bootstrap {
@@ -28,16 +29,16 @@ func NewBootstrap(app Application) *Bootstrap {
 // AddBundle adds the given bundle to the bootstrap.
 func (bootstrap *Bootstrap) AddBundle(bundle Bundle) {
 	bundle.Initialize(bootstrap)
-	bootstrap.Bundles = append(bootstrap.Bundles, bundle)
+	bootstrap.bundles = append(bootstrap.bundles, bundle)
 }
 
 func (bootstrap *Bootstrap) AddCommand(command Command) {
-	bootstrap.Commands = append(bootstrap.Commands, command)
+	bootstrap.commands = append(bootstrap.commands, command)
 }
 
 // run runs all registered bundles
 func (bootstrap *Bootstrap) run(configuration *Configuration, environment *Environment) error {
-	for _, bundle := range bootstrap.Bundles {
+	for _, bundle := range bootstrap.bundles {
 		if err := bundle.Run(configuration, environment); err != nil {
 			return err
 		}

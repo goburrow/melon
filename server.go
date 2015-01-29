@@ -135,14 +135,13 @@ func (server *DefaultServer) Start() error {
 
 // Stop stops all running connectors of the server.
 func (server *DefaultServer) Stop() error {
-	var firstError error
+	logger := gol.GetLogger(serverLoggerName)
 	for _, connector := range server.Connectors {
-		err := connector.Stop()
-		if err != nil && firstError == nil {
-			firstError = err
+		if err := connector.Stop(); err != nil {
+			logger.Warn("Error closing connector: %v", err)
 		}
 	}
-	return firstError
+	return nil
 }
 
 // AddConnectors adds a new connector to the server.
@@ -185,7 +184,6 @@ type DefaultServerFactory struct {
 
 // BuildServer creates a new Server.
 func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, environment *Environment) (Server, error) {
-	printServerBanner(environment.Name)
 	server := NewServer(&configuration.Server)
 	// Application
 	handler := NewServerHandler()
@@ -197,15 +195,6 @@ func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, e
 	environment.Admin.ServerHandler = handler
 	environment.Admin.Initialize(handler.ContextPath)
 	return server, nil
-}
-
-func printServerBanner(name string) {
-	banner := readBanner()
-	if banner != "" {
-		gol.GetLogger(serverLoggerName).Info("Starting %s\n%s", name, banner)
-	} else {
-		gol.GetLogger(serverLoggerName).Info("Starting %s", name)
-	}
 }
 
 // ServerCommand implements Command.
@@ -224,27 +213,50 @@ func (command *ServerCommand) Description() string {
 
 // Run runs the command with the given bootstrap.
 func (command *ServerCommand) Run(bootstrap *Bootstrap) error {
+	logger := gol.GetLogger(serverLoggerName)
 	// Parse configuration
 	configuration, err := bootstrap.ConfigurationFactory.BuildConfiguration(bootstrap)
 	if err != nil {
+		logger.Error("Could not create configuration: %v", err)
 		return err
 	}
 	// Create environment
-	environment := bootstrap.EnvironmentFactory.BuildEnvironment(bootstrap)
-	server, err := bootstrap.ServerFactory.BuildServer(configuration, environment)
+	environment, err := bootstrap.EnvironmentFactory.BuildEnvironment(bootstrap)
 	if err != nil {
+		logger.Error("Could not create environment: %v", err)
 		return err
 	}
+	server, err := bootstrap.ServerFactory.BuildServer(configuration, environment)
+	if err != nil {
+		logger.Error("Could not create server: %v", err)
+		return err
+	}
+	// Now can start everything
+	printBanner(logger, environment.Name)
 	// Run all bundles in bootstrap
 	if err = bootstrap.run(configuration, environment); err != nil {
+		logger.Error("Could not run bootstrap: %v", err)
 		return err
 	}
 	// Run application
 	if err = bootstrap.Application.Run(configuration, environment); err != nil {
+		logger.Error("Could not run application: %v", err)
 		return err
 	}
+	environment.Lifecycle.onStarting()
 	if err = server.Start(); err != nil {
-		gol.GetLogger(serverLoggerName).Error("Unable to start server (Reason: %v), shutting down", err)
+		logger.Error("Could not start server: %v", err)
 	}
+	environment.Lifecycle.onStopped()
 	return err
+}
+
+// printBanner prints application banner to the given logger
+func printBanner(logger gol.Logger, name string) {
+	banner := readBanner()
+	if banner != "" {
+		logger.Info("Starting %s\n%s", name, banner)
+	} else {
+		logger.Info("Starting %s", name)
+	}
 }
