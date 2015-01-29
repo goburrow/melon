@@ -4,8 +4,13 @@
 package gows
 
 import (
-	"github.com/goburrow/gol"
+	"crypto/tls"
+	"net"
 	"net/http"
+	"os"
+	"os/signal"
+
+	"github.com/goburrow/gol"
 )
 
 const (
@@ -30,7 +35,9 @@ type ServerFactory interface {
 
 // DefaultServerConnector utilizes http.Server.
 type DefaultServerConnector struct {
-	Server        *http.Server
+	Server *http.Server
+
+	listener      net.Listener
 	configuration *ConnectorConfiguration
 }
 
@@ -47,12 +54,42 @@ func NewServerConnector(handler http.Handler, configuration *ConnectorConfigurat
 	return connector
 }
 
-// start starts server connector.
-func (connector *DefaultServerConnector) start() error {
-	if connector.configuration.Type == "https" {
-		return connector.Server.ListenAndServeTLS(connector.configuration.CertFile, connector.configuration.KeyFile)
+// Start creates and serves a listerner.
+func (connector *DefaultServerConnector) Start() error {
+	addr := connector.Server.Addr
+	if addr == "" {
+		// Use connector type as listening port
+		addr = ":" + connector.configuration.Type
 	}
-	return connector.Server.ListenAndServe()
+	var err error
+	connector.listener, err = net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
+	if connector.configuration.Type == "https" {
+		// Load certificates and wrap the tcp listener
+		c, err := tls.LoadX509KeyPair(connector.configuration.CertFile, connector.configuration.KeyFile)
+		if err != nil {
+			return err
+		}
+		if connector.Server.TLSConfig == nil {
+			connector.Server.TLSConfig = &tls.Config{
+				NextProtos: []string{"http/1.1"},
+			}
+		}
+		connector.Server.TLSConfig.Certificates = []tls.Certificate{c}
+		connector.listener = tls.NewListener(connector.listener, connector.Server.TLSConfig)
+	}
+	return connector.Server.Serve(connector.listener)
+}
+
+// Stop closes the listener
+func (connector *DefaultServerConnector) Stop() error {
+	// TODO: Also close all opening connections
+	if connector.listener != nil {
+		return connector.listener.Close()
+	}
+	return nil
 }
 
 // DefaultServer implements Server interface
@@ -72,19 +109,24 @@ func NewServer(configuration *ServerConfiguration) *DefaultServer {
 // Start starts all connectors of the server.
 func (server *DefaultServer) Start() error {
 	errorChan := make(chan error)
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt)
 
 	for _, connector := range server.Connectors {
 		go func(c *DefaultServerConnector) {
-			errorChan <- c.start()
+			errorChan <- c.Start()
 		}(connector)
 	}
 	for i := len(server.Connectors); i > 0; i-- {
 		select {
 		case err := <-errorChan:
-			// TODO: stop server gratefully
 			if err != nil {
 				server.Stop()
 				return err
+			}
+		case sig := <-sigChan:
+			if sig == os.Interrupt {
+				return server.Stop()
 			}
 		}
 	}
@@ -93,8 +135,14 @@ func (server *DefaultServer) Start() error {
 
 // Stop stops all running connectors of the server.
 func (server *DefaultServer) Stop() error {
-	// TODO
-	return nil
+	var firstError error
+	for _, connector := range server.Connectors {
+		err := connector.Stop()
+		if err != nil && firstError == nil {
+			firstError = err
+		}
+	}
+	return firstError
 }
 
 // AddConnectors adds a new connector to the server.
