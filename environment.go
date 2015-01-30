@@ -27,7 +27,7 @@ func NewEnvironment() *Environment {
 func (env *Environment) Start() error {
 	env.Admin.addHandlers()
 	env.Admin.logTasks()
-	env.Admin.logHealthCheck()
+	env.Admin.logHealthChecks()
 	return nil
 }
 

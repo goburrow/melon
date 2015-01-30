@@ -37,10 +37,16 @@ const (
 </body>
 </html>
 `
+	noHealthChecksWarning = `
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!    THIS APPLICATION HAS NO HEALTHCHECKS.    !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+`
+
 	adminLoggerName = "gows.admin"
 
 	gcTaskName       = "gc"
-	logLevelTaskName = "log-level"
+	logLevelTaskName = "log"
 )
 
 type AdminEnvironment struct {
@@ -90,8 +96,13 @@ func (env *AdminEnvironment) logTasks() {
 }
 
 // logTasks prints all registered tasks to the log
-func (env *AdminEnvironment) logHealthCheck() {
-	gol.GetLogger(adminLoggerName).Info("healthchecks = %s", "TODO")
+func (env *AdminEnvironment) logHealthChecks() {
+	logger := gol.GetLogger(adminLoggerName)
+	names := env.HealthCheckRegistry.Names()
+	if len(names) <= 0 {
+		logger.Warn(noHealthChecksWarning)
+	}
+	logger.Debug("health checks = %v", names)
 }
 
 // DefaultAdminHandler implement http.Handler
@@ -205,7 +216,7 @@ func handleAdminRuntime(w http.ResponseWriter, r *http.Request) {
 func handleAdminGC(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Running GC...\n"))
 	runtime.GC()
-	w.Write([]byte("Done...\n"))
+	w.Write([]byte("Done!\n"))
 }
 
 // handleAdminLogLevel get and set logger level
