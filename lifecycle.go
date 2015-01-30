@@ -1,14 +1,15 @@
 // Copyright 2015 Quoc-Viet Nguyen. All rights reserved.
 // This software may be modified and distributed under the terms
 // of the BSD license. See the LICENSE file for details.
-package gows
+
+package gomelon
 
 import (
 	"github.com/goburrow/gol"
 )
 
 const (
-	lifecycleLoggerName = "gows.lifecycle"
+	lifecycleLoggerName = "gomelon.lifecycle"
 )
 
 // Managed is an interface for objects which need to be started and stopped as

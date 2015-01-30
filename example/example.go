@@ -1,6 +1,7 @@
 // Copyright 2015 Quoc-Viet Nguyen. All rights reserved.
 // This software may be modified and distributed under the terms
 // of the BSD license. See the LICENSE file for details.
+
 package main
 
 import (
@@ -12,7 +13,7 @@ import (
 	"time"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gows"
+	"github.com/goburrow/gomelon"
 	"github.com/goburrow/health"
 )
 
@@ -76,17 +77,17 @@ func (handler *MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // MyApplication extends DefaultApplication to add more commands/bundles
 type MyApplication struct {
-	gows.DefaultApplication
+	gomelon.DefaultApplication
 }
 
-func (app *MyApplication) Initialize(bootstrap *gows.Bootstrap) error {
+func (app *MyApplication) Initialize(bootstrap *gomelon.Bootstrap) error {
 	if err := app.DefaultApplication.Initialize(bootstrap); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (app *MyApplication) Run(configuration *gows.Configuration, environment *gows.Environment) error {
+func (app *MyApplication) Run(configuration *gomelon.Configuration, environment *gomelon.Environment) error {
 	environment.ServerHandler.Handle("/time", &MyHandler{time.Now()})
 
 	// http://localhost:8081/tasks/task1
@@ -101,7 +102,7 @@ func main() {
 
 	app := &MyApplication{}
 	app.SetName("MyApp")
-	if err := gows.Run(app, os.Args[1:]); err != nil {
+	if err := gomelon.Run(app, os.Args[1:]); err != nil {
 		os.Exit(1)
 	}
 }
