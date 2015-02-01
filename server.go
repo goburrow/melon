@@ -140,7 +140,7 @@ func (server *DefaultServer) Stop() error {
 	logger := gol.GetLogger(serverLoggerName)
 	for _, connector := range server.Connectors {
 		if err := connector.Stop(); err != nil {
-			logger.Warn("Error closing connector: %v", err)
+			logger.Warn("error closing connector: %v", err)
 		}
 	}
 	return nil
@@ -219,7 +219,7 @@ func (command *ServerCommand) Name() string {
 
 // Description returns description of the ServerCommand.
 func (command *ServerCommand) Description() string {
-	return "Runs the application as an HTTP server"
+	return "runs the application as an HTTP server"
 }
 
 // Run runs the command with the given bootstrap.
@@ -228,35 +228,35 @@ func (command *ServerCommand) Run(bootstrap *Bootstrap) error {
 	// Parse configuration
 	configuration, err := bootstrap.ConfigurationFactory.BuildConfiguration(bootstrap)
 	if err != nil {
-		logger.Error("Could not create configuration: %v", err)
+		logger.Error("could not create configuration: %v", err)
 		return err
 	}
 	// Create environment
 	environment, err := bootstrap.EnvironmentFactory.BuildEnvironment(bootstrap)
 	if err != nil {
-		logger.Error("Could not create environment: %v", err)
+		logger.Error("could not create environment: %v", err)
 		return err
 	}
 	server, err := bootstrap.ServerFactory.BuildServer(configuration, environment)
 	if err != nil {
-		logger.Error("Could not create server: %v", err)
+		logger.Error("could not create server: %v", err)
 		return err
 	}
 	// Now can start everything
 	printBanner(logger, environment.Name)
 	// Run all bundles in bootstrap
 	if err = bootstrap.run(configuration, environment); err != nil {
-		logger.Error("Could not run bootstrap: %v", err)
+		logger.Error("could not run bootstrap: %v", err)
 		return err
 	}
 	// Run application
 	if err = bootstrap.Application.Run(configuration, environment); err != nil {
-		logger.Error("Could not run application: %v", err)
+		logger.Error("could not run application: %v", err)
 		return err
 	}
 	environment.Lifecycle.onStarting()
 	if err = server.Start(); err != nil {
-		logger.Error("Could not start server: %v", err)
+		logger.Error("could not start server: %v", err)
 	}
 	environment.Lifecycle.onStopped()
 	return err
@@ -266,8 +266,8 @@ func (command *ServerCommand) Run(bootstrap *Bootstrap) error {
 func printBanner(logger gol.Logger, name string) {
 	banner := readBanner()
 	if banner != "" {
-		logger.Info("Starting %s\n%s", name, banner)
+		logger.Info("starting %s\n%s", name, banner)
 	} else {
-		logger.Info("Starting %s", name)
+		logger.Info("starting %s", name)
 	}
 }

@@ -44,7 +44,7 @@ func (env *LifecycleEnvironment) onStarting() {
 
 	for _, obj := range env.managedObjects {
 		if err := obj.Start(); err != nil {
-			logger.Warn("Error starting a managed object: %v", err)
+			logger.Warn("error starting a managed object: %v", err)
 		}
 	}
 }
@@ -55,7 +55,7 @@ func (env *LifecycleEnvironment) onStopped() {
 
 	for _, obj := range env.managedObjects {
 		if err := obj.Stop(); err != nil {
-			logger.Warn("Error stopping a managed object: %v", err)
+			logger.Warn("error stopping a managed object: %v", err)
 		}
 	}
 }
