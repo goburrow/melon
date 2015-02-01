@@ -14,6 +14,7 @@ import (
 
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gomelon"
+	"github.com/goburrow/gomelon/assets"
 	"github.com/goburrow/health"
 )
 
@@ -54,12 +55,12 @@ type MyManaged struct {
 }
 
 func (managed *MyManaged) Start() error {
-	logger.Info("%s started", managed.name)
+	logger.Info("started %s", managed.name)
 	return nil
 }
 
 func (managed *MyManaged) Stop() error {
-	logger.Info("%s stopped", managed.name)
+	logger.Info("stopped %s", managed.name)
 	return nil
 }
 
@@ -82,6 +83,7 @@ type MyApplication struct {
 
 func (app *MyApplication) Initialize(bootstrap *gomelon.Bootstrap) {
 	app.DefaultApplication.Initialize(bootstrap)
+	bootstrap.AddBundle(assets.NewBundle(os.TempDir(), "/static/"))
 }
 
 func (app *MyApplication) Run(configuration *gomelon.Configuration, environment *gomelon.Environment) error {
