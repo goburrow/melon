@@ -6,7 +6,7 @@ package gomelon
 
 type Application interface {
 	Name() string
-	Initialize(*Bootstrap) error
+	Initialize(*Bootstrap)
 	Run(*Configuration, *Environment) error
 }
 
@@ -24,9 +24,8 @@ func (app *DefaultApplication) SetName(name string) {
 }
 
 // Initializes the application bootstrap.
-func (app *DefaultApplication) Initialize(bootstrap *Bootstrap) error {
+func (app *DefaultApplication) Initialize(bootstrap *Bootstrap) {
 	bootstrap.AddCommand(&ServerCommand{})
-	return nil
 }
 
 // When the application runs, this is called after the Bundles are run.

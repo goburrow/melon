@@ -80,11 +80,8 @@ type MyApplication struct {
 	gomelon.DefaultApplication
 }
 
-func (app *MyApplication) Initialize(bootstrap *gomelon.Bootstrap) error {
-	if err := app.DefaultApplication.Initialize(bootstrap); err != nil {
-		return err
-	}
-	return nil
+func (app *MyApplication) Initialize(bootstrap *gomelon.Bootstrap) {
+	app.DefaultApplication.Initialize(bootstrap)
 }
 
 func (app *MyApplication) Run(configuration *gomelon.Configuration, environment *gomelon.Environment) error {
