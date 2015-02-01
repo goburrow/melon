@@ -19,11 +19,13 @@ const (
 )
 
 // Server is a managed HTTP server handling incoming connections to both application and admin.
+// A server can have multiple connectors (listeners on different ports) sharing
+// one ServerHandler.
 type Server interface {
 	Managed
 }
 
-// ServerHandler handles HTTP requests.
+// ServerHandler allows users to register a http.Handler.
 type ServerHandler interface {
 	// Handle registers the handler for the given pattern.
 	Handle(pattern string, handler http.Handler)
@@ -36,6 +38,8 @@ type ServerFactory interface {
 }
 
 // DefaultServerConnector utilizes http.Server.
+// Each connector has its own listener which will be closed when closing the
+// server it belongs to.
 type DefaultServerConnector struct {
 	Server *http.Server
 
@@ -94,18 +98,15 @@ func (connector *DefaultServerConnector) Stop() error {
 	return nil
 }
 
-// DefaultServer implements Server interface
+// DefaultServer implements Server interface. Each server can have multiple
+// connectors (listeners).
 type DefaultServer struct {
 	Connectors []*DefaultServerConnector
-
-	configuration *ServerConfiguration
 }
 
 // NewDefaultServer allocates and returns a new DefaultServer.
-func NewServer(configuration *ServerConfiguration) *DefaultServer {
-	return &DefaultServer{
-		configuration: configuration,
-	}
+func NewServer() *DefaultServer {
+	return &DefaultServer{}
 }
 
 // Start starts all connectors of the server.
@@ -195,15 +196,17 @@ type DefaultServerFactory struct {
 }
 
 // BuildServer creates a new Server.
+// By default, a server has separated connectors for application and admin.
+// If only one connector needed, user might need to implement a new ServerHandler.
 func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, environment *Environment) (Server, error) {
-	server := NewServer(&configuration.Server)
+	server := NewServer()
 	// Application
 	handler := NewServerHandler()
-	server.AddConnectors(handler, server.configuration.ApplicationConnectors)
+	server.AddConnectors(handler, configuration.Server.ApplicationConnectors)
 	environment.ServerHandler = handler
 	// Admin
 	handler = NewServerHandler()
-	server.AddConnectors(handler, server.configuration.AdminConnectors)
+	server.AddConnectors(handler, configuration.Server.AdminConnectors)
 	environment.Admin.ServerHandler = handler
 	return server, nil
 }

@@ -7,12 +7,15 @@ package gomelon
 // Environment also implements Managed interface so that it can be initilizen
 // when server starts
 type Environment struct {
+	// Name is taken from the application name.
 	Name string
-
+	// ServerHandler belongs to the Server created by ServerFactory.
+	// The default implementation is DefaultServerHandler.
 	ServerHandler ServerHandler
-
+	// Lifecycle controls managed services, allow them to start and stop
+	// along with the server's cycle.
 	Lifecycle *LifecycleEnvironment
-
+	// Admin controls administration tasks.
 	Admin *AdminEnvironment
 }
 
