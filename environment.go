@@ -5,7 +5,7 @@
 package gomelon
 
 // Environment also implements Managed interface so that it can be initilizen
-// when server starts
+// when server starts.
 type Environment struct {
 	// Name is taken from the application name.
 	Name string
@@ -27,7 +27,7 @@ func NewEnvironment() *Environment {
 	}
 }
 
-// Start registers all handlers in admin and logs current tasks and health checks
+// Start registers all handlers in admin and logs current tasks and health checks.
 func (env *Environment) Start() error {
 	env.Admin.addHandlers()
 	env.Admin.logTasks()
@@ -50,7 +50,8 @@ func (factory *DefaultEnvironmentFactory) BuildEnvironment(bootstrap *Bootstrap)
 	env := NewEnvironment()
 	env.Name = bootstrap.Application.Name()
 
-	// Manage itself
+	// Manage itself: Environment is the first thing in lifecycle started
+	// when the application runs.
 	env.Lifecycle.Manage(env)
 	return env, nil
 }
