@@ -9,7 +9,6 @@ package assets
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gomelon"
@@ -22,18 +21,18 @@ const (
 // AssetsBundle serves static asset files.
 type AssetsBundle struct {
 	dir     string
-	uriPath string
+	urlPath string
 }
 
 // AssetsBundle implements Bundle interface
 var _ gomelon.Bundle = (*AssetsBundle)(nil)
 
 // NewAssetsBundle allocates and returns a new AssetsBundle.
-// uriPath must always start with "/".
-func NewBundle(dir, uriPath string) *AssetsBundle {
+// urlPath must always start with "/".
+func NewBundle(dir, urlPath string) *AssetsBundle {
 	return &AssetsBundle{
 		dir:     dir,
-		uriPath: uriPath,
+		urlPath: urlPath,
 	}
 }
 
@@ -43,17 +42,29 @@ func (bundle *AssetsBundle) Initialize(bootstrap *gomelon.Bootstrap) {
 
 // Run registers current AssetsBundle to the server in the given environment.
 func (bundle *AssetsBundle) Run(config *gomelon.Configuration, env *gomelon.Environment) error {
-	gol.GetLogger(assetsLoggerName).Info("registering AssetsBundle for path %s", bundle.uriPath)
+	gol.GetLogger(assetsLoggerName).Info("registering AssetsBundle for path %s", bundle.urlPath)
 
-	path := bundle.uriPath
-	if !strings.HasSuffix(path, "/") {
-		path = path + "/"
-	}
+	// Add slashes if necessary
+	p := addSlashes(bundle.urlPath)
 	handler := http.FileServer(http.Dir(bundle.dir))
 	// Strip path prefix if needed
-	if path != "/" || env.ServerHandler.ContextPath() != "" {
-		handler = http.StripPrefix(env.ServerHandler.ContextPath()+path, handler)
+	if p != "/" || env.ServerHandler.ContextPath() != "" {
+		handler = http.StripPrefix(env.ServerHandler.ContextPath()+p, handler)
 	}
-	env.ServerHandler.Handle(path, handler)
+	env.ServerHandler.Handle("GET", p, handler)
 	return nil
+}
+
+// addSlashes adds leading and trailing slashes if necessary.
+func addSlashes(p string) string {
+	if p == "" {
+		return "/"
+	}
+	if p[0] != '/' {
+		p = "/" + p
+	}
+	if p[len(p)-1] != '/' {
+		p = p + "/"
+	}
+	return p
 }

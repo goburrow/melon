@@ -27,8 +27,13 @@ type Server interface {
 
 // ServerHandler allows users to register a http.Handler.
 type ServerHandler interface {
+	// ServerHandler is a router (multiplexer).
+	http.Handler
 	// Handle registers the handler for the given pattern.
-	Handle(pattern string, handler http.Handler)
+	// To use a user-defined router, call this in your Application.Run():
+	//   environment.ServerHandler.Handle("/", router)
+	Handle(method, pattern string, handler http.Handler)
+	// ContextPath returns prefix path of this handler.
 	ContextPath() string
 }
 
@@ -157,28 +162,67 @@ func (server *DefaultServer) AddConnectors(handler http.Handler, configurations 
 	}
 }
 
-// DefaultServerHandler implements ServerHandler and http.Handler interface.
+// methodAwareHandler contains handlers for respective http method.
+type methodAwareHandler struct {
+	handlers map[string]http.Handler
+}
+
+func newMethodAwareHandler() *methodAwareHandler {
+	return &methodAwareHandler{
+		handlers: make(map[string]http.Handler),
+	}
+}
+
+func (handler *methodAwareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h, ok := handler.handlers[r.Method]
+	if !ok {
+		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	h.ServeHTTP(w, r)
+}
+
+// DefaultServerHandler extends http.ServeMux to support HTTP method.
 type DefaultServerHandler struct {
-	ServeMux    *http.ServeMux
+	ServeMux *http.ServeMux
+
 	contextPath string
+	handlers    map[string]*methodAwareHandler
 }
 
 // NewServerHandler allocates and returns a new DefaultServerHandler.
 func NewServerHandler() *DefaultServerHandler {
 	return &DefaultServerHandler{
 		ServeMux: http.NewServeMux(),
+		handlers: make(map[string]*methodAwareHandler),
 	}
 }
 
-func (server *DefaultServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// TODO: Add request and response filter
-	server.ServeMux.ServeHTTP(w, r)
+// DefaultServerHandler implements http.Handler.
+func (serverHandler *DefaultServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	serverHandler.ServeMux.ServeHTTP(w, r)
 }
 
 // Handle registers the handler for the given pattern.
-func (server *DefaultServerHandler) Handle(pattern string, handler http.Handler) {
-	path := server.contextPath + pattern
-	server.ServeMux.Handle(path, handler)
+func (serverHandler *DefaultServerHandler) Handle(method, pattern string, handler http.Handler) {
+	// Prepend context path
+	pattern = serverHandler.contextPath + pattern
+
+	h, ok := serverHandler.handlers[pattern]
+	if ok {
+		// The pattern has been already registered, check if method is different
+		_, ok := h.handlers[method]
+		if ok {
+			panic("http: multiple registrations for " + pattern)
+		}
+		h.handlers[method] = handler
+		return
+	}
+	// Override given handler with the one that is sensitive to method
+	h = newMethodAwareHandler()
+	h.handlers[method] = handler
+	serverHandler.handlers[pattern] = h
+	serverHandler.ServeMux.Handle(pattern, h)
 }
 
 // ContextPath returns server root context path
@@ -188,11 +232,21 @@ func (server *DefaultServerHandler) ContextPath() string {
 
 // SetContextPath sets root context path for the server
 func (server *DefaultServerHandler) SetContextPath(contextPath string) {
-	server.contextPath = contextPath
+	// remove trailing slash
+	l := len(contextPath)
+	if l > 0 && contextPath[l-1] == '/' {
+		server.contextPath = contextPath[0 : l-1]
+	} else {
+		server.contextPath = contextPath
+	}
 }
 
 // DefaultServerFactory implements ServerFactory interface.
 type DefaultServerFactory struct {
+	// ApplicationHandler and AdminHandler are user-defined ServerHandler.
+	// DefaultServerHandler is used if the handler is nil.
+	ApplicationHandler ServerHandler
+	AdminHandler       ServerHandler
 }
 
 // BuildServer creates a new Server.
@@ -201,13 +255,19 @@ type DefaultServerFactory struct {
 func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, environment *Environment) (Server, error) {
 	server := NewServer()
 	// Application
-	handler := NewServerHandler()
-	server.AddConnectors(handler, configuration.Server.ApplicationConnectors)
-	environment.ServerHandler = handler
+	if factory.ApplicationHandler != nil {
+		environment.ServerHandler = factory.ApplicationHandler
+	} else {
+		environment.ServerHandler = NewServerHandler()
+	}
+	server.AddConnectors(environment.ServerHandler, configuration.Server.ApplicationConnectors)
 	// Admin
-	handler = NewServerHandler()
-	server.AddConnectors(handler, configuration.Server.AdminConnectors)
-	environment.Admin.ServerHandler = handler
+	if factory.AdminHandler != nil {
+		environment.Admin.ServerHandler = factory.AdminHandler
+	} else {
+		environment.Admin.ServerHandler = NewServerHandler()
+	}
+	server.AddConnectors(environment.Admin.ServerHandler, configuration.Server.AdminConnectors)
 	return server, nil
 }
 

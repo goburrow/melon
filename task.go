@@ -8,18 +8,7 @@ import (
 	"net/http"
 )
 
+// Task is simply a HTTP Handler.
 type Task interface {
 	http.Handler
-}
-
-// TaskFunc is a helper for creating a task that allows POST only.
-type TaskFunc func(http.ResponseWriter, *http.Request)
-
-// ServeHTTP calls f(w, r).
-func (f TaskFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		f(w, r)
-	} else {
-		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
-	}
 }

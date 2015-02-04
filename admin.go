@@ -63,26 +63,26 @@ func NewAdminEnvironment() *AdminEnvironment {
 		tasks:               make(map[string]Task),
 	}
 	// Default tasks
-	env.AddTask(gcTaskName, TaskFunc(handleAdminGC))
-	env.AddTask(logLevelTaskName, TaskFunc(handleAdminLogLevel))
+	env.AddTask(gcTaskName, http.HandlerFunc(handleAdminGC))
+	env.AddTask(logLevelTaskName, http.HandlerFunc(handleAdminLogLevel))
 	return env
 }
 
-// AddTask adds a new task to admin environment
+// AddTask adds a new task to admin environment. AddTask is not concurrent-safe.
 func (env *AdminEnvironment) AddTask(name string, task Task) {
 	env.tasks[name] = task
 }
 
 // addHandlers registers all required HTTP handlers
 func (env *AdminEnvironment) addHandlers() {
-	env.ServerHandler.Handle(pingUri, http.HandlerFunc(handleAdminPing))
-	env.ServerHandler.Handle(runtimeUri, http.HandlerFunc(handleAdminRuntime))
-	env.ServerHandler.Handle(healthCheckUri, NewHealthCheckHandler(env.HealthCheckRegistry))
-	env.ServerHandler.Handle("/", NewAdminHandler(env.ServerHandler.ContextPath()))
+	env.ServerHandler.Handle("GET", pingUri, http.HandlerFunc(handleAdminPing))
+	env.ServerHandler.Handle("GET", runtimeUri, http.HandlerFunc(handleAdminRuntime))
+	env.ServerHandler.Handle("GET", healthCheckUri, NewHealthCheckHandler(env.HealthCheckRegistry))
+	env.ServerHandler.Handle("GET", "/", NewAdminHandler(env.ServerHandler.ContextPath()))
 
 	for name, task := range env.tasks {
 		path := tasksUri + "/" + name
-		env.ServerHandler.Handle(path, task)
+		env.ServerHandler.Handle("POST", path, task)
 	}
 }
 

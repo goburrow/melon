@@ -87,7 +87,7 @@ func (app *MyApplication) Initialize(bootstrap *gomelon.Bootstrap) {
 }
 
 func (app *MyApplication) Run(configuration *gomelon.Configuration, environment *gomelon.Environment) error {
-	environment.ServerHandler.Handle("/time", &MyHandler{time.Now()})
+	environment.ServerHandler.Handle("GET", "/time", &MyHandler{time.Now()})
 
 	// http://localhost:8081/tasks/task1
 	environment.Admin.AddTask("task1", &MyTask{"This is Task 1"})
