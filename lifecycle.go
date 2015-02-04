@@ -33,7 +33,7 @@ func NewLifecycleEnvironment() *LifecycleEnvironment {
 }
 
 // Manage adds the given object to the list of objects managed by the server's
-// lifecycle.
+// lifecycle. Manage is not concurrent-safe.
 func (env *LifecycleEnvironment) Manage(obj Managed) {
 	env.managedObjects = append(env.managedObjects, obj)
 }

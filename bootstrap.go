@@ -27,12 +27,13 @@ func NewBootstrap(app Application) *Bootstrap {
 	return bootstrap
 }
 
-// AddBundle adds the given bundle to the bootstrap.
+// AddBundle adds the given bundle to the bootstrap. AddBundle is not concurrent-safe.
 func (bootstrap *Bootstrap) AddBundle(bundle Bundle) {
 	bundle.Initialize(bootstrap)
 	bootstrap.bundles = append(bootstrap.bundles, bundle)
 }
 
+// AddCommand add the given command to the bootstrao. AddCommand is not concurrent-safe.
 func (bootstrap *Bootstrap) AddCommand(command Command) {
 	bootstrap.commands = append(bootstrap.commands, command)
 }

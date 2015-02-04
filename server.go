@@ -203,7 +203,7 @@ func (serverHandler *DefaultServerHandler) ServeHTTP(w http.ResponseWriter, r *h
 	serverHandler.ServeMux.ServeHTTP(w, r)
 }
 
-// Handle registers the handler for the given pattern.
+// Handle registers the handler for the given pattern. This method is not concurrent-safe.
 func (serverHandler *DefaultServerHandler) Handle(method, pattern string, handler http.Handler) {
 	// Prepend context path
 	pattern = serverHandler.contextPath + pattern
@@ -218,7 +218,7 @@ func (serverHandler *DefaultServerHandler) Handle(method, pattern string, handle
 		h.handlers[method] = handler
 		return
 	}
-	// Override given handler with the one that is sensitive to method
+	// Override given handler with the one that is sensitive to HTTP method
 	h = newMethodAwareHandler()
 	h.handlers[method] = handler
 	serverHandler.handlers[pattern] = h
