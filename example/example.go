@@ -27,11 +27,15 @@ func init() {
 
 // MyTask is a task for management
 type MyTask struct {
+	name    string
 	message string
 }
 
+func (task *MyTask) Name() string {
+	return task.name
+}
+
 func (task *MyTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Message: "))
 	w.Write([]byte(task.message))
 }
 
@@ -66,14 +70,12 @@ func (managed *MyManaged) Stop() error {
 
 // MyHandler is a application handler
 type MyHandler struct {
-	last time.Time
 }
 
 func (handler *MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	const layout = "Jan 2, 2006 at 03:04:05 (MST)"
 	now := time.Now()
-	fmt.Fprintf(w, "Last: %s\nNow: %s", handler.last.Format(layout), now.Format(layout))
-	handler.last = now
+	w.Write([]byte(now.Format(layout)))
 }
 
 // MyApplication extends DefaultApplication to add more commands/bundles
@@ -87,12 +89,15 @@ func (app *MyApplication) Initialize(bootstrap *gomelon.Bootstrap) {
 }
 
 func (app *MyApplication) Run(configuration *gomelon.Configuration, environment *gomelon.Environment) error {
-	environment.ServerHandler.Handle("GET", "/time", &MyHandler{time.Now()})
+	// http://localhost:8080/time
+	environment.ServerHandler.Handle("GET", "/time", &MyHandler{})
 
 	// http://localhost:8081/tasks/task1
-	environment.Admin.AddTask("task1", &MyTask{"This is Task 1"})
-	environment.Admin.HealthCheckRegistry.Register("Check 1", &MyHealthCheck{50})
-	environment.Lifecycle.Manage(&MyManaged{"Component 1"})
+	environment.Admin.AddTask(&MyTask{"task1", "This is Task 1"})
+
+	// http://localhost:8081/healthcheck
+	environment.Admin.HealthCheckRegistry.Register("MyHealthCheck", &MyHealthCheck{50})
+	environment.Lifecycle.Manage(&MyManaged{"MyComponent"})
 	return nil
 }
 

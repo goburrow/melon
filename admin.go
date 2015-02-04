@@ -54,23 +54,22 @@ type AdminEnvironment struct {
 	ServerHandler       ServerHandler
 	HealthCheckRegistry health.Registry
 
-	tasks map[string]Task
+	tasks []Task
 }
 
 func NewAdminEnvironment() *AdminEnvironment {
 	env := &AdminEnvironment{
 		HealthCheckRegistry: health.NewRegistry(),
-		tasks:               make(map[string]Task),
 	}
 	// Default tasks
-	env.AddTask(gcTaskName, http.HandlerFunc(handleAdminGC))
-	env.AddTask(logLevelTaskName, http.HandlerFunc(handleAdminLogLevel))
+	env.AddTask(NewTask(gcTaskName, handleAdminGC))
+	env.AddTask(NewTask(logLevelTaskName, handleAdminLogLevel))
 	return env
 }
 
 // AddTask adds a new task to admin environment. AddTask is not concurrent-safe.
-func (env *AdminEnvironment) AddTask(name string, task Task) {
-	env.tasks[name] = task
+func (env *AdminEnvironment) AddTask(task Task) {
+	env.tasks = append(env.tasks, task)
 }
 
 // addHandlers registers all required HTTP handlers
@@ -80,8 +79,8 @@ func (env *AdminEnvironment) addHandlers() {
 	env.ServerHandler.Handle("GET", healthCheckUri, NewHealthCheckHandler(env.HealthCheckRegistry))
 	env.ServerHandler.Handle("GET", "/", NewAdminHandler(env.ServerHandler.ContextPath()))
 
-	for name, task := range env.tasks {
-		path := tasksUri + "/" + name
+	for _, task := range env.tasks {
+		path := tasksUri + "/" + task.Name()
 		env.ServerHandler.Handle("POST", path, task)
 	}
 }
@@ -89,9 +88,9 @@ func (env *AdminEnvironment) addHandlers() {
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logTasks() {
 	var buf bytes.Buffer
-	for name, task := range env.tasks {
+	for _, task := range env.tasks {
 		fmt.Fprintf(&buf, "    %-7s %s/%s (%T)\n", "POST",
-			tasksUri, name, task)
+			tasksUri, task.Name(), task)
 	}
 	gol.GetLogger(adminLoggerName).Info("tasks =\n\n%s", buf.String())
 }
