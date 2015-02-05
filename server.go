@@ -273,6 +273,10 @@ func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, e
 
 // ServerCommand implements Command.
 type ServerCommand struct {
+	Server Server
+
+	configuredCommand  ConfiguredCommand
+	environmentCommand EnvironmentCommand
 }
 
 // Name returns name of the ServerCommand.
@@ -287,21 +291,20 @@ func (command *ServerCommand) Description() string {
 
 // Run runs the command with the given bootstrap.
 func (command *ServerCommand) Run(bootstrap *Bootstrap) error {
-	logger := gol.GetLogger(serverLoggerName)
+	var err error
 	// Parse configuration
-	configuration, err := bootstrap.ConfigurationFactory.BuildConfiguration(bootstrap)
-	if err != nil {
-		logger.Error("could not create configuration: %v", err)
+	if err = command.configuredCommand.Run(bootstrap); err != nil {
 		return err
 	}
+	configuration := command.configuredCommand.Configuration
 	// Create environment
-	environment, err := bootstrap.EnvironmentFactory.BuildEnvironment(bootstrap)
-	if err != nil {
-		logger.Error("could not create environment: %v", err)
+	if err = command.environmentCommand.Run(bootstrap); err != nil {
 		return err
 	}
-	server, err := bootstrap.ServerFactory.BuildServer(configuration, environment)
-	if err != nil {
+	environment := command.environmentCommand.Environment
+	// Build server
+	logger := gol.GetLogger(serverLoggerName)
+	if command.Server, err = bootstrap.ServerFactory.BuildServer(configuration, environment); err != nil {
 		logger.Error("could not create server: %v", err)
 		return err
 	}
@@ -318,7 +321,7 @@ func (command *ServerCommand) Run(bootstrap *Bootstrap) error {
 		return err
 	}
 	environment.Lifecycle.onStarting()
-	if err = server.Start(); err != nil {
+	if err = command.Server.Start(); err != nil {
 		logger.Error("could not start server: %v", err)
 	}
 	environment.Lifecycle.onStopped()

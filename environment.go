@@ -39,19 +39,17 @@ func (env *Environment) Stop() error {
 	return nil
 }
 
-type EnvironmentFactory interface {
-	BuildEnvironment(bootstrap *Bootstrap) (*Environment, error)
+// EnvironmentCommand creates a new Environment from provided Bootstrap.
+type EnvironmentCommand struct {
+	Environment *Environment
 }
 
-type DefaultEnvironmentFactory struct {
-}
-
-func (factory *DefaultEnvironmentFactory) BuildEnvironment(bootstrap *Bootstrap) (*Environment, error) {
-	env := NewEnvironment()
-	env.Name = bootstrap.Application.Name()
+func (command *EnvironmentCommand) Run(bootstrap *Bootstrap) error {
+	command.Environment = NewEnvironment()
+	command.Environment.Name = bootstrap.Application.Name()
 
 	// Manage itself: Environment is the first thing in lifecycle started
 	// when the application runs.
-	env.Lifecycle.Manage(env)
-	return env, nil
+	command.Environment.Lifecycle.Manage(command.Environment)
+	return nil
 }

@@ -4,7 +4,15 @@
 
 package gomelon
 
-import "time"
+import (
+	"time"
+
+	"github.com/goburrow/gol"
+)
+
+const (
+	configurationLoggerName = "gomelon.configuration"
+)
 
 type Configuration struct {
 	Server  ServerConfiguration
@@ -55,4 +63,19 @@ func (_ *DefaultConfigurationFactory) BuildConfiguration(bootstrap *Bootstrap) (
 		},
 	}
 	return configuration, nil
+}
+
+// ConfiguredCommand parses configuration.
+type ConfiguredCommand struct {
+	Configuration *Configuration
+}
+
+func (command *ConfiguredCommand) Run(bootstrap *Bootstrap) error {
+	var err error
+	command.Configuration, err = bootstrap.ConfigurationFactory.BuildConfiguration(bootstrap)
+	if err != nil {
+		gol.GetLogger(configurationLoggerName).Error("could not create configuration: %v", err)
+		return err
+	}
+	return nil
 }

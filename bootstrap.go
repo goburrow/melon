@@ -10,7 +10,6 @@ type Bootstrap struct {
 	Arguments   []string
 
 	ConfigurationFactory ConfigurationFactory
-	EnvironmentFactory   EnvironmentFactory
 	ServerFactory        ServerFactory
 
 	bundles  []Bundle
@@ -21,7 +20,6 @@ func NewBootstrap(app Application) *Bootstrap {
 	bootstrap := &Bootstrap{
 		Application:          app,
 		ConfigurationFactory: &DefaultConfigurationFactory{},
-		EnvironmentFactory:   &DefaultEnvironmentFactory{},
 		ServerFactory:        &DefaultServerFactory{},
 	}
 	return bootstrap
