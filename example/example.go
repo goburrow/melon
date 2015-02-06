@@ -84,7 +84,7 @@ func (app *MyApplication) Run(configuration *gomelon.Configuration, environment 
 	environment.Admin.AddTask(gomelon.NewTask("task1", doMyTask))
 
 	// http://localhost:8081/healthcheck
-	environment.Admin.HealthCheckRegistry.Register("MyHealthCheck", &MyHealthCheck{50})
+	environment.Admin.HealthChecks.Register("MyHealthCheck", &MyHealthCheck{50})
 	environment.Lifecycle.Manage(&MyManaged{"MyComponent"})
 	return nil
 }

@@ -35,8 +35,8 @@ type ServerHandler interface {
 	// To use a user-defined router, call this in your Application.Run():
 	//   environment.ServerHandler.Handle("/", router)
 	Handle(method, pattern string, handler http.Handler)
-	// ContextPath returns prefix path of this handler.
-	ContextPath() string
+	// PathPrefix returns prefix path of this handler.
+	PathPrefix() string
 }
 
 // ServerFactory builds Server with given configuration and environment.
@@ -187,8 +187,8 @@ func (handler *methodAwareHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 type DefaultServerHandler struct {
 	ServeMux *http.ServeMux
 
-	contextPath string
-	handlers    map[string]*methodAwareHandler
+	pathPrefix string
+	handlers   map[string]*methodAwareHandler
 }
 
 // NewServerHandler allocates and returns a new DefaultServerHandler.
@@ -207,7 +207,7 @@ func (serverHandler *DefaultServerHandler) ServeHTTP(w http.ResponseWriter, r *h
 // Handle registers the handler for the given pattern. This method is not concurrent-safe.
 func (serverHandler *DefaultServerHandler) Handle(method, pattern string, handler http.Handler) {
 	// Prepend context path
-	pattern = serverHandler.contextPath + pattern
+	pattern = serverHandler.pathPrefix + pattern
 
 	h, ok := serverHandler.handlers[pattern]
 	if ok {
@@ -226,19 +226,19 @@ func (serverHandler *DefaultServerHandler) Handle(method, pattern string, handle
 	serverHandler.handlers[pattern] = h
 }
 
-// ContextPath returns server root context path
-func (server *DefaultServerHandler) ContextPath() string {
-	return server.contextPath
+// PathPrefix returns server root context path
+func (server *DefaultServerHandler) PathPrefix() string {
+	return server.pathPrefix
 }
 
-// SetContextPath sets root context path for the server
-func (server *DefaultServerHandler) SetContextPath(contextPath string) {
+// SetPathPrefix sets root context path for the server
+func (server *DefaultServerHandler) SetPathPrefix(prefix string) {
 	// remove trailing slash
-	l := len(contextPath)
-	if l > 0 && contextPath[l-1] == '/' {
-		server.contextPath = contextPath[0 : l-1]
+	l := len(prefix)
+	if l > 0 && prefix[l-1] == '/' {
+		server.pathPrefix = prefix[0 : l-1]
 	} else {
-		server.contextPath = contextPath
+		server.pathPrefix = prefix
 	}
 }
 
@@ -324,7 +324,7 @@ func (env *ServerEnvironment) logResources() {
 	for _, component := range env.components {
 		if res, ok := component.(Resource); ok {
 			fmt.Fprintf(&buf, "    %-7s %s%s (%T)\n",
-				res.Method(), env.ServerHandler.ContextPath(), res.Path(), res)
+				res.Method(), env.ServerHandler.PathPrefix(), res.Path(), res)
 		}
 	}
 	gol.GetLogger(serverLoggerName).Info("resources =\n\n%s", buf.String())

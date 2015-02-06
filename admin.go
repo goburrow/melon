@@ -51,15 +51,15 @@ const (
 )
 
 type AdminEnvironment struct {
-	ServerHandler       ServerHandler
-	HealthCheckRegistry health.Registry
+	ServerHandler ServerHandler
+	HealthChecks  health.Registry
 
 	tasks []Task
 }
 
 func NewAdminEnvironment() *AdminEnvironment {
 	env := &AdminEnvironment{
-		HealthCheckRegistry: health.NewRegistry(),
+		HealthChecks: health.NewRegistry(),
 	}
 	// Default tasks
 	env.AddTask(NewTask(gcTaskName, handleAdminGC),
@@ -76,8 +76,8 @@ func (env *AdminEnvironment) AddTask(task ...Task) {
 func (env *AdminEnvironment) onStarting() {
 	env.ServerHandler.Handle("GET", pingUri, http.HandlerFunc(handleAdminPing))
 	env.ServerHandler.Handle("GET", runtimeUri, http.HandlerFunc(handleAdminRuntime))
-	env.ServerHandler.Handle("GET", healthCheckUri, NewHealthCheckHandler(env.HealthCheckRegistry))
-	env.ServerHandler.Handle("GET", "/", NewAdminHandler(env.ServerHandler.ContextPath()))
+	env.ServerHandler.Handle("GET", healthCheckUri, NewHealthCheckHandler(env.HealthChecks))
+	env.ServerHandler.Handle("GET", "/", NewAdminHandler(env.ServerHandler.PathPrefix()))
 
 	for _, task := range env.tasks {
 		path := tasksUri + "/" + task.Name()
@@ -95,7 +95,7 @@ func (env *AdminEnvironment) logTasks() {
 	var buf bytes.Buffer
 	for _, task := range env.tasks {
 		fmt.Fprintf(&buf, "    %-7s %s%s/%s (%T)\n", "POST",
-			env.ServerHandler.ContextPath(), tasksUri, task.Name(), task)
+			env.ServerHandler.PathPrefix(), tasksUri, task.Name(), task)
 	}
 	gol.GetLogger(adminLoggerName).Info("tasks =\n\n%s", buf.String())
 }
@@ -103,7 +103,7 @@ func (env *AdminEnvironment) logTasks() {
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logHealthChecks() {
 	logger := gol.GetLogger(adminLoggerName)
-	names := env.HealthCheckRegistry.Names()
+	names := env.HealthChecks.Names()
 	if len(names) <= 0 {
 		logger.Warn(noHealthChecksWarning)
 	}

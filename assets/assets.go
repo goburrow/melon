@@ -48,8 +48,8 @@ func (bundle *AssetsBundle) Run(config *gomelon.Configuration, env *gomelon.Envi
 	p := addSlashes(bundle.urlPath)
 	handler := http.FileServer(http.Dir(bundle.dir))
 	// Strip path prefix if needed
-	if p != "/" || env.Server.ServerHandler.ContextPath() != "" {
-		handler = http.StripPrefix(env.Server.ServerHandler.ContextPath()+p, handler)
+	if p != "/" || env.Server.ServerHandler.PathPrefix() != "" {
+		handler = http.StripPrefix(env.Server.ServerHandler.PathPrefix()+p, handler)
 	}
 	env.Server.ServerHandler.Handle("GET", p, handler)
 	return nil
