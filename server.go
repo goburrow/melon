@@ -5,7 +5,9 @@
 package gomelon
 
 import (
+	"bytes"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -129,12 +131,11 @@ func (server *DefaultServer) Start() error {
 		select {
 		case err := <-errorChan:
 			if err != nil {
-				server.Stop()
 				return err
 			}
 		case sig := <-sigChan:
 			if sig == os.Interrupt {
-				return server.Stop()
+				return nil
 			}
 		}
 	}
@@ -221,8 +222,8 @@ func (serverHandler *DefaultServerHandler) Handle(method, pattern string, handle
 	// Override given handler with the one that is sensitive to HTTP method
 	h = newMethodAwareHandler()
 	h.handlers[method] = handler
-	serverHandler.handlers[pattern] = h
 	serverHandler.ServeMux.Handle(pattern, h)
+	serverHandler.handlers[pattern] = h
 }
 
 // ContextPath returns server root context path
@@ -254,13 +255,16 @@ type DefaultServerFactory struct {
 // If only one connector needed, user might need to implement a new ServerHandler.
 func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, environment *Environment) (Server, error) {
 	server := NewServer()
+
 	// Application
 	if factory.ApplicationHandler != nil {
-		environment.ServerHandler = factory.ApplicationHandler
+		environment.Server.ServerHandler = factory.ApplicationHandler
 	} else {
-		environment.ServerHandler = NewServerHandler()
+		environment.Server.ServerHandler = NewServerHandler()
 	}
-	server.AddConnectors(environment.ServerHandler, configuration.Server.ApplicationConnectors)
+	server.AddConnectors(environment.Server.ServerHandler, configuration.Server.ApplicationConnectors)
+	environment.Server.AddResourceHandler(NewResourceHandler(environment.Server.ServerHandler))
+
 	// Admin
 	if factory.AdminHandler != nil {
 		environment.Admin.ServerHandler = factory.AdminHandler
@@ -269,6 +273,61 @@ func (factory *DefaultServerFactory) BuildServer(configuration *Configuration, e
 	}
 	server.AddConnectors(environment.Admin.ServerHandler, configuration.Server.AdminConnectors)
 	return server, nil
+}
+
+// ServerEnvironment contains handlers for server and resources.
+type ServerEnvironment struct {
+	// ServerHandler belongs to the Server created by ServerFactory.
+	// The default implementation is DefaultServerHandler.
+	ServerHandler ServerHandler
+
+	components       []interface{}
+	resourceHandlers []ResourceHandler
+}
+
+func NewServerEnvironment() *ServerEnvironment {
+	return &ServerEnvironment{}
+}
+
+func (env *ServerEnvironment) Register(component ...interface{}) {
+	env.components = append(env.components, component...)
+}
+
+// AddResourceHandler adds the resource handler into this environment.
+// This method is not concurrent-safe.
+func (env *ServerEnvironment) AddResourceHandler(handler ...ResourceHandler) {
+	env.resourceHandlers = append(env.resourceHandlers, handler...)
+}
+
+func (env *ServerEnvironment) onStarting() {
+	for _, component := range env.components {
+		env.handle(component)
+	}
+	env.logResources()
+}
+
+func (env *ServerEnvironment) onStopped() {
+}
+
+func (env *ServerEnvironment) handle(component interface{}) {
+	// Last handler first
+	for i := len(env.resourceHandlers) - 1; i >= 0; i-- {
+		if env.resourceHandlers[i].Handle(component) {
+			return
+		}
+	}
+	gol.GetLogger(serverLoggerName).Warn("Could not handle %[1]v (%[1]T)", component)
+}
+
+func (env *ServerEnvironment) logResources() {
+	var buf bytes.Buffer
+	for _, component := range env.components {
+		if res, ok := component.(Resource); ok {
+			fmt.Fprintf(&buf, "    %-7s %s%s (%T)\n",
+				res.Method(), env.ServerHandler.ContextPath(), res.Path(), res)
+		}
+	}
+	gol.GetLogger(serverLoggerName).Info("resources =\n\n%s", buf.String())
 }
 
 // ServerCommand implements Command.
@@ -320,11 +379,12 @@ func (command *ServerCommand) Run(bootstrap *Bootstrap) error {
 		logger.Error("could not run application: %v", err)
 		return err
 	}
-	environment.Lifecycle.onStarting()
+	environment.eventContainer.setStarting()
+	defer environment.eventContainer.setStopped()
+	defer command.Server.Stop()
 	if err = command.Server.Start(); err != nil {
 		logger.Error("could not start server: %v", err)
 	}
-	environment.Lifecycle.onStopped()
 	return err
 }
 

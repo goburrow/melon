@@ -62,18 +62,18 @@ func NewAdminEnvironment() *AdminEnvironment {
 		HealthCheckRegistry: health.NewRegistry(),
 	}
 	// Default tasks
-	env.AddTask(NewTask(gcTaskName, handleAdminGC))
-	env.AddTask(NewTask(logLevelTaskName, handleAdminLogLevel))
+	env.AddTask(NewTask(gcTaskName, handleAdminGC),
+		NewTask(logLevelTaskName, handleAdminLogLevel))
 	return env
 }
 
 // AddTask adds a new task to admin environment. AddTask is not concurrent-safe.
-func (env *AdminEnvironment) AddTask(task Task) {
-	env.tasks = append(env.tasks, task)
+func (env *AdminEnvironment) AddTask(task ...Task) {
+	env.tasks = append(env.tasks, task...)
 }
 
-// addHandlers registers all required HTTP handlers
-func (env *AdminEnvironment) addHandlers() {
+// onStarting registers all required HTTP handlers
+func (env *AdminEnvironment) onStarting() {
 	env.ServerHandler.Handle("GET", pingUri, http.HandlerFunc(handleAdminPing))
 	env.ServerHandler.Handle("GET", runtimeUri, http.HandlerFunc(handleAdminRuntime))
 	env.ServerHandler.Handle("GET", healthCheckUri, NewHealthCheckHandler(env.HealthCheckRegistry))
@@ -83,14 +83,19 @@ func (env *AdminEnvironment) addHandlers() {
 		path := tasksUri + "/" + task.Name()
 		env.ServerHandler.Handle("POST", path, task)
 	}
+	env.logTasks()
+	env.logHealthChecks()
+}
+
+func (env *AdminEnvironment) onStopped() {
 }
 
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logTasks() {
 	var buf bytes.Buffer
 	for _, task := range env.tasks {
-		fmt.Fprintf(&buf, "    %-7s %s/%s (%T)\n", "POST",
-			tasksUri, task.Name(), task)
+		fmt.Fprintf(&buf, "    %-7s %s%s/%s (%T)\n", "POST",
+			env.ServerHandler.ContextPath(), tasksUri, task.Name(), task)
 	}
 	gol.GetLogger(adminLoggerName).Info("tasks =\n\n%s", buf.String())
 }

@@ -62,3 +62,30 @@ func (env *LifecycleEnvironment) onStopped() {
 		}
 	}
 }
+
+// eventListener is used internally to intialize/finalize environment.
+type eventListener interface {
+	onStarting()
+	onStopped()
+}
+
+type eventContainer struct {
+	listeners []eventListener
+}
+
+func (container *eventContainer) addListener(listener ...eventListener) {
+	container.listeners = append(container.listeners, listener...)
+}
+
+func (container *eventContainer) setStarting() {
+	length := len(container.listeners)
+	for i := 0; i < length; i++ {
+		container.listeners[i].onStarting()
+	}
+}
+
+func (container *eventContainer) setStopped() {
+	for i := len(container.listeners) - 1; i >= 0; i-- {
+		container.listeners[i].onStopped()
+	}
+}

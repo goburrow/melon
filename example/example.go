@@ -25,18 +25,16 @@ func init() {
 	logger = gol.GetLogger("example")
 }
 
-// MyTask is a task for management
-type MyTask struct {
-	name    string
-	message string
+// MyResousce is a application handler
+func doMyResource(w http.ResponseWriter, r *http.Request) {
+	const layout = "Jan 2, 2006 at 03:04:05 (MST)"
+	now := time.Now()
+	w.Write([]byte(now.Format(layout)))
 }
 
-func (task *MyTask) Name() string {
-	return task.name
-}
-
-func (task *MyTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(task.message))
+// myTask is a task for management
+func doMyTask(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("MyTask"))
 }
 
 // MyHealthCheck is a health check for a component
@@ -68,16 +66,6 @@ func (managed *MyManaged) Stop() error {
 	return nil
 }
 
-// MyHandler is a application handler
-type MyHandler struct {
-}
-
-func (handler *MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	const layout = "Jan 2, 2006 at 03:04:05 (MST)"
-	now := time.Now()
-	w.Write([]byte(now.Format(layout)))
-}
-
 // MyApplication extends DefaultApplication to add more commands/bundles
 type MyApplication struct {
 	gomelon.DefaultApplication
@@ -90,10 +78,10 @@ func (app *MyApplication) Initialize(bootstrap *gomelon.Bootstrap) {
 
 func (app *MyApplication) Run(configuration *gomelon.Configuration, environment *gomelon.Environment) error {
 	// http://localhost:8080/time
-	environment.ServerHandler.Handle("GET", "/time", &MyHandler{})
+	environment.Server.Register(gomelon.NewResource("GET", "/time", doMyResource))
 
 	// http://localhost:8081/tasks/task1
-	environment.Admin.AddTask(&MyTask{"task1", "This is Task 1"})
+	environment.Admin.AddTask(gomelon.NewTask("task1", doMyTask))
 
 	// http://localhost:8081/healthcheck
 	environment.Admin.HealthCheckRegistry.Register("MyHealthCheck", &MyHealthCheck{50})

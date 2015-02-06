@@ -25,7 +25,7 @@ func TestAssetsBundle(t *testing.T) {
 	// Setup environment
 	env := gomelon.NewEnvironment()
 	handler := gomelon.NewServerHandler()
-	env.ServerHandler = handler
+	env.Server.ServerHandler = handler
 	bundle := NewBundle(dir, "/static/")
 	err = bundle.Run(nil, env)
 	if err != nil {
