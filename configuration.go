@@ -5,8 +5,6 @@
 package gomelon
 
 import (
-	"time"
-
 	"github.com/goburrow/gol"
 )
 
@@ -39,7 +37,7 @@ type LoggingConfiguration struct {
 }
 
 type MetricsConfiguration struct {
-	Frequency time.Duration
+	Frequency string
 }
 
 type ConfigurationFactory interface {
