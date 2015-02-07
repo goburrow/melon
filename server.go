@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/goburrow/gol"
 )
@@ -67,18 +68,34 @@ func NewServerConnector(handler http.Handler, configuration *ConnectorConfigurat
 	return connector
 }
 
+// tcpKeepAliveListener is taken from net/http
+type tcpKeepAliveListener struct {
+	*net.TCPListener
+}
+
+func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
+	tc, err := ln.AcceptTCP()
+	if err != nil {
+		return
+	}
+	tc.SetKeepAlive(true)
+	tc.SetKeepAlivePeriod(3 * time.Minute)
+	return tc, nil
+}
+
 // Start creates and serves a listerner.
+// TODO: clean up this when graceful shutdown is supported (https://golang.org/issue/4674).
 func (connector *DefaultServerConnector) Start() error {
 	addr := connector.Server.Addr
 	if addr == "" {
 		// Use connector type as listening port
 		addr = ":" + connector.configuration.Type
 	}
-	var err error
-	connector.listener, err = net.Listen("tcp", addr)
+	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
+	connector.listener = tcpKeepAliveListener{ln.(*net.TCPListener)}
 	if connector.configuration.Type == "https" {
 		// Load certificates and wrap the tcp listener
 		c, err := tls.LoadX509KeyPair(connector.configuration.CertFile, connector.configuration.KeyFile)
@@ -164,17 +181,18 @@ func (server *DefaultServer) AddConnectors(handler http.Handler, configurations 
 }
 
 // methodAwareHandler contains handlers for respective http method.
-type methodAwareHandler struct {
+type defaultHTTPHandler struct {
 	handlers map[string]http.Handler
 }
 
-func newMethodAwareHandler() *methodAwareHandler {
-	return &methodAwareHandler{
+func newHTTPHandler() *defaultHTTPHandler {
+	return &defaultHTTPHandler{
 		handlers: make(map[string]http.Handler),
 	}
 }
 
-func (handler *methodAwareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *defaultHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// TODO: access log
 	h, ok := handler.handlers[r.Method]
 	if !ok {
 		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
@@ -188,14 +206,14 @@ type DefaultServerHandler struct {
 	ServeMux *http.ServeMux
 
 	pathPrefix string
-	handlers   map[string]*methodAwareHandler
+	handlers   map[string]*defaultHTTPHandler
 }
 
 // NewServerHandler allocates and returns a new DefaultServerHandler.
 func NewServerHandler() *DefaultServerHandler {
 	return &DefaultServerHandler{
 		ServeMux: http.NewServeMux(),
-		handlers: make(map[string]*methodAwareHandler),
+		handlers: make(map[string]*defaultHTTPHandler),
 	}
 }
 
@@ -220,7 +238,7 @@ func (serverHandler *DefaultServerHandler) Handle(method, pattern string, handle
 		return
 	}
 	// Override given handler with the one that is sensitive to HTTP method
-	h = newMethodAwareHandler()
+	h = newHTTPHandler()
 	h.handlers[method] = handler
 	serverHandler.ServeMux.Handle(pattern, h)
 	serverHandler.handlers[pattern] = h
