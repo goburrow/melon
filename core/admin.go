@@ -6,6 +6,7 @@ package core
 
 import (
 	"bytes"
+	"expvar"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -29,12 +30,7 @@ const (
 </head>
 <body>
 	<h1>Operational Menu</h1>
-	<ul>
-		<li><a href="%[1]s%[2]s">Metrics</a></li>
-		<li><a href="%[1]s%[3]s">Ping</a></li>
-		<li><a href="%[1]s%[4]s">Runtime</a></li>
-		<li><a href="%[1]s%[5]s">Healthcheck</a></li>
-	</ul>
+	<ul>%[1]s</ul>
 </body>
 </html>
 `
@@ -50,19 +46,28 @@ const (
 	logTaskName = "log"
 )
 
+type AdminHandler interface {
+	Path() string
+	Name() string
+	http.Handler
+}
+
 type AdminEnvironment struct {
 	ServerHandler ServerHandler
 	HealthChecks  health.Registry
 
-	tasks []Task
+	handlers []AdminHandler
+	tasks    []Task
 }
 
 func NewAdminEnvironment() *AdminEnvironment {
 	env := &AdminEnvironment{
 		HealthChecks: health.NewRegistry(),
 	}
+	// Default handlers
+	env.AddHandler(&metricsHandler{}, &pingHandler{}, &runtimeHandler{}, &healthCheckHandler{env.HealthChecks})
 	// Default tasks
-	env.AddTask(&GCTask{}, &LogTask{})
+	env.AddTask(&gcTask{}, &logTask{})
 	return env
 }
 
@@ -71,12 +76,20 @@ func (env *AdminEnvironment) AddTask(task ...Task) {
 	env.tasks = append(env.tasks, task...)
 }
 
+// AddHandler registers a handler entry for admin page.
+func (env *AdminEnvironment) AddHandler(handler ...AdminHandler) {
+	env.handlers = append(env.handlers, handler...)
+}
+
 // onStarting registers all required HTTP handlers
 func (env *AdminEnvironment) onStarting() {
-	env.ServerHandler.Handle("GET", pingUri, http.HandlerFunc(handleAdminPing))
-	env.ServerHandler.Handle("GET", runtimeUri, http.HandlerFunc(handleAdminRuntime))
-	env.ServerHandler.Handle("GET", healthCheckUri, NewHealthCheckHandler(env.HealthChecks))
-	env.ServerHandler.Handle("GET", "/", NewAdminHandler(env.ServerHandler.PathPrefix()))
+	env.ServerHandler.Handle("GET", "/", &adminHomeHandler{
+		handlers:    env.handlers,
+		contextPath: env.ServerHandler.PathPrefix(),
+	})
+	for _, h := range env.handlers {
+		env.ServerHandler.Handle("GET", h.Path(), h)
+	}
 
 	for _, task := range env.tasks {
 		path := tasksUri + "/" + task.Name()
@@ -110,38 +123,40 @@ func (env *AdminEnvironment) logHealthChecks() {
 }
 
 // AdminHandler implement http.Handler
-type AdminHandler struct {
+type adminHomeHandler struct {
+	handlers    []AdminHandler
 	contextPath string
 }
 
-// NewAdminHTTPHandler allocates and returns a new adminHTTPHandler
-func NewAdminHandler(contextPath string) *AdminHandler {
-	return &AdminHandler{
-		contextPath: contextPath,
-	}
-}
-
 // ServeHTTP handles request to the root of Admin page
-func (handler *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *adminHomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var buf bytes.Buffer
+
+	for _, h := range handler.handlers {
+		fmt.Fprintf(&buf, "<li><a href=\"%[1]s%[2]s\">%[3]s</a></li>",
+			handler.contextPath, h.Path(), h.Name())
+	}
+
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/html")
 
-	fmt.Fprintf(w, adminHTML, handler.contextPath, metricsUri, pingUri, runtimeUri, healthCheckUri)
+	fmt.Fprintf(w, adminHTML, buf.String())
 }
 
-// HealthCheckHandler is the http handler for /healthcheck page
-type HealthCheckHandler struct {
+// healthCheckHandler is the http handler for /healthcheck page
+type healthCheckHandler struct {
 	registry health.Registry
 }
 
-// NewHealthCheckHandler allocates and returns a new HealthCheckHandler
-func NewHealthCheckHandler(registry health.Registry) *HealthCheckHandler {
-	return &HealthCheckHandler{
-		registry: registry,
-	}
+func (handler *healthCheckHandler) Name() string {
+	return "Healthcheck"
 }
 
-func (handler *HealthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *healthCheckHandler) Path() string {
+	return healthCheckUri
+}
+
+func (handler *healthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/plain")
 
@@ -176,15 +191,64 @@ func isAllHealthy(results map[string]*health.Result) bool {
 	return true
 }
 
-// handleAdminPing handles ping request to admin /ping
-func handleAdminPing(w http.ResponseWriter, r *http.Request) {
+// metricsHandler displays expvars.
+type metricsHandler struct {
+}
+
+func (handler *metricsHandler) Name() string {
+	return "Metrics"
+}
+
+func (handler *metricsHandler) Path() string {
+	return metricsUri
+}
+
+func (*metricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, "{")
+	first := true
+	expvar.Do(func(kv expvar.KeyValue) {
+		if !first {
+			fmt.Fprintf(w, ",")
+		}
+		first = false
+		fmt.Fprintf(w, "%q: %s", kv.Key, kv.Value)
+	})
+	fmt.Fprintf(w, "}")
+}
+
+// pingHandler handles ping request to admin /ping
+type pingHandler struct {
+}
+
+func (handler *pingHandler) Name() string {
+	return "Ping"
+}
+
+func (handler *pingHandler) Path() string {
+	return pingUri
+}
+
+func (handler *pingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("pong\n"))
 }
 
-// handleAdminRuntime displays runtime statistics.
-func handleAdminRuntime(w http.ResponseWriter, r *http.Request) {
+// runtimeHandler displays runtime statistics.
+type runtimeHandler struct {
+}
+
+func (handler *runtimeHandler) Name() string {
+	return "Runtime"
+}
+
+func (handler *runtimeHandler) Path() string {
+	return runtimeUri
+}
+
+func (handler *runtimeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/plain")
 
@@ -209,29 +273,29 @@ func handleAdminRuntime(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Version: %s\n", runtime.Version())
 }
 
-// GCTask performs a garbage collection
-type GCTask struct {
+// gcTask performs a garbage collection
+type gcTask struct {
 }
 
-func (*GCTask) Name() string {
+func (*gcTask) Name() string {
 	return gcTaskName
 }
 
-func (*GCTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (*gcTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Running GC...\n"))
 	runtime.GC()
 	w.Write([]byte("Done!\n"))
 }
 
-// LogTask gets and sets logger level
-type LogTask struct {
+// logTask gets and sets logger level
+type logTask struct {
 }
 
-func (*LogTask) Name() string {
+func (*logTask) Name() string {
 	return logTaskName
 }
 
-func (*LogTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (*logTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	// Can have multiple loggers
 	loggers, ok := query["logger"]

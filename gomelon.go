@@ -8,6 +8,7 @@ Package gomelon provides a lightweight framework for building web services.
 package gomelon
 
 import (
+	_ "github.com/codahale/metrics"
 	"github.com/goburrow/gomelon/configuration"
 	"github.com/goburrow/gomelon/core"
 	"github.com/goburrow/gomelon/server"
