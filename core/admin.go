@@ -2,7 +2,7 @@
 // This software may be modified and distributed under the terms
 // of the BSD license. See the LICENSE file for details.
 
-package gomelon
+package core
 
 import (
 	"bytes"
@@ -46,8 +46,8 @@ const (
 
 	adminLoggerName = "gomelon.admin"
 
-	gcTaskName       = "gc"
-	logLevelTaskName = "log"
+	gcTaskName  = "gc"
+	logTaskName = "log"
 )
 
 type AdminEnvironment struct {
@@ -62,8 +62,7 @@ func NewAdminEnvironment() *AdminEnvironment {
 		HealthChecks: health.NewRegistry(),
 	}
 	// Default tasks
-	env.AddTask(NewTask(gcTaskName, handleAdminGC),
-		NewTask(logLevelTaskName, handleAdminLogLevel))
+	env.AddTask(&GCTask{}, &LogTask{})
 	return env
 }
 
@@ -110,46 +109,39 @@ func (env *AdminEnvironment) logHealthChecks() {
 	logger.Debug("health checks = %v", names)
 }
 
-// DefaultAdminHandler implement http.Handler
-type DefaultAdminHandler struct {
+// AdminHandler implement http.Handler
+type AdminHandler struct {
 	contextPath string
 }
 
 // NewAdminHTTPHandler allocates and returns a new adminHTTPHandler
-func NewAdminHandler(contextPath string) *DefaultAdminHandler {
-	return &DefaultAdminHandler{
+func NewAdminHandler(contextPath string) *AdminHandler {
+	return &AdminHandler{
 		contextPath: contextPath,
 	}
 }
 
 // ServeHTTP handles request to the root of Admin page
-func (handler *DefaultAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// The "/" pattern matches everything, so we need to check
-	// that we're at the root here.
-	rootUri := handler.contextPath + "/"
-	if r.URL.Path != rootUri {
-		http.NotFound(w, r)
-		return
-	}
+func (handler *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/html")
 
 	fmt.Fprintf(w, adminHTML, handler.contextPath, metricsUri, pingUri, runtimeUri, healthCheckUri)
 }
 
-// DefaultHealthCheckHandler is the http handler for /healthcheck page
-type DefaultHealthCheckHandler struct {
+// HealthCheckHandler is the http handler for /healthcheck page
+type HealthCheckHandler struct {
 	registry health.Registry
 }
 
-// NewHealthCheckHandler allocates and returns a new DefaultHealthCheckHandler
-func NewHealthCheckHandler(registry health.Registry) *DefaultHealthCheckHandler {
-	return &DefaultHealthCheckHandler{
+// NewHealthCheckHandler allocates and returns a new HealthCheckHandler
+func NewHealthCheckHandler(registry health.Registry) *HealthCheckHandler {
+	return &HealthCheckHandler{
 		registry: registry,
 	}
 }
 
-func (handler *DefaultHealthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *HealthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/plain")
 
@@ -217,15 +209,29 @@ func handleAdminRuntime(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Version: %s\n", runtime.Version())
 }
 
-// handleAdminGC performs a garbage collection
-func handleAdminGC(w http.ResponseWriter, r *http.Request) {
+// GCTask performs a garbage collection
+type GCTask struct {
+}
+
+func (*GCTask) Name() string {
+	return gcTaskName
+}
+
+func (*GCTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Running GC...\n"))
 	runtime.GC()
 	w.Write([]byte("Done!\n"))
 }
 
-// handleAdminLogLevel get and set logger level
-func handleAdminLogLevel(w http.ResponseWriter, r *http.Request) {
+// LogTask gets and sets logger level
+type LogTask struct {
+}
+
+func (*LogTask) Name() string {
+	return logTaskName
+}
+
+func (*LogTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	// Can have multiple loggers
 	loggers, ok := query["logger"]

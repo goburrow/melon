@@ -15,6 +15,7 @@ import (
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gomelon"
 	"github.com/goburrow/gomelon/assets"
+	"github.com/goburrow/gomelon/core"
 	"github.com/goburrow/health"
 )
 
@@ -25,15 +26,33 @@ func init() {
 	logger = gol.GetLogger("example")
 }
 
-// MyResousce is a application handler
-func doMyResource(w http.ResponseWriter, r *http.Request) {
+// myResousce is a application handler
+type myResource struct {
+}
+
+func (*myResource) Method() string {
+	return "GET"
+}
+
+func (*myResource) Path() string {
+	return "/time"
+}
+
+func (*myResource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	const layout = "Jan 2, 2006 at 03:04:05 (MST)"
 	now := time.Now()
 	w.Write([]byte(now.Format(layout)))
 }
 
+type myTask struct {
+}
+
+func (*myTask) Name() string {
+	return "task1"
+}
+
 // myTask is a task for management
-func doMyTask(w http.ResponseWriter, r *http.Request) {
+func (*myTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("MyTask"))
 }
 
@@ -66,22 +85,22 @@ func (managed *MyManaged) Stop() error {
 	return nil
 }
 
-// MyApplication extends DefaultApplication to add more commands/bundles
-type MyApplication struct {
-	gomelon.DefaultApplication
+// myApplication extends DefaultApplication to add more commands/bundles
+type myApplication struct {
+	gomelon.Application
 }
 
-func (app *MyApplication) Initialize(bootstrap *gomelon.Bootstrap) {
-	app.DefaultApplication.Initialize(bootstrap)
+func (app *myApplication) Initialize(bootstrap *core.Bootstrap) {
+	app.Application.Initialize(bootstrap)
 	bootstrap.AddBundle(assets.NewBundle(os.TempDir(), "/static/"))
 }
 
-func (app *MyApplication) Run(configuration *gomelon.Configuration, environment *gomelon.Environment) error {
+func (app *myApplication) Run(configuration *core.Configuration, environment *core.Environment) error {
 	// http://localhost:8080/time
-	environment.Server.Register(gomelon.NewResource("GET", "/time", doMyResource))
+	environment.Server.Register(&myResource{})
 
 	// http://localhost:8081/tasks/task1
-	environment.Admin.AddTask(gomelon.NewTask("task1", doMyTask))
+	environment.Admin.AddTask(&myTask{})
 
 	// http://localhost:8081/healthcheck
 	environment.Admin.HealthChecks.Register("MyHealthCheck", &MyHealthCheck{50})
@@ -92,7 +111,7 @@ func (app *MyApplication) Run(configuration *gomelon.Configuration, environment 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	app := &MyApplication{}
+	app := &myApplication{}
 	app.SetName("MyApp")
 	if err := gomelon.Run(app, os.Args[1:]); err != nil {
 		os.Exit(1)

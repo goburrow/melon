@@ -7,27 +7,27 @@ package configuration
 import (
 	"testing"
 
-	"github.com/goburrow/gomelon"
+	"github.com/goburrow/gomelon/core"
 )
 
 func TestLoadJSON(t *testing.T) {
-	bootstrap := gomelon.Bootstrap{
+	bootstrap := core.Bootstrap{
 		Arguments: []string{"server", "configuration_test.json"},
 	}
 	testFactory(t, &bootstrap)
 }
 
-func testFactory(t *testing.T, bootstrap *gomelon.Bootstrap) {
+func testFactory(t *testing.T, bootstrap *core.Bootstrap) {
 	factory := Factory{}
 	config, err := factory.BuildConfiguration(bootstrap)
 	if err != nil {
 		t.Fatal(err)
 	}
-	appConnector1 := gomelon.ConnectorConfiguration{
+	appConnector1 := core.ConnectorConfiguration{
 		Type: "http",
 		Addr: ":8080",
 	}
-	appConnector2 := gomelon.ConnectorConfiguration{
+	appConnector2 := core.ConnectorConfiguration{
 		Type:     "https",
 		Addr:     ":8048",
 		CertFile: "/tmp/cert",
@@ -38,7 +38,7 @@ func testFactory(t *testing.T, bootstrap *gomelon.Bootstrap) {
 		config.Server.ApplicationConnectors[1] != appConnector2 {
 		t.Fatalf("Invalid ApplicationConnectors: %+v", config.Server.ApplicationConnectors)
 	}
-	adminConnector1 := gomelon.ConnectorConfiguration{
+	adminConnector1 := core.ConnectorConfiguration{
 		Type: "http",
 		Addr: ":8081",
 	}

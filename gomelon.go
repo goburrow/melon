@@ -7,20 +7,28 @@ Package gomelon provides a lightweight framework for building web services.
 */
 package gomelon
 
-func printHelp(bootstrap *Bootstrap) {
+import (
+	"github.com/goburrow/gomelon/configuration"
+	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/gomelon/server"
+)
+
+func printHelp(bootstrap *core.Bootstrap) {
 	println("Available commands:")
-	for _, command := range bootstrap.commands {
+	for _, command := range bootstrap.Commands() {
 		println(command.Name(), ":", command.Description())
 	}
 }
 
 // Run executes application with given arguments
-func Run(app Application, args []string) error {
-	bootstrap := NewBootstrap(app)
+func Run(app core.Application, args []string) error {
+	bootstrap := core.NewBootstrap(app)
 	bootstrap.Arguments = args
+	bootstrap.ConfigurationFactory = &configuration.Factory{}
+	bootstrap.ServerFactory = &server.Factory{}
 	app.Initialize(bootstrap)
 	if len(args) > 0 {
-		for _, command := range bootstrap.commands {
+		for _, command := range bootstrap.Commands() {
 			if command.Name() == args[0] {
 				return command.Run(bootstrap)
 			}

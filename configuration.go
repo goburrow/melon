@@ -6,57 +6,26 @@ package gomelon
 
 import (
 	"github.com/goburrow/gol"
+	"github.com/goburrow/gomelon/core"
 )
 
 const (
 	configurationLoggerName = "gomelon.configuration"
 )
 
-type Configuration struct {
-	Server  ServerConfiguration
-	Logging LoggingConfiguration
-	Metrics MetricsConfiguration
+// ConfigurationFactory provides a default configuration for application.
+type ConfigurationFactory struct {
 }
 
-type ServerConfiguration struct {
-	ApplicationConnectors []ConnectorConfiguration
-	AdminConnectors       []ConnectorConfiguration
-}
-
-type ConnectorConfiguration struct {
-	Type string
-	Addr string
-
-	CertFile string
-	KeyFile  string
-}
-
-type LoggingConfiguration struct {
-	Level   string
-	Loggers map[string]string
-}
-
-type MetricsConfiguration struct {
-	Frequency string
-}
-
-type ConfigurationFactory interface {
-	BuildConfiguration(bootstrap *Bootstrap) (*Configuration, error)
-}
-
-// DefaultConfigurationFactory implements ConfigurationFactory and ServerFactory
-type DefaultConfigurationFactory struct {
-}
-
-func (_ *DefaultConfigurationFactory) BuildConfiguration(bootstrap *Bootstrap) (*Configuration, error) {
-	configuration := &Configuration{}
-	configuration.Server.ApplicationConnectors = []ConnectorConfiguration{
-		ConnectorConfiguration{
+func (_ *ConfigurationFactory) BuildConfiguration(bootstrap *core.Bootstrap) (*core.Configuration, error) {
+	configuration := &core.Configuration{}
+	configuration.Server.ApplicationConnectors = []core.ConnectorConfiguration{
+		core.ConnectorConfiguration{
 			Addr: ":8080",
 		},
 	}
-	configuration.Server.AdminConnectors = []ConnectorConfiguration{
-		ConnectorConfiguration{
+	configuration.Server.AdminConnectors = []core.ConnectorConfiguration{
+		core.ConnectorConfiguration{
 			Addr: ":8081",
 		},
 	}
@@ -65,10 +34,10 @@ func (_ *DefaultConfigurationFactory) BuildConfiguration(bootstrap *Bootstrap) (
 
 // ConfiguredCommand parses configuration.
 type ConfiguredCommand struct {
-	Configuration *Configuration
+	Configuration *core.Configuration
 }
 
-func (command *ConfiguredCommand) Run(bootstrap *Bootstrap) error {
+func (command *ConfiguredCommand) Run(bootstrap *core.Bootstrap) error {
 	var err error
 	command.Configuration, err = bootstrap.ConfigurationFactory.BuildConfiguration(bootstrap)
 	if err != nil {

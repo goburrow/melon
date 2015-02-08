@@ -2,11 +2,10 @@
 // This software may be modified and distributed under the terms
 // of the BSD license. See the LICENSE file for details.
 
-package gomelon
+package core
 
-// Command is a basic CLI command
-type Command interface {
+type Application interface {
 	Name() string
-	Description() string
-	Run(bootstrap *Bootstrap) error
+	Initialize(*Bootstrap)
+	Run(*Configuration, *Environment) error
 }

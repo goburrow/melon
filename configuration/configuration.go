@@ -13,7 +13,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/goburrow/gomelon"
+	"github.com/goburrow/gomelon/core"
 )
 
 var (
@@ -25,11 +25,11 @@ var (
 type Factory struct {
 }
 
-func (_ *Factory) BuildConfiguration(bootstrap *gomelon.Bootstrap) (*gomelon.Configuration, error) {
+func (_ *Factory) BuildConfiguration(bootstrap *core.Bootstrap) (*core.Configuration, error) {
 	if len(bootstrap.Arguments) < 2 {
 		return nil, errNoConfigFile
 	}
-	var config gomelon.Configuration
+	var config core.Configuration
 	if err := Unmarshal(bootstrap.Arguments[1], &config); err != nil {
 		return nil, err
 	}

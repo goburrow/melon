@@ -13,7 +13,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/goburrow/gomelon"
+	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/gomelon/server"
 )
 
 func TestAssetsBundle(t *testing.T) {
@@ -23,8 +24,8 @@ func TestAssetsBundle(t *testing.T) {
 	}
 	defer os.Remove(dir)
 	// Setup environment
-	env := gomelon.NewEnvironment()
-	handler := gomelon.NewServerHandler()
+	env := core.NewEnvironment()
+	handler := server.NewHandler()
 	env.Server.ServerHandler = handler
 	bundle := NewBundle(dir, "/static/")
 	err = bundle.Run(nil, env)

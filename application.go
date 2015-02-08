@@ -4,32 +4,30 @@
 
 package gomelon
 
-type Application interface {
-	Name() string
-	Initialize(*Bootstrap)
-	Run(*Configuration, *Environment) error
-}
+import (
+	"github.com/goburrow/gomelon/core"
+)
 
-type DefaultApplication struct {
+type Application struct {
 	// Name of the application
 	name string
 }
 
-func (app *DefaultApplication) Name() string {
+func (app *Application) Name() string {
 	return app.name
 }
 
-func (app *DefaultApplication) SetName(name string) {
+func (app *Application) SetName(name string) {
 	app.name = name
 }
 
 // Initializes the application bootstrap.
-func (app *DefaultApplication) Initialize(bootstrap *Bootstrap) {
+func (app *Application) Initialize(bootstrap *core.Bootstrap) {
 	bootstrap.AddCommand(&ServerCommand{})
 }
 
 // When the application runs, this is called after the Bundles are run.
 // Override it to add handlers, tasks, etc. for your application.
-func (app *DefaultApplication) Run(_ *Configuration, _ *Environment) error {
+func (app *Application) Run(_ *core.Configuration, _ *core.Environment) error {
 	return nil
 }

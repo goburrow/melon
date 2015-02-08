@@ -2,7 +2,7 @@
 // This software may be modified and distributed under the terms
 // of the BSD license. See the LICENSE file for details.
 
-package gomelon
+package core
 
 import (
 	"github.com/goburrow/gol"
@@ -60,32 +60,5 @@ func (env *LifecycleEnvironment) onStopped() {
 		if err := env.managedObjects[i].Stop(); err != nil {
 			logger.Warn("error stopping a managed object: %v", err)
 		}
-	}
-}
-
-// eventListener is used internally to intialize/finalize environment.
-type eventListener interface {
-	onStarting()
-	onStopped()
-}
-
-type eventContainer struct {
-	listeners []eventListener
-}
-
-func (container *eventContainer) addListener(listener ...eventListener) {
-	container.listeners = append(container.listeners, listener...)
-}
-
-func (container *eventContainer) setStarting() {
-	length := len(container.listeners)
-	for i := 0; i < length; i++ {
-		container.listeners[i].onStarting()
-	}
-}
-
-func (container *eventContainer) setStopped() {
-	for i := len(container.listeners) - 1; i >= 0; i-- {
-		container.listeners[i].onStopped()
 	}
 }
