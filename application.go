@@ -13,6 +13,9 @@ type Application struct {
 	name string
 }
 
+// Application implements core.Application interface.
+var _ core.Application = (*Application)(nil)
+
 func (app *Application) Name() string {
 	return app.name
 }
@@ -28,6 +31,6 @@ func (app *Application) Initialize(bootstrap *core.Bootstrap) {
 
 // When the application runs, this is called after the Bundles are run.
 // Override it to add handlers, tasks, etc. for your application.
-func (app *Application) Run(_ *core.Configuration, _ *core.Environment) error {
+func (app *Application) Run(interface{}, *core.Environment) error {
 	return nil
 }

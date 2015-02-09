@@ -10,6 +10,7 @@ package configuration
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -17,23 +18,24 @@ import (
 )
 
 var (
-	errNoConfigFile    = errors.New("no configuration file")
-	errUnknownFileType = errors.New("unknown configuration file type")
+	errNoFile = errors.New("no file specified")
 )
 
 // Factory implements gomelon.ConfigurationFactory interface.
 type Factory struct {
+	// Configuration is the type/pointer of application configuration.
+	Configuration interface{}
 }
 
-func (_ *Factory) BuildConfiguration(bootstrap *core.Bootstrap) (*core.Configuration, error) {
+// BuildConfiguration parse config file and returns the factory configuration.
+func (factory *Factory) BuildConfiguration(bootstrap *core.Bootstrap) (interface{}, error) {
 	if len(bootstrap.Arguments) < 2 {
-		return nil, errNoConfigFile
+		return nil, errNoFile
 	}
-	var config core.Configuration
-	if err := Unmarshal(bootstrap.Arguments[1], &config); err != nil {
+	if err := Unmarshal(bootstrap.Arguments[1], factory.Configuration); err != nil {
 		return nil, err
 	}
-	return &config, nil
+	return factory.Configuration, nil
 }
 
 // Unmarshal decodes the given file to output type.
@@ -44,11 +46,13 @@ func Unmarshal(path string, output interface{}) error {
 	}
 	defer f.Close()
 
-	switch filepath.Ext(path) {
+	ext := filepath.Ext(path)
+	switch ext {
 	case ".json":
 		return unmarshalJSON(f, output)
+	default:
+		return fmt.Errorf("unsupported file type %s", ext)
 	}
-	return errUnknownFileType
 }
 
 func unmarshalJSON(f *os.File, output interface{}) error {

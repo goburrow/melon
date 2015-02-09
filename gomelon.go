@@ -11,7 +11,6 @@ import (
 	_ "github.com/codahale/metrics"
 	"github.com/goburrow/gomelon/configuration"
 	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/server"
 )
 
 func printHelp(bootstrap *core.Bootstrap) {
@@ -25,8 +24,10 @@ func printHelp(bootstrap *core.Bootstrap) {
 func Run(app core.Application, args []string) error {
 	bootstrap := core.NewBootstrap(app)
 	bootstrap.Arguments = args
-	bootstrap.ConfigurationFactory = &configuration.Factory{}
-	bootstrap.ServerFactory = &server.Factory{}
+	bootstrap.ConfigurationFactory = &configuration.Factory{
+		Configuration: &Configuration{},
+	}
+
 	app.Initialize(bootstrap)
 	if len(args) > 0 {
 		for _, command := range bootstrap.Commands() {

@@ -7,5 +7,6 @@ package core
 type Application interface {
 	Name() string
 	Initialize(*Bootstrap)
-	Run(*Configuration, *Environment) error
+	// Run runs application with the given configuration and environment.
+	Run(interface{}, *Environment) error
 }

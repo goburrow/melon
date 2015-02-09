@@ -7,34 +7,29 @@ package gomelon
 import (
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/gomelon/server"
 )
 
 const (
 	configurationLoggerName = "gomelon.configuration"
 )
 
-// ConfigurationFactory provides a default configuration for application.
-type ConfigurationFactory struct {
+// Configuration is the default configuration that implements core.Configuration
+// interface.
+type Configuration struct {
+	Server server.Factory
 }
 
-func (_ *ConfigurationFactory) BuildConfiguration(bootstrap *core.Bootstrap) (*core.Configuration, error) {
-	configuration := &core.Configuration{}
-	configuration.Server.ApplicationConnectors = []core.ConnectorConfiguration{
-		core.ConnectorConfiguration{
-			Addr: ":8080",
-		},
-	}
-	configuration.Server.AdminConnectors = []core.ConnectorConfiguration{
-		core.ConnectorConfiguration{
-			Addr: ":8081",
-		},
-	}
-	return configuration, nil
+// Configuration implements core.Configuration interface.
+var _ core.Configuration = (*Configuration)(nil)
+
+func (c *Configuration) ServerFactory() core.ServerFactory {
+	return &c.Server
 }
 
 // ConfiguredCommand parses configuration.
 type ConfiguredCommand struct {
-	Configuration *core.Configuration
+	Configuration interface{}
 }
 
 func (command *ConfiguredCommand) Run(bootstrap *core.Bootstrap) error {

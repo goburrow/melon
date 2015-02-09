@@ -23,17 +23,25 @@ const (
 	serverLoggerName = "gomelon.server"
 )
 
+type ConnectorConfiguration struct {
+	Type string
+	Addr string
+
+	CertFile string
+	KeyFile  string
+}
+
 // DefaultConnector utilizes http.Server.
 // Each connector has its own listener which will be closed when closing the
 // server it belongs to.
 type Connector struct {
 	Server *graceful.Server
 
-	configuration *core.ConnectorConfiguration
+	configuration *ConnectorConfiguration
 }
 
 // NewServerConnector allocates and returns a new DefaultServerConnector.
-func NewConnector(handler http.Handler, configuration *core.ConnectorConfiguration) *Connector {
+func NewConnector(handler http.Handler, configuration *ConnectorConfiguration) *Connector {
 	server := &graceful.Server{
 		Addr:    configuration.Addr,
 		Handler: handler,
@@ -113,7 +121,7 @@ func (server *Server) Stop() error {
 }
 
 // AddConnectors adds a new connector to the server.
-func (server *Server) AddConnectors(handler http.Handler, configurations []core.ConnectorConfiguration) {
+func (server *Server) AddConnectors(handler http.Handler, configurations []ConnectorConfiguration) {
 	count := len(configurations)
 	// Does "range" copy struct value?
 	for i := 0; i < count; i++ {
@@ -180,21 +188,22 @@ func (h *Handler) SetPathPrefix(prefix string) {
 
 // Factory implements core.ServerFactory interface.
 type Factory struct {
+	ApplicationConnectors []ConnectorConfiguration
+	AdminConnectors       []ConnectorConfiguration
 }
 
 var _ core.ServerFactory = (*Factory)(nil)
 
 // BuildServer creates a new core.Server.
-func (factory *Factory) BuildServer(configuration *core.Configuration, environment *core.Environment) (core.Server, error) {
+func (factory *Factory) BuildServer(environment *core.Environment) (core.Server, error) {
 	server := NewServer()
 
 	// Application
 	environment.Server.ServerHandler = NewHandler()
-	server.AddConnectors(environment.Server.ServerHandler, configuration.Server.ApplicationConnectors)
-	//	environment.Server.AddResourceHandler(NewResourceHandler(environment.Server.ServerHandler))
+	server.AddConnectors(environment.Server.ServerHandler, factory.ApplicationConnectors)
 
 	// Admin
 	environment.Admin.ServerHandler = NewHandler()
-	server.AddConnectors(environment.Admin.ServerHandler, configuration.Server.AdminConnectors)
+	server.AddConnectors(environment.Admin.ServerHandler, factory.AdminConnectors)
 	return server, nil
 }

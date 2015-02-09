@@ -10,7 +10,6 @@ type Bootstrap struct {
 	Arguments   []string
 
 	ConfigurationFactory ConfigurationFactory
-	ServerFactory        ServerFactory
 
 	bundles  []Bundle
 	commands []Command
@@ -46,7 +45,7 @@ func (bootstrap *Bootstrap) AddCommand(command Command) {
 }
 
 // run runs all registered bundles
-func (bootstrap *Bootstrap) Run(configuration *Configuration, environment *Environment) error {
+func (bootstrap *Bootstrap) Run(configuration interface{}, environment *Environment) error {
 	for _, bundle := range bootstrap.bundles {
 		if err := bundle.Run(configuration, environment); err != nil {
 			return err

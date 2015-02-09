@@ -5,6 +5,7 @@
 package gomelon
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/goburrow/gol"
@@ -20,8 +21,8 @@ const (
 type ServerCommand struct {
 	Server core.Server
 
-	configuredCommand  ConfiguredCommand
-	environmentCommand EnvironmentCommand
+	ConfiguredCommand
+	EnvironmentCommand
 }
 
 // Name returns name of the ServerCommand.
@@ -38,35 +39,38 @@ func (command *ServerCommand) Description() string {
 func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 	var err error
 	// Parse configuration
-	if err = command.configuredCommand.Run(bootstrap); err != nil {
+	if err = command.ConfiguredCommand.Run(bootstrap); err != nil {
 		return err
 	}
-	configuration := command.configuredCommand.Configuration
 	// Create environment
-	if err = command.environmentCommand.Run(bootstrap); err != nil {
+	if err = command.EnvironmentCommand.Run(bootstrap); err != nil {
 		return err
 	}
-	environment := command.environmentCommand.Environment
-	// Build server
 	logger := gol.GetLogger(serverLoggerName)
-	if command.Server, err = bootstrap.ServerFactory.BuildServer(configuration, environment); err != nil {
+	configuration, ok := command.Configuration.(core.Configuration)
+	if !ok {
+		logger.Error("configuration does not implement Configuration interface %[1]v %[1]T", command.Configuration)
+		return fmt.Errorf("unsupported configuration %T", command.Configuration)
+	}
+	// Build server
+	if command.Server, err = configuration.ServerFactory().BuildServer(command.Environment); err != nil {
 		logger.Error("could not create server: %v", err)
 		return err
 	}
 	// Now can start everything
-	printBanner(logger, environment.Name)
+	printBanner(logger, command.Environment.Name)
 	// Run all bundles in bootstrap
-	if err = bootstrap.Run(configuration, environment); err != nil {
+	if err = bootstrap.Run(command.Configuration, command.Environment); err != nil {
 		logger.Error("could not run bootstrap: %v", err)
 		return err
 	}
 	// Run application
-	if err = bootstrap.Application.Run(configuration, environment); err != nil {
+	if err = bootstrap.Application.Run(command.Configuration, command.Environment); err != nil {
 		logger.Error("could not run application: %v", err)
 		return err
 	}
-	environment.SetStarting()
-	defer environment.SetStopped()
+	command.Environment.SetStarting()
+	defer command.Environment.SetStopped()
 	defer command.Server.Stop()
 	if err = command.Server.Start(); err != nil {
 		logger.Error("could not start server: %v", err)

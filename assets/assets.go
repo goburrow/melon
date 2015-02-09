@@ -41,7 +41,7 @@ func (bundle *bundle) Initialize(bootstrap *core.Bootstrap) {
 }
 
 // Run registers current AssetsBundle to the server in the given environment.
-func (bundle *bundle) Run(config *core.Configuration, env *core.Environment) error {
+func (bundle *bundle) Run(_ interface{}, env *core.Environment) error {
 	gol.GetLogger(assetsLoggerName).Info("registering AssetsBundle for path %s", bundle.urlPath)
 
 	// Add slashes if necessary

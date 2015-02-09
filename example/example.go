@@ -95,7 +95,7 @@ func (app *myApplication) Initialize(bootstrap *core.Bootstrap) {
 	bootstrap.AddBundle(assets.NewBundle(os.TempDir(), "/static/"))
 }
 
-func (app *myApplication) Run(configuration *core.Configuration, environment *core.Environment) error {
+func (app *myApplication) Run(configuration interface{}, environment *core.Environment) error {
 	// http://localhost:8080/time
 	environment.Server.Register(&myResource{})
 

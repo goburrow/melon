@@ -10,6 +10,34 @@ import (
 	"github.com/goburrow/gomelon/core"
 )
 
+type configuration struct {
+	Server  serverConfiguration
+	Logging loggingConfiguration
+	Metrics metricsConfiguration
+}
+
+type serverConfiguration struct {
+	ApplicationConnectors []connectorConfiguration
+	AdminConnectors       []connectorConfiguration
+}
+
+type connectorConfiguration struct {
+	Type string
+	Addr string
+
+	CertFile string
+	KeyFile  string
+}
+
+type loggingConfiguration struct {
+	Level   string
+	Loggers map[string]string
+}
+
+type metricsConfiguration struct {
+	Frequency string
+}
+
 func TestLoadJSON(t *testing.T) {
 	bootstrap := core.Bootstrap{
 		Arguments: []string{"server", "configuration_test.json"},
@@ -18,16 +46,17 @@ func TestLoadJSON(t *testing.T) {
 }
 
 func testFactory(t *testing.T, bootstrap *core.Bootstrap) {
-	factory := Factory{}
-	config, err := factory.BuildConfiguration(bootstrap)
+	factory := Factory{Configuration: &configuration{}}
+	c, err := factory.BuildConfiguration(bootstrap)
 	if err != nil {
 		t.Fatal(err)
 	}
-	appConnector1 := core.ConnectorConfiguration{
+	config := c.(*configuration)
+	appConnector1 := connectorConfiguration{
 		Type: "http",
 		Addr: ":8080",
 	}
-	appConnector2 := core.ConnectorConfiguration{
+	appConnector2 := connectorConfiguration{
 		Type:     "https",
 		Addr:     ":8048",
 		CertFile: "/tmp/cert",
@@ -38,7 +67,7 @@ func testFactory(t *testing.T, bootstrap *core.Bootstrap) {
 		config.Server.ApplicationConnectors[1] != appConnector2 {
 		t.Fatalf("Invalid ApplicationConnectors: %+v", config.Server.ApplicationConnectors)
 	}
-	adminConnector1 := core.ConnectorConfiguration{
+	adminConnector1 := connectorConfiguration{
 		Type: "http",
 		Addr: ":8081",
 	}

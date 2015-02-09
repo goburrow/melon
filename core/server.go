@@ -39,7 +39,7 @@ type ServerHandler interface {
 
 // ServerFactory builds Server with given configuration and environment.
 type ServerFactory interface {
-	BuildServer(configuration *Configuration, environment *Environment) (Server, error)
+	BuildServer(environment *Environment) (Server, error)
 }
 
 // ServerEnvironment contains handlers for server and resources.
