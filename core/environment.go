@@ -41,10 +41,6 @@ type eventListener interface {
 	onStopped()
 }
 
-type eventContainer struct {
-	listeners []eventListener
-}
-
 func (env *Environment) SetStarting() {
 	length := len(env.eventListeners)
 	for i := 0; i < length; i++ {

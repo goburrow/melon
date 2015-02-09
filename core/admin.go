@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
-	"strings"
 
 	"github.com/goburrow/gol"
 	"github.com/goburrow/health"
@@ -42,8 +41,7 @@ const (
 
 	adminLoggerName = "gomelon.admin"
 
-	gcTaskName  = "gc"
-	logTaskName = "log"
+	gcTaskName = "gc"
 )
 
 type AdminHandler interface {
@@ -67,7 +65,7 @@ func NewAdminEnvironment() *AdminEnvironment {
 	// Default handlers
 	env.AddHandler(&metricsHandler{}, &pingHandler{}, &runtimeHandler{}, &healthCheckHandler{env.HealthChecks})
 	// Default tasks
-	env.AddTask(&gcTask{}, &logTask{})
+	env.AddTask(&gcTask{})
 	return env
 }
 
@@ -285,64 +283,4 @@ func (*gcTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Running GC...\n"))
 	runtime.GC()
 	w.Write([]byte("Done!\n"))
-}
-
-// logTask gets and sets logger level
-type logTask struct {
-}
-
-func (*logTask) Name() string {
-	return logTaskName
-}
-
-func (*logTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-	// Can have multiple loggers
-	loggers, ok := query["logger"]
-	if !ok || len(loggers) == 0 {
-		return
-	}
-	// But only one level
-	level := query.Get("level")
-	if level != "" {
-		logLevel, ok := parseLogLevel(level)
-		if !ok {
-			http.Error(w, "Level is not supported", http.StatusBadRequest)
-			return
-		}
-		for _, name := range loggers {
-			logger, ok := gol.GetLogger(name).(*gol.DefaultLogger)
-			if ok {
-				logger.SetLevel(logLevel)
-			}
-		}
-	}
-	// Print level of each logger
-	for _, name := range loggers {
-		logger, ok := gol.GetLogger(name).(*gol.DefaultLogger)
-		if ok {
-			fmt.Fprintf(w, "%s: %s\n", name, gol.LevelString(logger.Level()))
-		}
-	}
-}
-
-// parseLogLevel returns respective gol.Level of the given string
-func parseLogLevel(level string) (gol.Level, bool) {
-	// Changing log level is not executed regularly so it's not worth having
-	// logLevels in static scope
-	var logLevels = []gol.Level{
-		gol.LevelAll,
-		gol.LevelTrace,
-		gol.LevelDebug,
-		gol.LevelInfo,
-		gol.LevelWarn,
-		gol.LevelError,
-		gol.LevelOff,
-	}
-	for _, l := range logLevels {
-		if strings.EqualFold(level, gol.LevelString(l)) {
-			return l, true
-		}
-	}
-	return gol.LevelOff, false
 }

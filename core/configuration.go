@@ -6,9 +6,11 @@ package core
 
 type Configuration interface {
 	ServerFactory() ServerFactory
+	LoggingFactory() LoggingFactory
+	MetricsFactory() MetricsFactory
 }
 
 // ConfigurationFactory creates a configuration for the application.
 type ConfigurationFactory interface {
-	BuildConfiguration(bootstrap *Bootstrap) (interface{}, error)
+	Build(bootstrap *Bootstrap) (interface{}, error)
 }

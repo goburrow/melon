@@ -5,8 +5,12 @@
 package gomelon
 
 import (
+	"fmt"
+
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/gomelon/logging"
+	"github.com/goburrow/gomelon/metrics"
 	"github.com/goburrow/gomelon/server"
 )
 
@@ -17,7 +21,9 @@ const (
 // Configuration is the default configuration that implements core.Configuration
 // interface.
 type Configuration struct {
-	Server server.Factory
+	Server  server.Factory
+	Logging logging.Factory
+	Metrics metrics.Factory
 }
 
 // Configuration implements core.Configuration interface.
@@ -27,17 +33,38 @@ func (c *Configuration) ServerFactory() core.ServerFactory {
 	return &c.Server
 }
 
-// ConfiguredCommand parses configuration.
-type ConfiguredCommand struct {
-	Configuration interface{}
+func (c *Configuration) LoggingFactory() core.LoggingFactory {
+	return &c.Logging
 }
 
-func (command *ConfiguredCommand) Run(bootstrap *core.Bootstrap) error {
+func (c *Configuration) MetricsFactory() core.MetricsFactory {
+	return &c.Metrics
+}
+
+// ConfigurationCommand parses configuration.
+type ConfigurationCommand struct {
+	// Configuration is the original configuration provided by application.
+	Configuration interface{}
+
+	// configuration is the interface used internally.
+	configuration core.Configuration
+}
+
+func (command *ConfigurationCommand) Run(bootstrap *core.Bootstrap) error {
 	var err error
-	command.Configuration, err = bootstrap.ConfigurationFactory.BuildConfiguration(bootstrap)
+	command.Configuration, err = bootstrap.ConfigurationFactory.Build(bootstrap)
 	if err != nil {
 		gol.GetLogger(configurationLoggerName).Error("could not create configuration: %v", err)
 		return err
+	}
+	// Configuration provided must implement core.Configuration interface.
+	var ok bool
+	command.configuration, ok = command.Configuration.(core.Configuration)
+	if !ok {
+		gol.GetLogger(configurationLoggerName).Error(
+			"configuration does not implement core.Configuration interface %[1]v %[1]T",
+			command.Configuration)
+		return fmt.Errorf("unsupported configuration %T", command.Configuration)
 	}
 	return nil
 }

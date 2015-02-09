@@ -5,7 +5,6 @@
 package gomelon
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/goburrow/gol"
@@ -21,7 +20,7 @@ const (
 type ServerCommand struct {
 	Server core.Server
 
-	ConfiguredCommand
+	ConfigurationCommand
 	EnvironmentCommand
 }
 
@@ -39,21 +38,23 @@ func (command *ServerCommand) Description() string {
 func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 	var err error
 	// Parse configuration
-	if err = command.ConfiguredCommand.Run(bootstrap); err != nil {
+	if err = command.ConfigurationCommand.Run(bootstrap); err != nil {
 		return err
 	}
 	// Create environment
 	if err = command.EnvironmentCommand.Run(bootstrap); err != nil {
 		return err
 	}
-	logger := gol.GetLogger(serverLoggerName)
-	configuration, ok := command.Configuration.(core.Configuration)
-	if !ok {
-		logger.Error("configuration does not implement Configuration interface %[1]v %[1]T", command.Configuration)
-		return fmt.Errorf("unsupported configuration %T", command.Configuration)
+	// Config loggingFactory and MetricsFactory
+	if err = command.configuration.LoggingFactory().Configure(command.Environment); err != nil {
+		return err
 	}
+	if err = command.configuration.MetricsFactory().Configure(command.Environment); err != nil {
+		return err
+	}
+	logger := gol.GetLogger(serverLoggerName)
 	// Build server
-	if command.Server, err = configuration.ServerFactory().BuildServer(command.Environment); err != nil {
+	if command.Server, err = command.configuration.ServerFactory().Build(command.Environment); err != nil {
 		logger.Error("could not create server: %v", err)
 		return err
 	}

@@ -47,7 +47,7 @@ func TestLoadJSON(t *testing.T) {
 
 func testFactory(t *testing.T, bootstrap *core.Bootstrap) {
 	factory := Factory{Configuration: &configuration{}}
-	c, err := factory.BuildConfiguration(bootstrap)
+	c, err := factory.Build(bootstrap)
 	if err != nil {
 		t.Fatal(err)
 	}

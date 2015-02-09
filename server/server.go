@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	serverLoggerName = "gomelon.server"
+	loggerName = "gomelon.server"
 )
 
 type ConnectorConfiguration struct {
@@ -111,7 +111,7 @@ func (server *Server) Start() error {
 
 // Stop stops all running connectors of the server.
 func (server *Server) Stop() error {
-	logger := gol.GetLogger(serverLoggerName)
+	logger := gol.GetLogger(loggerName)
 	for _, connector := range server.Connectors {
 		if err := connector.Stop(); err != nil {
 			logger.Warn("error closing connector: %v", err)
@@ -195,7 +195,7 @@ type Factory struct {
 var _ core.ServerFactory = (*Factory)(nil)
 
 // BuildServer creates a new core.Server.
-func (factory *Factory) BuildServer(environment *core.Environment) (core.Server, error) {
+func (factory *Factory) Build(environment *core.Environment) (core.Server, error) {
 	server := NewServer()
 
 	// Application

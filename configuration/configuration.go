@@ -28,7 +28,7 @@ type Factory struct {
 }
 
 // BuildConfiguration parse config file and returns the factory configuration.
-func (factory *Factory) BuildConfiguration(bootstrap *core.Bootstrap) (interface{}, error) {
+func (factory *Factory) Build(bootstrap *core.Bootstrap) (interface{}, error) {
 	if len(bootstrap.Arguments) < 2 {
 		return nil, errNoFile
 	}
