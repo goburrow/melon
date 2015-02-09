@@ -89,7 +89,10 @@ func (server *Server) Start() error {
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, os.Interrupt)
 
+	logger := gol.GetLogger(loggerName)
+
 	for _, connector := range server.Connectors {
+		logger.Info("listening %s", connector.configuration.Addr)
 		go func(c *Connector) {
 			errorChan <- c.Start()
 		}(connector)
@@ -139,41 +142,43 @@ type Handler struct {
 // Handler implements gomelon.ServerHandler
 var _ core.ServerHandler = (*Handler)(nil)
 
-func NewHandler() *Handler {
-	return &Handler{
-		ServeMux: web.New(),
+// NewHandler creates a new multiplexer if not provided.
+func NewHandler(mux *web.Mux) *Handler {
+	if mux == nil {
+		mux = web.New()
 	}
-}
-
-// Handler implements http.Handler.
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.ServeMux.ServeHTTP(w, r)
+	return &Handler{
+		ServeMux: mux,
+	}
 }
 
 // Handle registers the handler for the given pattern.
 func (h *Handler) Handle(method, pattern string, handler http.Handler) {
+	var f func(pattern interface{}, handler interface{})
+
 	switch method {
 	case "GET":
-		h.ServeMux.Get(pattern, handler)
+		f = h.ServeMux.Get
 	case "HEAD":
-		h.ServeMux.Head(pattern, handler)
+		f = h.ServeMux.Head
 	case "POST":
-		h.ServeMux.Post(pattern, handler)
+		f = h.ServeMux.Post
 	case "PUT":
-		h.ServeMux.Put(pattern, handler)
+		f = h.ServeMux.Put
 	case "DELETE":
-		h.ServeMux.Delete(pattern, handler)
+		f = h.ServeMux.Delete
 	case "TRACE":
-		h.ServeMux.Trace(pattern, handler)
+		f = h.ServeMux.Trace
 	case "OPTIONS":
-		h.ServeMux.Options(pattern, handler)
+		f = h.ServeMux.Options
 	case "CONNECT":
-		h.ServeMux.Connect(pattern, handler)
+		f = h.ServeMux.Connect
 	case "PATCH":
-		h.ServeMux.Patch(pattern, handler)
+		f = h.ServeMux.Patch
 	default:
 		panic("http: method not supported " + method)
 	}
+	f(h.pathPrefix+pattern, handler)
 }
 
 // PathPrefix returns server root context path.
@@ -181,29 +186,66 @@ func (h *Handler) PathPrefix() string {
 	return h.pathPrefix
 }
 
-// SetPathPrefix sets root context path for the server.
-func (h *Handler) SetPathPrefix(prefix string) {
-	h.pathPrefix = prefix
-}
-
-// Factory implements core.ServerFactory interface.
-type Factory struct {
+// DefaultFactory allows multiple sets of application and admin connectors running
+// on separate ports.
+type DefaultFactory struct {
 	ApplicationConnectors []ConnectorConfiguration
 	AdminConnectors       []ConnectorConfiguration
 }
 
-var _ core.ServerFactory = (*Factory)(nil)
-
-// BuildServer creates a new core.Server.
-func (factory *Factory) Build(environment *core.Environment) (core.Server, error) {
+func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server, error) {
 	server := NewServer()
 
 	// Application
-	environment.Server.ServerHandler = NewHandler()
-	server.AddConnectors(environment.Server.ServerHandler, factory.ApplicationConnectors)
+	appHandler := NewHandler(nil)
+	server.AddConnectors(appHandler.ServeMux, factory.ApplicationConnectors)
+	environment.Server.ServerHandler = appHandler
 
 	// Admin
-	environment.Admin.ServerHandler = NewHandler()
-	server.AddConnectors(environment.Admin.ServerHandler, factory.AdminConnectors)
+	adminHandler := NewHandler(nil)
+	server.AddConnectors(adminHandler.ServeMux, factory.AdminConnectors)
+	environment.Admin.ServerHandler = adminHandler
+
 	return server, nil
+}
+
+// SimpleFactory creates a single-connector server.
+type SimpleFactory struct {
+	ApplicationContextPath string
+	AdminContextPath       string
+	Connector              ConnectorConfiguration
+}
+
+func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server, error) {
+	server := NewServer()
+
+	// Both application and admin share same handler
+	appHandler := NewHandler(nil)
+	adminHandler := NewHandler(appHandler.ServeMux)
+
+	appHandler.pathPrefix = factory.ApplicationContextPath
+	environment.Server.ServerHandler = appHandler
+
+	adminHandler.pathPrefix = factory.AdminContextPath
+	environment.Admin.ServerHandler = adminHandler
+
+	server.AddConnectors(appHandler.ServeMux, []ConnectorConfiguration{factory.Connector})
+	return server, nil
+}
+
+// Factory implements core.ServerFactory interface.
+type Factory struct {
+	Type string
+
+	DefaultFactory
+	SimpleFactory
+}
+
+var _ core.ServerFactory = (*Factory)(nil)
+
+func (factory *Factory) Build(environment *core.Environment) (core.Server, error) {
+	if factory.Type == "simple" {
+		return factory.SimpleFactory.Build(environment)
+	}
+	return factory.DefaultFactory.Build(environment)
 }

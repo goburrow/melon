@@ -25,7 +25,7 @@ func TestAssetsBundle(t *testing.T) {
 	defer os.Remove(dir)
 	// Setup environment
 	env := core.NewEnvironment()
-	handler := server.NewHandler()
+	handler := server.NewHandler(nil)
 	env.Server.ServerHandler = handler
 	bundle := NewBundle(dir, "/static/")
 	err = bundle.Run(nil, env)

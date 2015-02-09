@@ -25,16 +25,12 @@ type Server interface {
 
 // ServerHandler allows users to register a http.Handler.
 type ServerHandler interface {
-	// ServerHandler is a router (multiplexer).
-	http.Handler
 	// Handle registers the handler for the given pattern.
 	// To use a user-defined router, call this in your Application.Run():
 	//   environment.ServerHandler.Handle("/", router)
 	Handle(method, pattern string, handler http.Handler)
 	// PathPrefix returns prefix path of this handler.
 	PathPrefix() string
-	// SetPathPrefix sets prefix path for this handler.
-	SetPathPrefix(string)
 }
 
 // ServerFactory builds Server with given configuration and environment.

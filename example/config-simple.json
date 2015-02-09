@@ -1,0 +1,17 @@
+{
+  "server": {
+    "type": "simple",
+    "applicationContextPath": "/application",
+    "adminContextPath": "/admin",
+    "connector": {
+      "type": "http",
+      "addr": ":8080"
+    }
+  },
+  "logging": {
+    "level": "INFO"
+  },
+  "metrics": {
+    "frequency": "1s"
+  }
+}
