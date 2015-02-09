@@ -4,9 +4,10 @@ Lightweight Go framework for building web services, inspired by Dropwizard.
 ## Overview
 gomelon includes a number of libraries to build a web application quickly:
 
-* [goji](https://github.com/zenazn/goji) for web server.
-* [metrics](https://github.com/codahale/metrics) for metrics.
-* [gol](https://github.com/goburrow/gol) for logging.
+* [goji](https://github.com/zenazn/goji): a robust web framework.
+* [gol](https://github.com/goburrow/gol): a simple hierarchical logging framework.
+* [metrics](https://github.com/codahale/metrics): a minimalist instrumentation library.
+* [validator](https://github.com/go-validator/validator): extensible value validations.
 
 
 ## Example

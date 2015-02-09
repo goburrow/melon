@@ -35,6 +35,11 @@ func (factory *Factory) Build(bootstrap *core.Bootstrap) (interface{}, error) {
 	if err := Unmarshal(bootstrap.Arguments[1], factory.Configuration); err != nil {
 		return nil, err
 	}
+	if bootstrap.ValidatorFactory != nil {
+		if err := bootstrap.ValidatorFactory.Validator().Validate(factory.Configuration); err != nil {
+			return nil, err
+		}
+	}
 	return factory.Configuration, nil
 }
 

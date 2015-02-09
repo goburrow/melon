@@ -10,6 +10,7 @@ package gomelon
 import (
 	"github.com/goburrow/gomelon/configuration"
 	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/gomelon/validation"
 )
 
 func printHelp(bootstrap *core.Bootstrap) {
@@ -26,6 +27,7 @@ func Run(app core.Application, args []string) error {
 	bootstrap.ConfigurationFactory = &configuration.Factory{
 		Configuration: &Configuration{},
 	}
+	bootstrap.ValidatorFactory = &validation.Factory{}
 
 	app.Initialize(bootstrap)
 	if len(args) > 0 {

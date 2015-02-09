@@ -10,6 +10,7 @@ type Bootstrap struct {
 	Arguments   []string
 
 	ConfigurationFactory ConfigurationFactory
+	ValidatorFactory     ValidatorFactory
 
 	bundles  []Bundle
 	commands []Command
