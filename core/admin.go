@@ -6,7 +6,6 @@ package core
 
 import (
 	"bytes"
-	"expvar"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -16,7 +15,6 @@ import (
 )
 
 const (
-	metricsUri     = "/metrics"
 	pingUri        = "/ping"
 	runtimeUri     = "/runtime"
 	healthCheckUri = "/healthcheck"
@@ -63,7 +61,7 @@ func NewAdminEnvironment() *AdminEnvironment {
 		HealthChecks: health.NewRegistry(),
 	}
 	// Default handlers
-	env.AddHandler(&metricsHandler{}, &pingHandler{}, &runtimeHandler{}, &healthCheckHandler{env.HealthChecks})
+	env.AddHandler(&pingHandler{}, &runtimeHandler{}, &healthCheckHandler{env.HealthChecks})
 	// Default tasks
 	env.AddTask(&gcTask{})
 	return env
@@ -85,10 +83,11 @@ func (env *AdminEnvironment) onStarting() {
 		handlers:    env.handlers,
 		contextPath: env.ServerHandler.PathPrefix(),
 	})
+	// Registered handlers
 	for _, h := range env.handlers {
 		env.ServerHandler.Handle("GET", h.Path(), h)
 	}
-
+	// Registered tasks
 	for _, task := range env.tasks {
 		path := tasksUri + "/" + task.Name()
 		env.ServerHandler.Handle("POST", path, task)
@@ -187,33 +186,6 @@ func isAllHealthy(results map[string]*health.Result) bool {
 		}
 	}
 	return true
-}
-
-// metricsHandler displays expvars.
-type metricsHandler struct {
-}
-
-func (handler *metricsHandler) Name() string {
-	return "Metrics"
-}
-
-func (handler *metricsHandler) Path() string {
-	return metricsUri
-}
-
-func (*metricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, "{")
-	first := true
-	expvar.Do(func(kv expvar.KeyValue) {
-		if !first {
-			fmt.Fprintf(w, ",")
-		}
-		first = false
-		fmt.Fprintf(w, "%q: %s", kv.Key, kv.Value)
-	})
-	fmt.Fprintf(w, "}")
 }
 
 // pingHandler handles ping request to admin /ping
