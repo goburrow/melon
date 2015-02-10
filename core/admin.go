@@ -101,12 +101,16 @@ func (env *AdminEnvironment) onStopped() {
 
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logTasks() {
+	logger := gol.GetLogger(adminLoggerName)
+	if !logger.InfoEnabled() {
+		return
+	}
 	var buf bytes.Buffer
 	for _, task := range env.tasks {
 		fmt.Fprintf(&buf, "    %-7s %s%s/%s (%T)\n", "POST",
 			env.ServerHandler.PathPrefix(), tasksUri, task.Name(), task)
 	}
-	gol.GetLogger(adminLoggerName).Info("tasks =\n\n%s", buf.String())
+	logger.Info("tasks =\n\n%s", buf.String())
 }
 
 // logTasks prints all registered tasks to the log

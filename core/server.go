@@ -88,6 +88,10 @@ func (env *ServerEnvironment) handle(component interface{}) {
 }
 
 func (env *ServerEnvironment) logResources() {
+	logger := gol.GetLogger(serverLoggerName)
+	if !logger.InfoEnabled() {
+		return
+	}
 	var buf bytes.Buffer
 	for _, component := range env.components {
 		if res, ok := component.(HTTPResource); ok {
@@ -95,5 +99,5 @@ func (env *ServerEnvironment) logResources() {
 				res.Method(), env.ServerHandler.PathPrefix(), res.Path(), res)
 		}
 	}
-	gol.GetLogger(serverLoggerName).Info("resources =\n\n%s", buf.String())
+	logger.Info("resources =\n\n%s", buf.String())
 }
