@@ -16,7 +16,7 @@ import (
 func printHelp(bootstrap *core.Bootstrap) {
 	println("Available commands:")
 	for _, command := range bootstrap.Commands() {
-		println(command.Name(), ":", command.Description())
+		println(command.Name(), "\t", command.Description())
 	}
 }
 

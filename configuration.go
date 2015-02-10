@@ -72,3 +72,25 @@ func (command *ConfigurationCommand) Run(bootstrap *core.Bootstrap) error {
 	}
 	return nil
 }
+
+type CheckCommand struct {
+	ConfigurationCommand
+}
+
+var _ core.Command = (*CheckCommand)(nil)
+
+func (c *CheckCommand) Name() string {
+	return "check"
+}
+
+func (c *CheckCommand) Description() string {
+	return "parses and validates the configuration file"
+}
+
+func (c *CheckCommand) Run(bootstrap *core.Bootstrap) error {
+	if err := c.ConfigurationCommand.Run(bootstrap); err != nil {
+		return err
+	}
+	println("Configuration is OK")
+	return nil
+}

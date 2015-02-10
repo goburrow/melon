@@ -44,6 +44,7 @@ func (app *Application) SetConfiguration(c interface{}) {
 
 // Initializes the application bootstrap.
 func (app *Application) Initialize(bootstrap *core.Bootstrap) {
+	bootstrap.AddCommand(&CheckCommand{})
 	bootstrap.AddCommand(&ServerCommand{})
 }
 
