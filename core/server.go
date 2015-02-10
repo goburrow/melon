@@ -80,11 +80,9 @@ func (env *ServerEnvironment) handle(component interface{}) {
 		}
 	}
 	// Eventually handle this resource as http.Handler
-	if res, ok := component.(Resource); ok {
-		if h, ok := component.(http.Handler); ok {
-			env.ServerHandler.Handle(res.Method(), res.Path(), h)
-			return
-		}
+	if res, ok := component.(HTTPResource); ok {
+		env.ServerHandler.Handle(res.Method(), res.Path(), res)
+		return
 	}
 	gol.GetLogger(serverLoggerName).Warn("Could not handle %[1]v (%[1]T)", component)
 }
@@ -92,7 +90,7 @@ func (env *ServerEnvironment) handle(component interface{}) {
 func (env *ServerEnvironment) logResources() {
 	var buf bytes.Buffer
 	for _, component := range env.components {
-		if res, ok := component.(Resource); ok {
+		if res, ok := component.(HTTPResource); ok {
 			fmt.Fprintf(&buf, "    %-7s %s%s (%T)\n",
 				res.Method(), env.ServerHandler.PathPrefix(), res.Path(), res)
 		}
