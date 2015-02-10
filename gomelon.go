@@ -25,7 +25,7 @@ func Run(app core.Application, args []string) error {
 	bootstrap := core.NewBootstrap(app)
 	bootstrap.Arguments = args
 	bootstrap.ConfigurationFactory = &configuration.Factory{
-		Configuration: &Configuration{},
+		Configuration: app.Configuration(),
 	}
 	bootstrap.ValidatorFactory = &validation.Factory{}
 

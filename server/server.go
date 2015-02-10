@@ -24,7 +24,7 @@ const (
 )
 
 type ConnectorConfiguration struct {
-	Type string
+	Type string `validate:"nonzero"`
 	Addr string
 
 	CertFile string
@@ -189,8 +189,24 @@ func (h *Handler) PathPrefix() string {
 // DefaultFactory allows multiple sets of application and admin connectors running
 // on separate ports.
 type DefaultFactory struct {
-	ApplicationConnectors []ConnectorConfiguration
-	AdminConnectors       []ConnectorConfiguration
+	ApplicationConnectors []ConnectorConfiguration `validate:"nonzero"`
+	AdminConnectors       []ConnectorConfiguration `validate:"nonzero"`
+}
+
+// Initialize sets default value for the factory.
+func (factory *DefaultFactory) Initialize() {
+	factory.ApplicationConnectors = []ConnectorConfiguration{
+		ConnectorConfiguration{
+			Type: "http",
+			Addr: ":8080",
+		},
+	}
+	factory.AdminConnectors = []ConnectorConfiguration{
+		ConnectorConfiguration{
+			Type: "http",
+			Addr: ":8081",
+		},
+	}
 }
 
 func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server, error) {
@@ -211,9 +227,17 @@ func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server
 
 // SimpleFactory creates a single-connector server.
 type SimpleFactory struct {
-	ApplicationContextPath string
-	AdminContextPath       string
+	ApplicationContextPath string `validate:"nonzero"`
+	AdminContextPath       string `validate:"nonzero"`
 	Connector              ConnectorConfiguration
+}
+
+// Initialize sets default value for the factory.
+func (factory *SimpleFactory) Initialize() {
+	factory.ApplicationContextPath = "/application"
+	factory.AdminContextPath = "/admin"
+	factory.Connector.Type = "http"
+	factory.Connector.Addr = ":8080"
 }
 
 func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server, error) {
@@ -233,7 +257,7 @@ func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server,
 	return server, nil
 }
 
-// Factory implements core.ServerFactory interface.
+// Factory is an union of DefaultFactory and SimpleFactory.
 type Factory struct {
 	Type string
 
@@ -242,6 +266,12 @@ type Factory struct {
 }
 
 var _ core.ServerFactory = (*Factory)(nil)
+
+// Initialize sets default value for the factory.
+func (factory *Factory) Initialize() {
+	factory.DefaultFactory.Initialize()
+	factory.SimpleFactory.Initialize()
+}
 
 func (factory *Factory) Build(environment *core.Environment) (core.Server, error) {
 	if factory.Type == "simple" {
