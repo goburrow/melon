@@ -172,20 +172,20 @@ func (handler *healthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	for name, result := range results {
-		fmt.Fprintf(w, "%s:\n\tHealthy: %t\n", name, result.Healthy)
-		if result.Message != "" {
-			fmt.Fprintf(w, "\tMessage: %s\n", result.Message)
+		fmt.Fprintf(w, "%s:\n\tHealthy: %t\n", name, result.Healthy())
+		if result.Message() != "" {
+			fmt.Fprintf(w, "\tMessage: %s\n", result.Message())
 		}
-		if result.Cause != nil {
-			fmt.Fprintf(w, "\tCause: %+v\n", result.Cause)
+		if result.Cause() != nil {
+			fmt.Fprintf(w, "\tCause: %+v\n", result.Cause())
 		}
 	}
 }
 
 // isAllHealthy checks if all are healthy
-func isAllHealthy(results map[string]*health.Result) bool {
+func isAllHealthy(results map[string]health.Result) bool {
 	for _, result := range results {
-		if !result.Healthy {
+		if !result.Healthy() {
 			return false
 		}
 	}

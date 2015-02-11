@@ -61,13 +61,13 @@ type MyHealthCheck struct {
 	threshold int
 }
 
-func (healthCheck *MyHealthCheck) Check() *health.Result {
+func (healthCheck *MyHealthCheck) Check() health.Result {
 	val := rand.Intn(100)
 	if val > healthCheck.threshold {
 		message := fmt.Sprintf("%v exceeds threshold value (%v)", val, healthCheck.threshold)
-		return health.NewResultUnhealthy(message, myError)
+		return health.ResultUnhealthy(message, myError)
 	}
-	return health.ResultHealthy
+	return health.Healthy
 }
 
 // MyManaged is a lifecycle listener
