@@ -27,6 +27,12 @@ type Factory struct {
 	Configuration interface{}
 }
 
+func NewFactory(c interface{}) *Factory {
+	return &Factory{
+		Configuration: c,
+	}
+}
+
 // BuildConfiguration parse config file and returns the factory configuration.
 func (factory *Factory) Build(bootstrap *core.Bootstrap) (interface{}, error) {
 	if len(bootstrap.Arguments) < 2 {

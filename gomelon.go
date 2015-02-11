@@ -24,10 +24,8 @@ func printHelp(bootstrap *core.Bootstrap) {
 func Run(app core.Application, args []string) error {
 	bootstrap := core.NewBootstrap(app)
 	bootstrap.Arguments = args
-	bootstrap.ConfigurationFactory = &configuration.Factory{
-		Configuration: app.Configuration(),
-	}
-	bootstrap.ValidatorFactory = &validation.Factory{}
+	bootstrap.ConfigurationFactory = configuration.NewFactory(app.Configuration())
+	bootstrap.ValidatorFactory = validation.NewFactory()
 
 	app.Initialize(bootstrap)
 	if len(args) > 0 {

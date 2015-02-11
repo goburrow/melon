@@ -18,9 +18,12 @@ type Factory struct {
 
 var _ core.ValidatorFactory = (*Factory)(nil)
 
-func (f *Factory) Validator() core.Validator {
-	if f.validator == nil {
-		f.validator = validator.NewValidator()
+func NewFactory() *Factory {
+	return &Factory{
+		validator: validator.NewValidator(),
 	}
+}
+
+func (f *Factory) Validator() core.Validator {
 	return f.validator
 }
