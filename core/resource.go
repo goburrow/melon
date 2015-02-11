@@ -22,6 +22,5 @@ type HTTPResource interface {
 
 // ResourceHandler handles the given HTTP resources.
 type ResourceHandler interface {
-	// Handle returns true if the resource is handled.
-	Handle(interface{}) bool
+	Handle(interface{})
 }
