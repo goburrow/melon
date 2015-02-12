@@ -18,10 +18,8 @@ const (
 
 // ServerCommand implements Command.
 type ServerCommand struct {
-	Server core.Server
-
-	ConfigurationCommand
 	EnvironmentCommand
+	Server core.Server
 }
 
 // Name returns name of the ServerCommand.
@@ -37,19 +35,8 @@ func (command *ServerCommand) Description() string {
 // Run runs the command with the given bootstrap.
 func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 	var err error
-	// Parse configuration
-	if err = command.ConfigurationCommand.Run(bootstrap); err != nil {
-		return err
-	}
 	// Create environment
 	if err = command.EnvironmentCommand.Run(bootstrap); err != nil {
-		return err
-	}
-	// Config loggingFactory and MetricsFactory
-	if err = command.configuration.LoggingFactory().Configure(command.Environment); err != nil {
-		return err
-	}
-	if err = command.configuration.MetricsFactory().Configure(command.Environment); err != nil {
 		return err
 	}
 	logger := gol.GetLogger(serverLoggerName)
