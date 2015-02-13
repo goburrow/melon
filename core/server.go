@@ -7,7 +7,6 @@ package core
 import (
 	"bytes"
 	"fmt"
-	"net/http"
 
 	"github.com/goburrow/gol"
 )
@@ -28,7 +27,7 @@ type ServerHandler interface {
 	// Handle registers the handler for the given pattern.
 	// To use a user-defined router, call this in your Application.Run():
 	//   environment.ServerHandler.Handle("/", router)
-	Handle(method, pattern string, handler http.Handler)
+	Handle(method, pattern string, handler interface{})
 	// PathPrefix returns prefix path of this handler.
 	PathPrefix() string
 }

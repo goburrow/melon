@@ -153,7 +153,7 @@ func NewHandler(mux *web.Mux) *Handler {
 }
 
 // Handle registers the handler for the given pattern.
-func (h *Handler) Handle(method, pattern string, handler http.Handler) {
+func (h *Handler) Handle(method, pattern string, handler interface{}) {
 	var f func(pattern interface{}, handler interface{})
 
 	switch method {
