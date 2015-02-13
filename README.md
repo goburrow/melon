@@ -5,13 +5,13 @@ Lightweight Go framework for building web services, inspired by Dropwizard.
 gomelon includes a number of libraries to build a web application quickly:
 
 * [goji](https://github.com/zenazn/goji): a robust web framework.
-* [gol](https://github.com/goburrow/gol): a simple hierarchical logging framework.
+* [gol](https://github.com/goburrow/gol): a simple hierarchical logging API.
 * [metrics](https://github.com/codahale/metrics): a minimalist instrumentation library.
 * [validator](https://github.com/go-validator/validator): extensible value validations.
 
 
 ## Example
-See [example/example.go](https://github.com/goburrow/gomelon/blob/master/example/example.go)
+See [example](https://github.com/goburrow/gomelon/tree/master/example)
 
 ```
 INFO  [2015-02-04T22:46:18.062+10:00] gomelon.server: starting MyApp
@@ -25,9 +25,11 @@ INFO  [2015-02-04T22:46:18.062+10:00] gomelon.server: starting MyApp
           \/_____/
 
 INFO  [2015-02-04T22:46:18.063+10:00] gomelon.assets: registering AssetsBundle for path /static/
-INFO  [2015-02-04T22:46:18.063+10:00] gomelon.server: resources =
+DEBUG [2015-02-04T22:46:18.063+10:00] gomelon.server: resources = [*main.resource]
+INFO  [2015-02-04T22:46:18.063+10:00] gomelon.server: endpoints =
 
-    GET     /time (*main.myResource)
+    GET     /user/:name (*main.resource)
+    POST    /user/:name (*main.resource)
 
 INFO  [2015-02-04T22:46:18.063+10:00] gomelon.admin: tasks =
 
@@ -37,4 +39,6 @@ INFO  [2015-02-04T22:46:18.063+10:00] gomelon.admin: tasks =
 
 DEBUG [2015-02-04T22:46:18.063+10:00] gomelon.admin: health checks = [MyHealthCheck]
 INFO  [2015-02-04T22:46:18.063+10:00] example: started MyComponent
+INFO  [2015-02-04T22:46:18.063+10:00] gomelon.server: listening :8080
+INFO  [2015-02-04T22:46:18.063+10:00] gomelon.server: listening :8081
 ```
