@@ -5,9 +5,9 @@
 package rest
 
 import (
+	"fmt"
 	"net/http"
 
-	"github.com/goburrow/gol"
 	"github.com/zenazn/goji/web"
 	"golang.org/x/net/context"
 )
@@ -29,11 +29,16 @@ const (
 	pathParamsKey contextKey = iota + 10
 )
 
-// contextFunc
 type contextFunc func(context.Context) (interface{}, error)
 
+// contextHandler
+type contextHandler struct {
+	providers []Provider
+	handler   contextFunc
+}
+
 // ServeHTTPC converts web.C to context.Context
-func (f contextFunc) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
+func (h *contextHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -41,8 +46,24 @@ func (f contextFunc) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request)
 	ctx = context.WithValue(ctx, requestKey, r)
 	ctx = context.WithValue(ctx, pathParamsKey, c.URLParams)
 
-	response, err := f(ctx)
-	gol.GetLogger(loggerContextName).Info("%#v %#v", response, err)
+	response, err := h.handler(ctx)
+	if err != nil {
+		// TODO: print error
+		http.Error(w, "500 internal server error", http.StatusInternalServerError)
+		return
+	}
+	// No response, maybe body is already writen by the handler.
+	if response == nil {
+		return
+	}
+	for i := len(h.providers) - 1; i >= 0; i-- {
+		if h.providers[i].IsWriteable(r, response, w) {
+			h.providers[i].Write(r, response, w)
+			return
+		}
+	}
+	// FIXME: Unknown type
+	fmt.Fprintf(w, "%#v", response)
 }
 
 func ResponseWriterFromContext(c context.Context) (http.ResponseWriter, bool) {

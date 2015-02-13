@@ -16,6 +16,9 @@ type Application struct {
 }
 
 func (app *Application) Run(conf interface{}, env *core.Environment) error {
+	if err := app.Application.Run(conf, env); err != nil {
+		return err
+	}
 	restHandler := NewResourceHandler(env.Server.ServerHandler.(*server.Handler), env.Server)
 	env.Server.AddResourceHandler(restHandler)
 	return nil
