@@ -20,6 +20,7 @@ func (app *Application) Run(conf interface{}, env *core.Environment) error {
 		return err
 	}
 	restHandler := NewResourceHandler(env.Server.ServerHandler.(*server.Handler), env.Server)
+	restHandler.providers = []Provider{&JSONProvider{}, &XMLProvider{}}
 	env.Server.AddResourceHandler(restHandler)
 	return nil
 }

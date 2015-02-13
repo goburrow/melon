@@ -23,7 +23,6 @@ func NewResourceHandler(serverHandler *server.Handler, endpointLogger core.Endpo
 	return &ResourceHandler{
 		serverHandler:  serverHandler,
 		endpointLogger: endpointLogger,
-		providers:      []Provider{&JSONProvider{}},
 	}
 }
 
@@ -49,6 +48,10 @@ func (h *ResourceHandler) Handle(v interface{}) {
 		h.serverHandler.ServeMux.Head(r.Path(), h.newContextHandler(r.HEAD))
 		h.endpointLogger.LogEndpoint("HEAD", r.Path(), v)
 	}
+}
+
+func (h *ResourceHandler) AddProvider(p ...Provider) {
+	h.providers = append(h.providers, p...)
 }
 
 func (h *ResourceHandler) newContextHandler(f contextFunc) *contextHandler {
