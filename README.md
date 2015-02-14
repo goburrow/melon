@@ -27,7 +27,7 @@ Features supported:
 See [example](https://github.com/goburrow/gomelon/tree/master/example)
 
 ```
-INFO  [2015-02-04T22:46:18.062+10:00] gomelon.server: starting MyApp
+INFO  [2015-02-04T22:46:18.062+10:00] gomelon/server: starting MyApp
     ______
    /\   __\______
   /..\  \  \     \
@@ -37,23 +37,23 @@ INFO  [2015-02-04T22:46:18.062+10:00] gomelon.server: starting MyApp
    \/_____/./__   /
           \/_____/
 
-INFO  [2015-02-04T22:46:18.063+10:00] gomelon.assets: registering AssetsBundle for path /static/
-DEBUG [2015-02-04T22:46:18.063+10:00] gomelon.server: resources = [*main.resource]
-INFO  [2015-02-04T22:46:18.063+10:00] gomelon.server: endpoints =
+INFO  [2015-02-04T22:46:18.063+10:00] gomelon/assets: registering AssetsBundle for path /static/
+DEBUG [2015-02-04T22:46:18.063+10:00] gomelon/server: resources = [*main.resource]
+INFO  [2015-02-04T22:46:18.063+10:00] gomelon/server: endpoints =
 
     GET     /user/:name (*main.resource)
     POST    /user/:name (*main.resource)
 
-INFO  [2015-02-04T22:46:18.063+10:00] gomelon.admin: tasks =
+INFO  [2015-02-04T22:46:18.063+10:00] gomelon/admin: tasks =
 
     POST    /tasks/gc (*core.gcTask)
     POST    /tasks/log (*core.logTask)
     POST    /tasks/task1 (*main.myTask)
 
-DEBUG [2015-02-04T22:46:18.063+10:00] gomelon.admin: health checks = [MyHealthCheck]
+DEBUG [2015-02-04T22:46:18.063+10:00] gomelon/admin: health checks = [MyHealthCheck]
 INFO  [2015-02-04T22:46:18.063+10:00] example: started MyComponent
-INFO  [2015-02-04T22:46:18.063+10:00] gomelon.server: listening :8080
-INFO  [2015-02-04T22:46:18.063+10:00] gomelon.server: listening :8081
+INFO  [2015-02-04T22:46:18.063+10:00] gomelon/server: listening :8080
+INFO  [2015-02-04T22:46:18.063+10:00] gomelon/server: listening :8081
 ```
 
 ## Contribution

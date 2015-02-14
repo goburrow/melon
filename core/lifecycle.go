@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	lifecycleLoggerName = "gomelon.lifecycle"
+	lifecycleLoggerName = "gomelon/lifecycle"
 )
 
 // Managed is an interface for objects which need to be started and stopped as

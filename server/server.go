@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	loggerName = "gomelon.server"
+	loggerName = "gomelon/server"
 )
 
 type ConnectorConfiguration struct {

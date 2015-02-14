@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	serverLoggerName = "gomelon.server"
+	serverLoggerName = "gomelon/server"
 	maxBannerSize    = 50 * 1024 // 50KB
 )
 

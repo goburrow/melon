@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	configurationLoggerName = "gomelon.configuration"
+	configurationLoggerName = "gomelon/configuration"
 )
 
 // Configuration is the default configuration that implements core.Configuration

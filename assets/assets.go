@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	assetsLoggerName = "gomelon.assets"
+	assetsLoggerName = "gomelon/assets"
 )
 
 // AssetsBundle serves static asset files.

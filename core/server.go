@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	serverLoggerName = "gomelon.server"
+	serverLoggerName = "gomelon/server"
 )
 
 // Server is a managed HTTP server handling incoming connections to both application and admin.
