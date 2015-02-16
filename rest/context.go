@@ -5,6 +5,7 @@
 package rest
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -23,10 +24,20 @@ type contextKey int
 const (
 	responseWriterKey contextKey = iota
 	requestKey
+	contextHandlerKey
 )
 
 const (
 	pathParamsKey contextKey = iota + 10
+)
+
+var (
+	errNoHTTPRequest  = errors.New("rest: no http request")
+	errContextHandler = errors.New("rest: no context handler")
+
+	errInternalServerError  = NewHTTPError("500 internal server error", 500)
+	errNotAcceptable        = NewHTTPError("406 not acceptable", 406)
+	errUnsupportedMediaType = NewHTTPError("415 unsupported media type", 415)
 )
 
 type contextFunc func(context.Context) (interface{}, error)
@@ -35,13 +46,15 @@ type contextFunc func(context.Context) (interface{}, error)
 type contextHandler struct {
 	providers Providers
 	handler   contextFunc
+
+	errorHandler ErrorHandler
 }
 
 // ServeHTTPC converts web.C to context.Context
 func (h *contextHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
 	responseWriters := h.getResponseWriters(r)
 	if len(responseWriters) == 0 {
-		http.Error(w, "406 not acceptable", http.StatusNotAcceptable)
+		h.errorHandler.HandleError(errNotAcceptable, w, r)
 		return
 	}
 
@@ -50,12 +63,12 @@ func (h *contextHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Requ
 
 	ctx = context.WithValue(ctx, responseWriterKey, w)
 	ctx = context.WithValue(ctx, requestKey, r)
+	ctx = context.WithValue(ctx, contextHandlerKey, h)
 	ctx = context.WithValue(ctx, pathParamsKey, c.URLParams)
 
 	response, err := h.handler(ctx)
 	if err != nil {
-		// TODO: print error
-		http.Error(w, "500 internal server error", http.StatusInternalServerError)
+		h.errorHandler.HandleError(err, w, r)
 		return
 	}
 	// No response, maybe body is already writen by the handler.
@@ -66,13 +79,13 @@ func (h *contextHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Requ
 		if responseWriters[i].IsWriteable(r, response, w) {
 			err = responseWriters[i].Write(r, response, w)
 			if err != nil {
-				http.Error(w, "500 internal server error", http.StatusInternalServerError)
+				h.errorHandler.HandleError(errInternalServerError, w, r)
 			}
 			return
 		}
 	}
 	// FIXME: Unknown type
-	http.Error(w, "406 not acceptable", http.StatusNotAcceptable)
+	h.errorHandler.HandleError(errNotAcceptable, w, r)
 }
 
 // getResponseWriters returns a list of ResponseWriter according Accept in the request header.
@@ -97,6 +110,12 @@ func (h *contextHandler) getResponseWriters(r *http.Request) []ResponseWriter {
 	return nil
 }
 
+// getRequestReaders returns a list of RequestReader according Content-Type in the request header.
+func (h *contextHandler) getRequestReaders(r *http.Request) []RequestReader {
+	mime := r.Header.Get("Content-Type")
+	return h.providers.GetRequestReaders(strings.TrimSpace(mime))
+}
+
 func ResponseWriterFromContext(c context.Context) (http.ResponseWriter, bool) {
 	v, ok := c.Value(responseWriterKey).(http.ResponseWriter)
 	return v, ok
@@ -105,6 +124,31 @@ func ResponseWriterFromContext(c context.Context) (http.ResponseWriter, bool) {
 func RequestFromContext(c context.Context) (*http.Request, bool) {
 	v, ok := c.Value(requestKey).(*http.Request)
 	return v, ok
+}
+
+func RequestBodyFromContext(c context.Context, v interface{}) error {
+	request, ok := c.Value(requestKey).(*http.Request)
+	if !ok {
+		return errNoHTTPRequest
+	}
+	contextHandler, ok := c.Value(contextHandlerKey).(*contextHandler)
+	if !ok {
+		return errContextHandler
+	}
+	requestReaders := contextHandler.getRequestReaders(request)
+	if len(requestReaders) == 0 {
+		return errUnsupportedMediaType
+	}
+	for i := len(requestReaders) - 1; i >= 0; i-- {
+		if requestReaders[i].IsReadable(request, v) {
+			err := requestReaders[i].Read(request, v)
+			if err != nil {
+				return NewHTTPError(err.Error(), http.StatusBadRequest)
+			}
+			return nil
+		}
+	}
+	return errUnsupportedMediaType
 }
 
 func PathParamsFromContext(c context.Context) (map[string]string, bool) {

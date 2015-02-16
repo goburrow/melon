@@ -19,20 +19,33 @@ type User struct {
 }
 
 // REST resource.
-type resource struct {
+type UserResource struct {
 }
 
-func (r *resource) Path() string {
+func (r *UserResource) Path() string {
 	return "/user/:name"
 }
 
-func (r *resource) GET(c context.Context) (interface{}, error) {
+func (r *UserResource) GET(c context.Context) (interface{}, error) {
 	params, _ := rest.PathParamsFromContext(c)
 	return &User{Name: params["name"]}, nil
 }
 
-func (r *resource) POST(c context.Context) (interface{}, error) {
-	return &User{}, nil
+func (r *UserResource) POST(c context.Context) (interface{}, error) {
+	user := &User{}
+	if err := rest.RequestBodyFromContext(c, user); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (r *UserResource) DELETE(c context.Context) (interface{}, error) {
+	params, _ := rest.PathParamsFromContext(c)
+	return fmt.Sprintf("Deleted: user %v", params["name"]), nil
+}
+
+func (r *UserResource) Produces() []string {
+	return []string{"application/xml"}
 }
 
 // Main application.
@@ -44,7 +57,8 @@ func (app *application) Run(conf interface{}, env *core.Environment) error {
 	if err := app.Application.Run(conf, env); err != nil {
 		return err
 	}
-	env.Server.Register(&resource{})
+	env.Server.Register(&rest.XMLProvider{})
+	env.Server.Register(&UserResource{})
 	return nil
 }
 

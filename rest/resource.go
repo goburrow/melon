@@ -12,6 +12,7 @@ type ResourceHandler struct {
 
 	serverHandler  core.ServerHandler
 	endpointLogger core.EndpointLogger
+	errorHandler   ErrorHandler
 }
 
 var _ core.ResourceHandler = (*ResourceHandler)(nil)
@@ -21,6 +22,8 @@ func NewResourceHandler(serverHandler core.ServerHandler, endpointLogger core.En
 		Providers:      NewProviders(),
 		serverHandler:  serverHandler,
 		endpointLogger: endpointLogger,
+		// TODO: configuable error handlers
+		errorHandler: NewErrorHandler(),
 	}
 }
 
@@ -50,7 +53,7 @@ func (h *ResourceHandler) Handle(v interface{}) {
 
 func (h *ResourceHandler) handle(v interface{}, method, path string, f contextFunc) {
 	providers := h.getProviders(v)
-	context := &contextHandler{providers: providers, handler: f}
+	context := &contextHandler{providers: providers, handler: f, errorHandler: h.errorHandler}
 
 	h.serverHandler.Handle(method, path, context)
 	h.endpointLogger.LogEndpoint(method, path, v)
