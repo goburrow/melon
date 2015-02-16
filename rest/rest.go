@@ -54,3 +54,13 @@ type HEAD interface {
 	Path() string
 	HEAD(context.Context) (interface{}, error)
 }
+
+// Consumes defines the MIME Types that a resource can accept.
+type Consumes interface {
+	Consumes() []string
+}
+
+// Produces defines the MIME Types that a resource can produce.
+type Produces interface {
+	Produces() []string
+}

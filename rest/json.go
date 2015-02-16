@@ -7,15 +7,24 @@ package rest
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 )
+
+var jsonMIMETypes = []string{
+	"application/json",
+	"text/json",
+	"text/javascript",
+}
 
 // JSONProvider reads JSON request and responds JSON.
 type JSONProvider struct {
 }
 
+func (p *JSONProvider) ContentTypes() []string {
+	return jsonMIMETypes
+}
+
 func (p *JSONProvider) IsReadable(r *http.Request, v interface{}) bool {
-	return isTypeJSON(r.Header.Get("Content-Type"))
+	return true
 }
 
 func (p *JSONProvider) Read(r *http.Request, v interface{}) error {
@@ -24,38 +33,11 @@ func (p *JSONProvider) Read(r *http.Request, v interface{}) error {
 }
 
 func (p *JSONProvider) IsWriteable(r *http.Request, v interface{}, w http.ResponseWriter) bool {
-	accept := r.Header.Get("Accept")
-	// JSON is default format
-	return accept == "" || accept == "*/*" || isTypeJSON(accept)
+	return true
 }
 
 func (p *JSONProvider) Write(r *http.Request, v interface{}, w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	return encoder.Encode(v)
-}
-
-func isTypeJSON(s string) bool {
-	if s == "application/json" { // Most popular
-		return true
-	}
-	subType := getSubType(s)
-	if subType != "" {
-		if subType == "json" ||
-			strings.HasSuffix(subType, "+json") ||
-			subType == "x-json" ||
-			subType == "x-javascript" ||
-			subType == "javascript" {
-			return true
-		}
-	}
-	return false
-}
-
-func getSubType(s string) string {
-	idx := strings.Index(s, "/")
-	if idx < 0 {
-		return ""
-	}
-	return s[idx+1:]
 }

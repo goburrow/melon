@@ -7,7 +7,6 @@ package rest
 import (
 	"github.com/goburrow/gomelon"
 	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/server"
 )
 
 // Application is a RESTful-supported application.
@@ -15,12 +14,16 @@ type Application struct {
 	gomelon.Application
 }
 
+// Run registers the RESTful handler and set JSONProvider as default.
+// To support other providers (like XML), use core.Server.Register(), e.g:
+//   environment.Server.Register(&rest.XMLProvider{})
 func (app *Application) Run(conf interface{}, env *core.Environment) error {
 	if err := app.Application.Run(conf, env); err != nil {
 		return err
 	}
-	restHandler := NewResourceHandler(env.Server.ServerHandler.(*server.Handler), env.Server)
-	restHandler.providers = []Provider{&JSONProvider{}, &XMLProvider{}}
+	restHandler := NewResourceHandler(env.Server.ServerHandler, env.Server)
+	restHandler.Providers.AddProvider(&JSONProvider{})
+	//restHandler.Providers.AddProvider(&XMLProvider{})
 	env.Server.AddResourceHandler(restHandler)
 	return nil
 }

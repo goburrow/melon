@@ -4,55 +4,75 @@
 
 package rest
 
-import (
-	"github.com/goburrow/gomelon/core"
-)
+import "github.com/goburrow/gomelon/core"
 
 type ResourceHandler struct {
+	// Providers contains all supported Provider.
+	Providers *DefaultProviders
+
 	serverHandler  core.ServerHandler
 	endpointLogger core.EndpointLogger
-	providers      []Provider
 }
 
 var _ core.ResourceHandler = (*ResourceHandler)(nil)
 
 func NewResourceHandler(serverHandler core.ServerHandler, endpointLogger core.EndpointLogger) *ResourceHandler {
 	return &ResourceHandler{
+		Providers:      NewProviders(),
 		serverHandler:  serverHandler,
 		endpointLogger: endpointLogger,
 	}
 }
 
+// Handle must only be called after all providers are added.
 func (h *ResourceHandler) Handle(v interface{}) {
+	// Also supports additional Provider
+	if r, ok := v.(Provider); ok {
+		h.Providers.AddProvider(r)
+	}
+	// FIXME: share Providers
 	if r, ok := v.(GET); ok {
-		h.serverHandler.Handle("GET", r.Path(), h.newContextHandler(r.GET))
-		h.endpointLogger.LogEndpoint("GET", r.Path(), v)
+		h.handle(v, "GET", r.Path(), r.GET)
 	}
 	if r, ok := v.(POST); ok {
-		h.serverHandler.Handle("POST", r.Path(), h.newContextHandler(r.POST))
-		h.endpointLogger.LogEndpoint("POST", r.Path(), v)
+		h.handle(v, "POST", r.Path(), r.POST)
 	}
 	if r, ok := v.(PUT); ok {
-		h.serverHandler.Handle("PUT", r.Path(), h.newContextHandler(r.PUT))
-		h.endpointLogger.LogEndpoint("PUT", r.Path(), v)
+		h.handle(v, "PUT", r.Path(), r.PUT)
 	}
 	if r, ok := v.(DELETE); ok {
-		h.serverHandler.Handle("DELETE", r.Path(), h.newContextHandler(r.DELETE))
-		h.endpointLogger.LogEndpoint("DELETE", r.Path(), v)
+		h.handle(v, "DELETE", r.Path(), r.DELETE)
 	}
 	if r, ok := v.(HEAD); ok {
-		h.serverHandler.Handle("HEAD", r.Path(), h.newContextHandler(r.HEAD))
-		h.endpointLogger.LogEndpoint("HEAD", r.Path(), v)
+		h.handle(v, "HEAD", r.Path(), r.HEAD)
 	}
 }
 
-func (h *ResourceHandler) AddProvider(p ...Provider) {
-	h.providers = append(h.providers, p...)
+func (h *ResourceHandler) handle(v interface{}, method, path string, f contextFunc) {
+	providers := h.getProviders(v)
+	context := &contextHandler{providers: providers, handler: f}
+
+	h.serverHandler.Handle(method, path, context)
+	h.endpointLogger.LogEndpoint(method, path, v)
 }
 
-func (h *ResourceHandler) newContextHandler(f contextFunc) *contextHandler {
-	return &contextHandler{
-		providers: h.providers,
-		handler:   f,
+func (h *ResourceHandler) getProviders(v interface{}) Providers {
+	// If v does implement Consumes nor Produces interfaces, the provider
+	// is from this resource handler.
+	consumes, hasConsumes := v.(Consumes)
+	produces, hasProduces := v.(Produces)
+
+	if !hasConsumes && !hasProduces {
+		return h.Providers
 	}
+
+	providers := NewRestrictedProviders(h.Providers)
+	// Transfer readers and writers for given mime types.
+	if hasConsumes {
+		providers.Consumes = consumes.Consumes()
+	}
+	if hasProduces {
+		providers.Produces = produces.Produces()
+	}
+	return providers
 }
