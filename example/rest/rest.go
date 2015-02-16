@@ -44,21 +44,24 @@ func (r *UserResource) DELETE(c context.Context) (interface{}, error) {
 	return fmt.Sprintf("Deleted: user %v", params["name"]), nil
 }
 
-func (r *UserResource) Produces() []string {
-	return []string{"application/xml"}
-}
-
 // Main application.
 type application struct {
-	rest.Application
+	gomelon.Application
 }
 
+// Initialize adds RESTful bundle.
+func (app *application) Initialize(bootstrap *core.Bootstrap) {
+	app.Application.Initialize(bootstrap)
+	bootstrap.AddBundle(&rest.Bundle{})
+}
+
+// Run registers application resources.
 func (app *application) Run(conf interface{}, env *core.Environment) error {
 	if err := app.Application.Run(conf, env); err != nil {
 		return err
 	}
-	env.Server.Register(&rest.XMLProvider{})
 	env.Server.Register(&UserResource{})
+	env.Server.Register(&rest.XMLProvider{})
 	return nil
 }
 
