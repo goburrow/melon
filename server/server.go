@@ -154,7 +154,7 @@ func NewHandler(mux *web.Mux) *Handler {
 
 // Handle registers the handler for the given pattern.
 func (h *Handler) Handle(method, pattern string, handler interface{}) {
-	var f func(pattern interface{}, handler interface{})
+	var f func(pattern web.PatternType, handler web.HandlerType)
 
 	switch method {
 	case "GET":
