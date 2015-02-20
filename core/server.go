@@ -21,8 +21,7 @@ type Server interface {
 // ServerHandler allows users to register a http.Handler.
 type ServerHandler interface {
 	// Handle registers the handler for the given pattern.
-	// To use a user-defined router, call this in your Application.Run():
-	//   environment.ServerHandler.Handle("/", router)
+	// An implementation of ServerHandler must at least support http.Handler.
 	Handle(method, pattern string, handler interface{})
 	// PathPrefix returns prefix path of this handler.
 	PathPrefix() string
@@ -80,12 +79,7 @@ func (env *ServerEnvironment) onStopped() {
 func (env *ServerEnvironment) handle(component interface{}) {
 	// Last handler first
 	for i := len(env.resourceHandlers) - 1; i >= 0; i-- {
-		env.resourceHandlers[i].Handle(component)
-	}
-	// Eventually handle this resource as http.Handler
-	if res, ok := component.(HTTPResource); ok {
-		env.ServerHandler.Handle(res.Method(), res.Path(), res)
-		env.LogEndpoint(res.Method(), res.Path(), res)
+		env.resourceHandlers[i].HandleResource(component)
 	}
 }
 

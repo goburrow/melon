@@ -24,7 +24,7 @@ func NewResourceHandler(serverHandler core.ServerHandler, endpointLogger core.En
 }
 
 // Handle must only be called after all providers are added.
-func (h *ResourceHandler) Handle(v interface{}) {
+func (h *ResourceHandler) HandleResource(v interface{}) {
 	// Also supports additional Provider
 	if r, ok := v.(Provider); ok {
 		h.Providers.AddProvider(r)
