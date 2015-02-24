@@ -70,8 +70,9 @@ type ConsoleAppenderConfiguration struct {
 }
 
 type FileAppenderConfiguration struct {
-	Threshold          string
-	CurrentLogFilename string `validate:"nonzero"`
+	Threshold string
+	// FIXME: `valid:"nonzero"`
+	CurrentLogFilename string
 
 	Archive                    bool
 	ArchivedLogFilenamePattern string
@@ -85,7 +86,11 @@ type SyslogAppenderConfiguration struct {
 }
 
 type AppenderConfiguration struct {
-	Type string `validate:"nonzero"`
+	Type string `valid:"nonzero"`
+
+	// FIXME: properties in inner struct are not set because of name clash.
+	Threshold string
+
 	ConsoleAppenderConfiguration
 	FileAppenderConfiguration
 	SyslogAppenderConfiguration
@@ -159,14 +164,18 @@ func (factory *Factory) configureAppenders() error {
 	for _, a := range factory.Appenders {
 		switch a.Type {
 		case "console":
+			// FIXME: properties in inner struct are not set because of name clash.
+			a.ConsoleAppenderConfiguration.Threshold = a.Threshold
 			if err := factory.addConsoleAppender(&a.ConsoleAppenderConfiguration); err != nil {
 				return err
 			}
 		case "file":
+			a.FileAppenderConfiguration.Threshold = a.Threshold
 			if err := factory.addFileAppender(&a.FileAppenderConfiguration); err != nil {
 				return err
 			}
 		case "syslog":
+			a.SyslogAppenderConfiguration.Threshold = a.Threshold
 			if err := factory.addSyslogAppender(&a.SyslogAppenderConfiguration); err != nil {
 				return err
 			}

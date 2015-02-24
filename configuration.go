@@ -53,15 +53,16 @@ type ConfigurationCommand struct {
 
 func (command *ConfigurationCommand) Run(bootstrap *core.Bootstrap) error {
 	var err error
-	command.Configuration, err = bootstrap.ConfigurationFactory.Build(bootstrap)
-	if err != nil {
-		gol.GetLogger(configurationLoggerName).Error("could not create configuration: %v", err)
+	if command.Configuration, err = bootstrap.ConfigurationFactory.Build(bootstrap); err != nil {
+		return err
+	}
+	if err = bootstrap.ValidatorFactory.Validator().Validate(command.Configuration); err != nil {
+		gol.GetLogger(configurationLoggerName).Error("configuration is invalid: %v", err)
 		return err
 	}
 	// Configuration provided must implement core.Configuration interface.
 	var ok bool
-	command.configuration, ok = command.Configuration.(core.Configuration)
-	if !ok {
+	if command.configuration, ok = command.Configuration.(core.Configuration); !ok {
 		gol.GetLogger(configurationLoggerName).Error(
 			"configuration does not implement core.Configuration interface %[1]v %[1]T",
 			command.Configuration)
@@ -88,6 +89,8 @@ func (c *CheckCommand) Run(bootstrap *core.Bootstrap) error {
 	if err := c.ConfigurationCommand.Run(bootstrap); err != nil {
 		return err
 	}
+
+	gol.GetLogger(configurationLoggerName).Debug("configuration: %+v", c.ConfigurationCommand.Configuration)
 	println("Configuration is OK")
 	return nil
 }

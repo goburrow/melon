@@ -20,7 +20,7 @@ const (
 )
 
 type ConnectorConfiguration struct {
-	Type string `validate:"nonzero"`
+	Type string `valid:"nonzero"`
 	Addr string
 
 	CertFile string
@@ -185,8 +185,8 @@ func (h *Handler) PathPrefix() string {
 // DefaultFactory allows multiple sets of application and admin connectors running
 // on separate ports.
 type DefaultFactory struct {
-	ApplicationConnectors []ConnectorConfiguration `validate:"nonzero"`
-	AdminConnectors       []ConnectorConfiguration `validate:"nonzero"`
+	ApplicationConnectors []ConnectorConfiguration `valid:"nonzero"`
+	AdminConnectors       []ConnectorConfiguration `valid:"nonzero"`
 }
 
 // Initialize sets default value for the factory.
@@ -224,8 +224,8 @@ func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server
 
 // SimpleFactory creates a single-connector server.
 type SimpleFactory struct {
-	ApplicationContextPath string `validate:"nonzero"`
-	AdminContextPath       string `validate:"nonzero"`
+	ApplicationContextPath string `valid:"nonzero"`
+	AdminContextPath       string `valid:"nonzero"`
 	Connector              ConnectorConfiguration
 }
 
