@@ -5,7 +5,7 @@ package validation
 
 import (
 	"github.com/goburrow/gomelon/core"
-	"gopkg.in/validator.v2"
+	"github.com/goburrow/validator"
 )
 
 const (
