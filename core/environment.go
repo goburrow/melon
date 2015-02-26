@@ -12,6 +12,8 @@ type Environment struct {
 	Lifecycle *LifecycleEnvironment
 	// Admin controls administration tasks.
 	Admin *AdminEnvironment
+	// Validator validates communication data structures.
+	Validator Validator
 
 	eventListeners []eventListener
 }
