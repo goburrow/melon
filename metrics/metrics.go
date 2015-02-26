@@ -33,16 +33,16 @@ func (handler *metricsHandler) Path() string {
 func (*metricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, "{")
+	w.Write([]byte("{"))
 	first := true
 	expvar.Do(func(kv expvar.KeyValue) {
 		if !first {
-			fmt.Fprintf(w, ",")
+			w.Write([]byte(","))
 		}
 		first = false
 		fmt.Fprintf(w, "%q: %s", kv.Key, kv.Value)
 	})
-	fmt.Fprintf(w, "}")
+	w.Write([]byte("}"))
 }
 
 type Factory struct {
