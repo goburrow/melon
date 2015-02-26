@@ -91,6 +91,6 @@ func (c *CheckCommand) Run(bootstrap *core.Bootstrap) error {
 	}
 
 	gol.GetLogger(configurationLoggerName).Debug("configuration: %+v", c.ConfigurationCommand.Configuration)
-	println("Configuration is OK")
+	fmt.Println("Configuration is OK")
 	return nil
 }

@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/goburrow/gol"
 	golfile "github.com/goburrow/gol/file"
 	golsyslog "github.com/goburrow/gol/syslog"
+	"github.com/goburrow/polytype"
 
 	"github.com/goburrow/gomelon/core"
 )
@@ -21,19 +23,44 @@ const (
 )
 
 var (
-	logLevels map[string]gol.Level
+	logLevels = map[string]gol.Level{
+		"ALL":   gol.LevelAll,
+		"TRACE": gol.LevelTrace,
+		"DEBUG": gol.LevelDebug,
+		"INFO":  gol.LevelInfo,
+		"WARN":  gol.LevelWarn,
+		"ERROR": gol.LevelError,
+		"OFF":   gol.LevelOff,
+	}
+
+	facilities = map[string]golsyslog.Facility{
+		"KERN":     golsyslog.LOG_KERN,
+		"USER":     golsyslog.LOG_USER,
+		"MAIL":     golsyslog.LOG_MAIL,
+		"DAEMON":   golsyslog.LOG_DAEMON,
+		"AUTH":     golsyslog.LOG_AUTH,
+		"SYSLOG":   golsyslog.LOG_SYSLOG,
+		"LPR":      golsyslog.LOG_LPR,
+		"NEWS":     golsyslog.LOG_NEWS,
+		"UUCP":     golsyslog.LOG_UUCP,
+		"CRON":     golsyslog.LOG_CRON,
+		"AUTHPRIV": golsyslog.LOG_AUTHPRIV,
+		"FTP":      golsyslog.LOG_FTP,
+		"LOCAL0":   golsyslog.LOG_LOCAL0,
+		"LOCAL1":   golsyslog.LOG_LOCAL1,
+		"LOCAL2":   golsyslog.LOG_LOCAL2,
+		"LOCAL3":   golsyslog.LOG_LOCAL3,
+		"LOCAL4":   golsyslog.LOG_LOCAL4,
+		"LOCAL5":   golsyslog.LOG_LOCAL5,
+		"LOCAL6":   golsyslog.LOG_LOCAL6,
+		"LOCAL7":   golsyslog.LOG_LOCAL7,
+	}
 )
 
 func init() {
-	logLevels = map[string]gol.Level{
-		gol.LevelString(gol.LevelAll):   gol.LevelAll,
-		gol.LevelString(gol.LevelTrace): gol.LevelTrace,
-		gol.LevelString(gol.LevelDebug): gol.LevelDebug,
-		gol.LevelString(gol.LevelInfo):  gol.LevelInfo,
-		gol.LevelString(gol.LevelWarn):  gol.LevelWarn,
-		gol.LevelString(gol.LevelError): gol.LevelError,
-		gol.LevelString(gol.LevelOff):   gol.LevelOff,
-	}
+	polytype.AddType("console_appender", func() interface{} { return &ConsoleAppenderConfiguration{} })
+	polytype.AddType("file_appender", func() interface{} { return &FileAppenderConfiguration{} })
+	polytype.AddType("syslog_appender", func() interface{} { return &SyslogAppenderConfiguration{} })
 }
 
 func getLogLevel(level string) (gol.Level, bool) {
@@ -64,15 +91,22 @@ type stoppable interface {
 	Stop() error
 }
 
-type ConsoleAppenderConfiguration struct {
+type FilteredAppenderConfiguration struct {
 	Threshold string
-	Target    string
+	Includes  []string
+	Excludes  []string
+}
+
+type ConsoleAppenderConfiguration struct {
+	FilteredAppenderConfiguration
+
+	Target string
 }
 
 type FileAppenderConfiguration struct {
-	Threshold string
-	// FIXME: `valid:"nonzero"`
-	CurrentLogFilename string
+	FilteredAppenderConfiguration
+
+	CurrentLogFilename string `valid:"nonzero"`
 
 	Archive                    bool
 	ArchivedLogFilenamePattern string
@@ -80,20 +114,16 @@ type FileAppenderConfiguration struct {
 }
 
 type SyslogAppenderConfiguration struct {
-	Threshold string
-	Network   string
-	Addr      string
+	FilteredAppenderConfiguration
+
+	Network  string
+	Addr     string
+	Facility string
 }
 
+// AppenderConfiguration is an union of console, file and syslog configuration.
 type AppenderConfiguration struct {
-	Type string `valid:"nonzero"`
-
-	// FIXME: properties in inner struct are not set because of name clash.
-	Threshold string
-
-	ConsoleAppenderConfiguration
-	FileAppenderConfiguration
-	SyslogAppenderConfiguration
+	polytype.Polytype
 }
 
 // Factory configures logging environment.
@@ -134,8 +164,11 @@ func (factory *Factory) Start() error {
 }
 
 func (factory *Factory) Stop() error {
+	logger := gol.GetLogger(loggerName)
 	for _, s := range factory.managed {
-		s.Stop()
+		if err := s.Stop(); err != nil {
+			logger.Warn("error stopping appender %v", err)
+		}
 	}
 	return nil
 }
@@ -161,26 +194,22 @@ func (factory *Factory) configureLevels() error {
 }
 
 func (factory *Factory) configureAppenders() error {
-	for _, a := range factory.Appenders {
-		switch a.Type {
-		case "console":
-			// FIXME: properties in inner struct are not set because of name clash.
-			a.ConsoleAppenderConfiguration.Threshold = a.Threshold
-			if err := factory.addConsoleAppender(&a.ConsoleAppenderConfiguration); err != nil {
+	for _, appender := range factory.Appenders {
+		switch a := appender.Value.(type) {
+		case *ConsoleAppenderConfiguration:
+			if err := factory.addConsoleAppender(a); err != nil {
 				return err
 			}
-		case "file":
-			a.FileAppenderConfiguration.Threshold = a.Threshold
-			if err := factory.addFileAppender(&a.FileAppenderConfiguration); err != nil {
+		case *FileAppenderConfiguration:
+			if err := factory.addFileAppender(a); err != nil {
 				return err
 			}
-		case "syslog":
-			a.SyslogAppenderConfiguration.Threshold = a.Threshold
-			if err := factory.addSyslogAppender(&a.SyslogAppenderConfiguration); err != nil {
+		case *SyslogAppenderConfiguration:
+			if err := factory.addSyslogAppender(a); err != nil {
 				return err
 			}
 		default:
-			return fmt.Errorf("unknown appender type: %s", a.Type)
+			return fmt.Errorf("unsupported appender %#v", a)
 		}
 	}
 	// Override default appender of the root logger
@@ -195,10 +224,6 @@ func (factory *Factory) configureAppenders() error {
 }
 
 func (factory *Factory) addConsoleAppender(config *ConsoleAppenderConfiguration) error {
-	threshold, err := getThreshold(config.Threshold)
-	if err != nil {
-		return err
-	}
 	var writer io.Writer
 	switch config.Target {
 	case "", "stdout":
@@ -209,19 +234,15 @@ func (factory *Factory) addConsoleAppender(config *ConsoleAppenderConfiguration)
 		return fmt.Errorf("unknown target %s", config.Target)
 	}
 
-	a := &thresholdAppender{
-		threshold: threshold,
-		appender:  gol.NewAppender(writer),
+	a, err := newFilteredAppender(gol.NewAppender(writer), &config.FilteredAppenderConfiguration)
+	if err != nil {
+		return err
 	}
 	factory.appenders = append(factory.appenders, a)
 	return nil
 }
 
 func (factory *Factory) addFileAppender(config *FileAppenderConfiguration) error {
-	threshold, err := getThreshold(config.Threshold)
-	if err != nil {
-		return err
-	}
 	appender := golfile.NewAppender(config.CurrentLogFilename)
 	if config.Archive {
 		triggeringPolicy := golfile.NewTimeTriggeringPolicy()
@@ -236,35 +257,58 @@ func (factory *Factory) addFileAppender(config *FileAppenderConfiguration) error
 		appender.SetTriggeringPolicy(triggeringPolicy)
 		appender.SetRollingPolicy(rollingPolicy)
 	}
+	a, err := newFilteredAppender(appender, &config.FilteredAppenderConfiguration)
+	if err != nil {
+		return err
+	}
 	if err := appender.Start(); err != nil {
 		return err
 	}
 	factory.managed = append(factory.managed, appender)
-
-	a := &thresholdAppender{
-		threshold: threshold,
-		appender:  appender,
-	}
 	factory.appenders = append(factory.appenders, a)
 	return nil
 }
 
 func (factory *Factory) addSyslogAppender(config *SyslogAppenderConfiguration) error {
-	threshold, err := getThreshold(config.Threshold)
-	if err != nil {
-		return err
-	}
 	appender := golsyslog.NewAppender()
 	appender.Network = config.Network
 	appender.Addr = config.Addr
+	if config.Facility != "" {
+		f, ok := facilities[strings.ToUpper(config.Facility)]
+		if !ok {
+			return fmt.Errorf("unknown facility %s", config.Facility)
+		}
+		appender.Facility = f
+	}
+	a, err := newFilteredAppender(appender, &config.FilteredAppenderConfiguration)
+	if err != nil {
+		return err
+	}
 	if err := appender.Start(); err != nil {
 		return err
 	}
 	factory.managed = append(factory.managed, appender)
-	a := &thresholdAppender{
-		threshold: threshold,
-		appender:  appender,
-	}
 	factory.appenders = append(factory.appenders, a)
 	return nil
+}
+
+// newFilteredAppender allocates and returns a new filteredAppender
+func newFilteredAppender(appender gol.Appender, config *FilteredAppenderConfiguration) (*filteredAppender, error) {
+	threshold, err := getThreshold(config.Threshold)
+	if err != nil {
+		return nil, err
+	}
+	a := &filteredAppender{
+		appender:  appender,
+		threshold: threshold,
+	}
+	if len(config.Includes) > 0 {
+		a.includes = config.Includes
+		sort.Strings(a.includes)
+	}
+	if len(config.Excludes) > 0 {
+		a.excludes = config.Excludes
+		sort.Strings(a.excludes)
+	}
+	return a, nil
 }
