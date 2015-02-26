@@ -1,0 +1,20 @@
+server:
+  applicationConnectors:
+  - type: http
+    addr: ":8080"
+  - type: https
+    addr: :8048
+    certFile: /tmp/cert
+    keyFile: "/tmp/key"
+  adminConnectors:
+  - type: "http"
+    addr: ":8081"
+
+logging:
+  level: "INFO"
+  loggers:
+    gomelon.server: "DEBUG"
+    gomelon.configuration: WARN
+
+metrics:
+  frequency: 1s

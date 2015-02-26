@@ -41,6 +41,13 @@ func TestLoadJSON(t *testing.T) {
 	testFactory(t, &bootstrap)
 }
 
+func TestLoadYAML(t *testing.T) {
+	bootstrap := core.Bootstrap{
+		Arguments: []string{"server", "configuration_test.yaml"},
+	}
+	testFactory(t, &bootstrap)
+}
+
 func testFactory(t *testing.T, bootstrap *core.Bootstrap) {
 	factory := Factory{Configuration: &configuration{}}
 	c, err := factory.Build(bootstrap)

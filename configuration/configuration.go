@@ -7,11 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gomelon/core"
+
+	"github.com/ghodss/yaml"
 )
 
 const (
@@ -51,6 +54,8 @@ func Unmarshal(path string, output interface{}) error {
 	switch ext {
 	case ".json", ".js":
 		return unmarshalJSON(f, output)
+	case ".yaml", ".yml":
+		return unmarshalYAML(f, output)
 	default:
 		return fmt.Errorf("unsupported file type %s", ext)
 	}
@@ -59,4 +64,12 @@ func Unmarshal(path string, output interface{}) error {
 func unmarshalJSON(f *os.File, output interface{}) error {
 	decoder := json.NewDecoder(f)
 	return decoder.Decode(output)
+}
+
+func unmarshalYAML(f *os.File, output interface{}) error {
+	content, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(content, output)
 }

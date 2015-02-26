@@ -110,6 +110,7 @@ func main() {
 	app := &myApplication{}
 	app.SetName("MyApp")
 	if err := gomelon.Run(app, os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }

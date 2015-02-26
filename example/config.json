@@ -18,7 +18,12 @@
     "loggers": {
       "gomelon/server": "DEBUG",
       "gomelon/configuration": "WARN"
-    }
+    },
+    "appenders": [
+      {
+	"type": "console_appender",
+      }
+    ]
   },
   "metrics": {
     "frequency": "1s"

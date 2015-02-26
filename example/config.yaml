@@ -1,0 +1,18 @@
+server:
+  applicationConnectors:
+  - type: http
+    addr: :8080
+  adminConnectors:
+  - type: http
+    addr: :8081
+
+logging:
+  level: INFO
+  loggers:
+    gomelon.server: DEBUG
+    gomelon.configuration: WARN
+  appenders:
+  - type: console_appender
+
+metrics:
+  frequency: 1s
