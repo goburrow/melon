@@ -222,7 +222,8 @@ func (handler *runtimeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 	w.Header().Set("Content-Type", "text/plain")
 
-	fmt.Fprintf(w, "NumCPU: %d\nNumCgoCall: %d\nNumGoroutine: %d\n",
+	fmt.Fprintf(w, "GOARCH: %s\nGOOS: %s\nVersion: %s\nNumCPU: %d\nNumCgoCall: %d\nNumGoroutine: %d\n",
+		runtime.GOARCH, runtime.GOOS, runtime.Version(),
 		runtime.NumCPU(), runtime.NumCgoCall(), runtime.NumGoroutine())
 
 	var m runtime.MemStats
@@ -239,8 +240,6 @@ func (handler *runtimeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	// Garbage collector statistics
 	fmt.Fprintf(w, "\tNextGC: %d\n\tLastGC: %d\n\tPauseTotalNs: %d\n\tNumGC: %d\n\tEnableGC: %t\n\tDebugGC: %t\n",
 		m.NextGC, m.LastGC, m.PauseTotalNs, m.NumGC, m.EnableGC, m.DebugGC)
-
-	fmt.Fprintf(w, "Version: %s\n", runtime.Version())
 }
 
 // gcTask performs a garbage collection
