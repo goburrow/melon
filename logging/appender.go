@@ -1,48 +1,172 @@
 package logging
 
 import (
-	"sort"
+	"fmt"
+	"io"
+	"os"
+	"strings"
 
 	"github.com/goburrow/gol"
+	"github.com/goburrow/gomelon/core"
+
+	golfile "github.com/goburrow/gol/file"
+	golfilter "github.com/goburrow/gol/filter"
+	golsyslog "github.com/goburrow/gol/syslog"
 )
 
-// filteredAppender is an logging appender which supports minimum level.
-type filteredAppender struct {
-	threshold gol.Level
-	// Make sure includes and excludes are sorted as it relies on binary search
-	// to check if the logger is in the list.
-	includes []string
-	excludes []string
+var (
+	facilities = map[string]golsyslog.Facility{
+		"KERN":     golsyslog.LOG_KERN,
+		"USER":     golsyslog.LOG_USER,
+		"MAIL":     golsyslog.LOG_MAIL,
+		"DAEMON":   golsyslog.LOG_DAEMON,
+		"AUTH":     golsyslog.LOG_AUTH,
+		"SYSLOG":   golsyslog.LOG_SYSLOG,
+		"LPR":      golsyslog.LOG_LPR,
+		"NEWS":     golsyslog.LOG_NEWS,
+		"UUCP":     golsyslog.LOG_UUCP,
+		"CRON":     golsyslog.LOG_CRON,
+		"AUTHPRIV": golsyslog.LOG_AUTHPRIV,
+		"FTP":      golsyslog.LOG_FTP,
+		"LOCAL0":   golsyslog.LOG_LOCAL0,
+		"LOCAL1":   golsyslog.LOG_LOCAL1,
+		"LOCAL2":   golsyslog.LOG_LOCAL2,
+		"LOCAL3":   golsyslog.LOG_LOCAL3,
+		"LOCAL4":   golsyslog.LOG_LOCAL4,
+		"LOCAL5":   golsyslog.LOG_LOCAL5,
+		"LOCAL6":   golsyslog.LOG_LOCAL6,
+		"LOCAL7":   golsyslog.LOG_LOCAL7,
+	}
+)
 
-	appender gol.Appender
+// AppenderFactory is for creating gol.Appender.
+type AppenderFactory interface {
+	Build(*core.Environment) (gol.Appender, error)
 }
 
-func (a *filteredAppender) Append(e *gol.LoggingEvent) {
-	if e.Level < a.threshold {
-		return
+// getThreshold returns gol.LevelAll if threshold is empty.
+func getThreshold(threshold string) (gol.Level, error) {
+	if threshold == "" {
+		return gol.LevelAll, nil
 	}
-	if len(a.excludes) > 0 {
-		idx := sort.SearchStrings(a.excludes, e.Name)
-		if idx != len(a.excludes) {
-			// Excluded
-			return
-		}
+	level, ok := getLogLevel(threshold)
+	if !ok {
+		return 0, fmt.Errorf("unknown threshold %s", threshold)
 	}
-	if len(a.includes) > 0 {
-		idx := sort.SearchStrings(a.includes, e.Name)
-		if idx == len(a.includes) {
-			// Not included
-			return
-		}
-	}
-	a.appender.Append(e)
+	return level, nil
 }
 
-// appenders sends the logging event to all appenders asynchronously.
-type appenders []gol.Appender
+// FilteredAppenderFactory is an abstract factory to create a new filteredAppender.
+type FilteredAppenderFactory struct {
+	Threshold string
+	Includes  []string
+	Excludes  []string
+}
 
-func (appenders appenders) Append(e *gol.LoggingEvent) {
-	for _, a := range appenders {
-		go a.Append(e)
+func (factory *FilteredAppenderFactory) Build(appender gol.Appender) (gol.Appender, error) {
+	threshold, err := getThreshold(factory.Threshold)
+	if err != nil {
+		return nil, err
 	}
+	a := golfilter.NewAppender(appender)
+	a.SetThreshold(threshold)
+	if len(factory.Includes) > 0 {
+		a.SetIncludes(factory.Includes)
+	}
+	if len(factory.Excludes) > 0 {
+		a.SetExcludes(factory.Excludes)
+	}
+	return a, nil
+}
+
+// ConsoleAppenderFactory provides an appender that writes logging events to the console.
+type ConsoleAppenderFactory struct {
+	FilteredAppenderFactory
+
+	Target string
+}
+
+func (factory *ConsoleAppenderFactory) Build(environment *core.Environment) (gol.Appender, error) {
+	var writer io.Writer
+	switch factory.Target {
+	case "", "stdout":
+		writer = os.Stdout
+	case "stderr":
+		writer = os.Stderr
+	default:
+		return nil, fmt.Errorf("unknown target %s", factory.Target)
+	}
+
+	return factory.FilteredAppenderFactory.Build(gol.NewAppender(writer))
+}
+
+// FileAppenderFactory provides an appender that writes logging events to file system.
+// It also archives older files as needed.
+type FileAppenderFactory struct {
+	FilteredAppenderFactory
+
+	CurrentLogFilename string `valid:"nonzero"`
+
+	Archive                    bool
+	ArchivedLogFilenamePattern string
+	ArchivedFileCount          int
+}
+
+func (factory *FileAppenderFactory) Build(environment *core.Environment) (gol.Appender, error) {
+	fa := golfile.NewAppender(factory.CurrentLogFilename)
+	if factory.Archive {
+		triggeringPolicy := golfile.NewTimeTriggeringPolicy()
+		if err := triggeringPolicy.Start(); err != nil {
+			return nil, err
+		}
+
+		rollingPolicy := golfile.NewTimeRollingPolicy()
+		rollingPolicy.FilePattern = factory.ArchivedLogFilenamePattern
+		rollingPolicy.FileCount = factory.ArchivedFileCount
+
+		fa.SetTriggeringPolicy(triggeringPolicy)
+		fa.SetRollingPolicy(rollingPolicy)
+	}
+	appender, err := factory.FilteredAppenderFactory.Build(fa)
+	if err != nil {
+		return nil, err
+	}
+	// Start file appender early. Its Start method can be called multiple times.
+	if err := fa.Start(); err != nil {
+		return nil, err
+	}
+	environment.Lifecycle.Manage(fa)
+	return appender, nil
+}
+
+// SyslogAppenderFactory provides an appender that writes logging events to syslog.
+type SyslogAppenderFactory struct {
+	FilteredAppenderFactory
+
+	Network  string
+	Addr     string
+	Facility string
+}
+
+func (factory *SyslogAppenderFactory) Build(environment *core.Environment) (gol.Appender, error) {
+	sa := golsyslog.NewAppender()
+	sa.Network = factory.Network
+	sa.Addr = factory.Addr
+	if factory.Facility != "" {
+		facility, ok := facilities[strings.ToUpper(factory.Facility)]
+		if !ok {
+			return nil, fmt.Errorf("unknown facility %s", factory.Facility)
+		}
+		sa.Facility = facility
+	}
+	appender, err := factory.FilteredAppenderFactory.Build(sa)
+	if err != nil {
+		return nil, err
+	}
+	// Start syslog appender early. Its Start method can be called multiple times.
+	if err := sa.Start(); err != nil {
+		return nil, err
+	}
+	environment.Lifecycle.Manage(sa)
+	return appender, nil
 }

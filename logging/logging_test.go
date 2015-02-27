@@ -1,110 +1,38 @@
 package logging
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
+
+	"github.com/goburrow/gol"
 )
 
-func TestConsoleLogging(t *testing.T) {
-	factory := &Factory{}
-	config := &ConsoleAppenderConfiguration{
-		Target: "stderr",
+func TestGetLogLevel(t *testing.T) {
+	level, ok := getLogLevel("ALL")
+	if !ok || level != gol.LevelAll {
+		t.Fatalf("%v != %v", gol.LevelAll, level)
 	}
-	err := factory.addConsoleAppender(config)
-	if err != nil {
-		t.Fatal(err)
+	level, ok = getLogLevel("DEBUG")
+	if !ok || level != gol.LevelDebug {
+		t.Fatalf("%v != %v", gol.LevelDebug, level)
 	}
-	if 1 != len(factory.appenders) {
-		t.Fatalf("console appender is not added %#v", factory.appenders)
+	level, ok = getLogLevel("INFO")
+	if !ok || level != gol.LevelInfo {
+		t.Fatalf("%v != %v", gol.LevelInfo, level)
 	}
-	config.Target = "stdout"
-	config.Threshold = "DEBUG"
-	err = factory.addConsoleAppender(config)
-	if err != nil {
-		t.Fatal(err)
+	level, ok = getLogLevel("WARN")
+	if !ok || level != gol.LevelWarn {
+		t.Fatalf("%v != %v", gol.LevelWarn, level)
 	}
-	if 2 != len(factory.appenders) {
-		t.Fatalf("console appender is not added %#v", factory.appenders)
+	level, ok = getLogLevel("ERROR")
+	if !ok || level != gol.LevelError {
+		t.Fatalf("%v != %v", gol.LevelError, level)
 	}
-}
-
-func TestConsoleLoggingWithInvalidArguments(t *testing.T) {
-	factory := &Factory{}
-	config := &ConsoleAppenderConfiguration{
-		Target: "std",
+	level, ok = getLogLevel("OFF")
+	if !ok || level != gol.LevelOff {
+		t.Fatalf("%v != %v", gol.LevelOff, level)
 	}
-	err := factory.addConsoleAppender(config)
-	if err == nil {
-		t.Fatal("error must be thrown")
-	}
-	config.Target = "stdout"
-	config.Threshold = "ANY"
-	err = factory.addConsoleAppender(config)
-	if err == nil {
-		t.Fatal("error must be thrown")
-	}
-}
-
-func TestFileLogging(t *testing.T) {
-	dir, err := ioutil.TempDir("", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	name := filepath.Join(dir, "test.log")
-	factory := &Factory{}
-	config := &FileAppenderConfiguration{
-		CurrentLogFilename: name,
-	}
-	err = factory.addFileAppender(config)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer factory.Stop()
-	if 1 != len(factory.appenders) {
-		t.Fatalf("file appender is not added %#v", factory.appenders)
-	}
-}
-
-func TestFileLoggingArchive(t *testing.T) {
-	dir, err := ioutil.TempDir("", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	name := filepath.Join(dir, "test.log")
-	archivedName := filepath.Join(dir, "test-%s.log.gz")
-
-	factory := &Factory{}
-	config := &FileAppenderConfiguration{
-		CurrentLogFilename: name,
-
-		Archive:                    true,
-		ArchivedLogFilenamePattern: archivedName,
-		ArchivedFileCount:          2,
-	}
-	err = factory.addFileAppender(config)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer factory.Stop()
-	if 1 != len(factory.appenders) {
-		t.Fatalf("file appender is not added %#v", factory.appenders)
-	}
-}
-
-func TestSyslogLogging(t *testing.T) {
-	factory := &Factory{}
-	config := &SyslogAppenderConfiguration{}
-	err := factory.addSyslogAppender(config)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if 1 != len(factory.appenders) {
-		t.Fatalf("syslog appender is not added %#v", factory.appenders)
+	_, ok = getLogLevel("WHATEVER")
+	if ok {
+		t.Fatal("Should not found")
 	}
 }
