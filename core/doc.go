@@ -1,5 +1,4 @@
 /*
-Package core provides APIs for a gomelon application. Its behavior is similar
-to Dropwizard.
+Package core provides APIs and basic behaviors for a server stack like Dropwizard.
 */
 package core

@@ -121,9 +121,7 @@ func (server *Server) Stop() error {
 
 // AddConnectors adds a new connector to the server.
 func (server *Server) AddConnectors(handler http.Handler, configurations []ConnectorConfiguration) {
-	count := len(configurations)
-	// Does "range" copy struct value?
-	for i := 0; i < count; i++ {
+	for i, _ := range configurations {
 		connector := NewConnector(handler, &configurations[i])
 		server.Connectors = append(server.Connectors, connector)
 	}

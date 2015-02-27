@@ -39,8 +39,7 @@ func (env *LifecycleEnvironment) onStarting() {
 	logger := gol.GetLogger(lifecycleLoggerName)
 
 	// Starting managed objects in order.
-	length := len(env.managedObjects)
-	for i := 0; i < length; i++ {
+	for i, _ := range env.managedObjects {
 		if err := env.managedObjects[i].Start(); err != nil {
 			logger.Warn("error starting a managed object: %v", err)
 		}

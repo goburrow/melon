@@ -119,7 +119,7 @@ func (env *AdminEnvironment) logHealthChecks() {
 	logger.Debug("health checks = %v", names)
 }
 
-// AdminHandler implement http.Handler
+// adminHomeHandler implement http.Handler
 type adminHomeHandler struct {
 	handlers    []AdminHandler
 	contextPath string
