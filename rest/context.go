@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	loggerContextName = "gomelon.rest.context"
+	loggerContextName         = "gomelon.rest.context"
+	statusUnprocessableEntity = 422
 )
 
 type contextKey int
@@ -31,26 +32,27 @@ var (
 	errNoHTTPRequest  = errors.New("rest: no http request")
 	errContextHandler = errors.New("rest: no context handler")
 
-	errInternalServerError  = NewHTTPError("500 internal server error", 500)
-	errNotAcceptable        = NewHTTPError("406 not acceptable", 406)
-	errUnsupportedMediaType = NewHTTPError("415 unsupported media type", 415)
+	errInternalServerError  = NewHTTPError("500 internal server error", http.StatusInternalServerError)
+	errNotAcceptable        = NewHTTPError("406 not acceptable", http.StatusNotAcceptable)
+	errUnsupportedMediaType = NewHTTPError("415 unsupported media type", http.StatusUnsupportedMediaType)
 )
 
 type contextFunc func(context.Context) (interface{}, error)
 
-// contextHandler
+// contextHandler is a HTTP handler for a resource giving user a request/response context.
+// It implements web.Handler.
 type contextHandler struct {
 	providers Providers
-	handler   contextFunc
+	handle    contextFunc
 
-	errorHandler ErrorHandler
+	resourceHandler *ResourceHandler
 }
 
 // ServeHTTPC converts web.C to context.Context
 func (h *contextHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
 	responseWriters := h.getResponseWriters(r)
 	if len(responseWriters) == 0 {
-		h.errorHandler.HandleError(errNotAcceptable, w, r)
+		h.resourceHandler.errorMapper.MapError(errNotAcceptable, w, r)
 		return
 	}
 
@@ -62,9 +64,9 @@ func (h *contextHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Requ
 	ctx = context.WithValue(ctx, contextHandlerKey, h)
 	ctx = context.WithValue(ctx, pathParamsKey, c.URLParams)
 
-	response, err := h.handler(ctx)
+	response, err := h.handle(ctx)
 	if err != nil {
-		h.errorHandler.HandleError(err, w, r)
+		h.resourceHandler.errorMapper.MapError(err, w, r)
 		return
 	}
 	// No response, maybe body is already writen by the handler.
@@ -75,13 +77,14 @@ func (h *contextHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Requ
 		if responseWriters[i].IsWriteable(r, response, w) {
 			err = responseWriters[i].Write(r, response, w)
 			if err != nil {
-				h.errorHandler.HandleError(errInternalServerError, w, r)
+				h.resourceHandler.logger.Warn("response writer: %v", err)
+				h.resourceHandler.errorMapper.MapError(errInternalServerError, w, r)
 			}
 			return
 		}
 	}
 	// FIXME: Unknown type
-	h.errorHandler.HandleError(errNotAcceptable, w, r)
+	h.resourceHandler.errorMapper.MapError(errNotAcceptable, w, r)
 }
 
 // getResponseWriters returns a list of ResponseWriter according Accept in the request header.
@@ -112,17 +115,26 @@ func (h *contextHandler) getRequestReaders(r *http.Request) []RequestReader {
 	return h.providers.GetRequestReaders(strings.TrimSpace(mime))
 }
 
+// ResponseWriterFromContext returns http.ResponseWriter.
 func ResponseWriterFromContext(c context.Context) (http.ResponseWriter, bool) {
 	v, ok := c.Value(responseWriterKey).(http.ResponseWriter)
 	return v, ok
 }
 
+// RequestFromContext returns http.Request.
 func RequestFromContext(c context.Context) (*http.Request, bool) {
 	v, ok := c.Value(requestKey).(*http.Request)
 	return v, ok
 }
 
-func RequestBodyFromContext(c context.Context, v interface{}) error {
+// ParamsFromContext returns path params.
+func ParamsFromContext(c context.Context) (map[string]string, bool) {
+	v, ok := c.Value(pathParamsKey).(map[string]string)
+	return v, ok
+}
+
+// EntityFromContext returns marshalled http.Request.Body.
+func EntityFromContext(c context.Context, v interface{}) error {
 	request, ok := c.Value(requestKey).(*http.Request)
 	if !ok {
 		return errNoHTTPRequest
@@ -147,7 +159,16 @@ func RequestBodyFromContext(c context.Context, v interface{}) error {
 	return errUnsupportedMediaType
 }
 
-func PathParamsFromContext(c context.Context) (map[string]string, bool) {
-	v, ok := c.Value(pathParamsKey).(map[string]string)
-	return v, ok
+// ValidEntityFromContext is similar to EntityFromContext but also validate the entity.
+func ValidEntityFromContext(c context.Context, v interface{}) error {
+	err := EntityFromContext(c, v)
+	if err != nil {
+		return err
+	}
+	contextHandler, _ := c.Value(contextHandlerKey).(*contextHandler)
+	err = contextHandler.resourceHandler.validator.Validate(v)
+	if err != nil {
+		return NewHTTPError(err.Error(), statusUnprocessableEntity)
+	}
+	return nil
 }

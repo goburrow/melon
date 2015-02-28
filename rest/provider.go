@@ -60,6 +60,7 @@ func (p *DefaultProviders) GetRequestReaders(mime string) []RequestReader {
 	if mime != "*/*" {
 		return p.readers[mime]
 	}
+	// FIXME: preserve insert order
 	for _, readers := range p.readers {
 		if len(readers) > 0 {
 			return readers
@@ -72,6 +73,7 @@ func (p *DefaultProviders) GetResponseWriters(mime string) []ResponseWriter {
 	if mime != "*/*" {
 		return p.writers[mime]
 	}
+	// FIXME: preserve insert order
 	for _, writers := range p.writers {
 		if len(writers) > 0 {
 			return writers

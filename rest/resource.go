@@ -1,25 +1,39 @@
 package rest
 
-import "github.com/goburrow/gomelon/core"
+import (
+	"github.com/goburrow/gol"
+	"github.com/goburrow/gomelon/core"
+)
 
+const (
+	resourceLoggerName = "gomelon/rest/resource"
+)
+
+// ResourceHandler implements core.ResourceHandler
 type ResourceHandler struct {
 	// Providers contains all supported Provider.
 	Providers *DefaultProviders
 
 	serverHandler  core.ServerHandler
 	endpointLogger core.EndpointLogger
-	errorHandler   ErrorHandler
+
+	errorMapper ErrorMapper
+	validator   core.Validator
+	logger      gol.Logger
 }
 
 var _ core.ResourceHandler = (*ResourceHandler)(nil)
 
-func NewResourceHandler(serverHandler core.ServerHandler, endpointLogger core.EndpointLogger) *ResourceHandler {
+func NewResourceHandler(env *core.Environment) *ResourceHandler {
 	return &ResourceHandler{
 		Providers:      NewProviders(),
-		serverHandler:  serverHandler,
-		endpointLogger: endpointLogger,
-		// TODO: configuable error handlers
-		errorHandler: NewErrorHandler(),
+		serverHandler:  env.Server.ServerHandler,
+		endpointLogger: env.Server,
+
+		// TODO: configuable error mapper
+		errorMapper: NewErrorMapper(),
+		validator:   env.Validator,
+		logger:      gol.GetLogger(resourceLoggerName),
 	}
 }
 
@@ -49,7 +63,7 @@ func (h *ResourceHandler) HandleResource(v interface{}) {
 
 func (h *ResourceHandler) handle(v interface{}, method, path string, f contextFunc) {
 	providers := h.getProviders(v)
-	context := &contextHandler{providers: providers, handler: f, errorHandler: h.errorHandler}
+	context := &contextHandler{providers: providers, handle: f, resourceHandler: h}
 
 	h.serverHandler.Handle(method, path, context)
 	h.endpointLogger.LogEndpoint(method, path, v)

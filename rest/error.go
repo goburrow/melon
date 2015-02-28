@@ -2,6 +2,12 @@ package rest
 
 import (
 	"net/http"
+
+	"github.com/goburrow/gol"
+)
+
+const (
+	errorLoggerName = "gomelon/rest/error"
 )
 
 type HTTPError struct {
@@ -20,19 +26,24 @@ func (e *HTTPError) Error() string {
 	return e.Message
 }
 
-type ErrorHandler interface {
-	HandleError(error, http.ResponseWriter, *http.Request)
+// ErrorMapper maps error to http error.
+type ErrorMapper interface {
+	MapError(error, http.ResponseWriter, *http.Request)
 }
 
 // DefaultErrorHandler implements ErrorHandler interface.
-type DefaultErrorHandler struct {
+type DefaultErrorMapper struct {
+	logger gol.Logger
 }
 
-func NewErrorHandler() *DefaultErrorHandler {
-	return &DefaultErrorHandler{}
+func NewErrorMapper() *DefaultErrorMapper {
+	return &DefaultErrorMapper{
+		logger: gol.GetLogger("gomelon/rest/error"),
+	}
 }
 
-func (h *DefaultErrorHandler) HandleError(err error, w http.ResponseWriter, r *http.Request) {
+func (h *DefaultErrorMapper) MapError(err error, w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug("%#v", err)
 	// TODO: log error
 	switch v := err.(type) {
 	case *HTTPError:
