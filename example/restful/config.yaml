@@ -7,9 +7,9 @@ server:
     addr: :8081
 
 logging:
-  level: INFO
+  level: DEBUG
   loggers:
-    gomelon.server: DEBUG
+    gomelon.server: INFO
     gomelon.configuration: WARN
   appenders:
   - type: console_appender
