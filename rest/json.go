@@ -9,6 +9,7 @@ var jsonMIMETypes = []string{
 	"application/json",
 	"text/json",
 	"text/javascript",
+	"*/*", // JSON is the default provider
 }
 
 // JSONProvider reads JSON request and responds JSON.

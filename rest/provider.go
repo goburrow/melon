@@ -57,29 +57,11 @@ func (p *DefaultProviders) AddResponseWriter(mime string, writer ...ResponseWrit
 }
 
 func (p *DefaultProviders) GetRequestReaders(mime string) []RequestReader {
-	if mime != "*/*" {
-		return p.readers[mime]
-	}
-	// FIXME: preserve insert order
-	for _, readers := range p.readers {
-		if len(readers) > 0 {
-			return readers
-		}
-	}
-	return nil
+	return p.readers[mime]
 }
 
 func (p *DefaultProviders) GetResponseWriters(mime string) []ResponseWriter {
-	if mime != "*/*" {
-		return p.writers[mime]
-	}
-	// FIXME: preserve insert order
-	for _, writers := range p.writers {
-		if len(writers) > 0 {
-			return writers
-		}
-	}
-	return nil
+	return p.writers[mime]
 }
 
 type RestrictedProviders struct {
@@ -96,10 +78,11 @@ func NewRestrictedProviders(parent Providers) *RestrictedProviders {
 }
 
 func (p *RestrictedProviders) GetRequestReaders(mime string) []RequestReader {
-	if p.Consumes == nil {
+	if len(p.Consumes) == 0 {
 		return p.parent.GetRequestReaders(mime)
 	}
 	if mime == "*/*" {
+		// Pick the first one
 		for _, m := range p.Consumes {
 			readers := p.parent.GetRequestReaders(m)
 			if len(readers) > 0 {
@@ -117,10 +100,11 @@ func (p *RestrictedProviders) GetRequestReaders(mime string) []RequestReader {
 }
 
 func (p *RestrictedProviders) GetResponseWriters(mime string) []ResponseWriter {
-	if p.Produces == nil {
+	if len(p.Produces) == 0 {
 		return p.parent.GetResponseWriters(mime)
 	}
 	if mime == "*/*" {
+		// Pick the first one
 		for _, m := range p.Produces {
 			readers := p.parent.GetResponseWriters(m)
 			if len(readers) > 0 {
