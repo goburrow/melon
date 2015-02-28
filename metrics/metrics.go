@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	_ "github.com/codahale/metrics"
+	_ "github.com/codahale/metrics/runtime"
 	"github.com/goburrow/gomelon/core"
 )
 
