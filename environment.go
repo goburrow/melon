@@ -21,9 +21,11 @@ func (command *EnvironmentCommand) Run(bootstrap *core.Bootstrap) error {
 	command.Environment.Validator = bootstrap.ValidatorFactory.Validator()
 	// Config other factories that affect this environment.
 	if err := command.configuration.LoggingFactory().Configure(command.Environment); err != nil {
+		command.Environment.SetStopped()
 		return err
 	}
 	if err := command.configuration.MetricsFactory().Configure(command.Environment); err != nil {
+		command.Environment.SetStopped()
 		return err
 	}
 	return nil

@@ -35,6 +35,8 @@ func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 	if err = command.EnvironmentCommand.Run(bootstrap); err != nil {
 		return err
 	}
+	// Always run Stop() method on managed objects.
+	defer command.Environment.SetStopped()
 	logger := gol.GetLogger(serverLoggerName)
 	// Build server
 	if command.Server, err = command.configuration.ServerFactory().Build(command.Environment); err != nil {
@@ -54,7 +56,6 @@ func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 		return err
 	}
 	command.Environment.SetStarting()
-	defer command.Environment.SetStopped()
 	defer command.Server.Stop()
 	if err = command.Server.Start(); err != nil {
 		logger.Error("could not start server: %v", err)
