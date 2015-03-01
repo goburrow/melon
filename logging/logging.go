@@ -31,9 +31,9 @@ var (
 )
 
 func init() {
-	polytype.AddType("console_appender", func() interface{} { return &ConsoleAppenderFactory{} })
-	polytype.AddType("file_appender", func() interface{} { return &FileAppenderFactory{} })
-	polytype.AddType("syslog_appender", func() interface{} { return &SyslogAppenderFactory{} })
+	polytype.Add("console_appender", func() interface{} { return &ConsoleAppenderFactory{} })
+	polytype.Add("file_appender", func() interface{} { return &FileAppenderFactory{} })
+	polytype.Add("syslog_appender", func() interface{} { return &SyslogAppenderFactory{} })
 }
 
 func getLogLevel(level string) (gol.Level, bool) {
@@ -50,7 +50,7 @@ func setLogLevel(name string, level gol.Level) {
 
 // AppenderConfiguration is an union of console, file and syslog configuration.
 type AppenderConfiguration struct {
-	polytype.Polytype
+	polytype.Type
 }
 
 // Factory configures logging environment.
