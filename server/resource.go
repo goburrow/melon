@@ -8,12 +8,14 @@ import (
 )
 
 type httpResource interface {
-	core.Resource
+	Method() string
+	Path() string
 	http.Handler
 }
 
 type webResource interface {
-	core.Resource
+	Method() string
+	Path() string
 	web.Handler
 }
 
