@@ -205,7 +205,6 @@ func main() {
 	app := &application{}
 	app.SetName("MyApp")
 	if err := gomelon.Run(app, os.Args[1:]); err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
-		os.Exit(1)
+		panic(err.Error()) // Show stacks
 	}
 }

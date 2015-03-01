@@ -6,8 +6,7 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"os"
-	"os/signal"
+	"sync"
 
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gomelon/core"
@@ -27,7 +26,7 @@ type ConnectorConfiguration struct {
 	KeyFile  string
 }
 
-// DefaultConnector utilizes http.Server.
+// Connector utilizes graceful.Server.
 // Each connector has its own listener which will be closed when closing the
 // server it belongs to.
 type Connector struct {
@@ -36,7 +35,7 @@ type Connector struct {
 	configuration *ConnectorConfiguration
 }
 
-// NewServerConnector allocates and returns a new DefaultServerConnector.
+// NewConnector allocates and returns a new DefaultServerConnector.
 func NewConnector(handler http.Handler, configuration *ConnectorConfiguration) *Connector {
 	server := &graceful.Server{
 		Addr:    configuration.Addr,
@@ -49,8 +48,8 @@ func NewConnector(handler http.Handler, configuration *ConnectorConfiguration) *
 	return connector
 }
 
-// Start creates and serves a listerner.
-func (connector *Connector) Start() error {
+// Listen creates and serves a listerner.
+func (connector *Connector) Listen() error {
 	switch connector.configuration.Type {
 	case "http":
 		return connector.Server.ListenAndServe()
@@ -60,13 +59,7 @@ func (connector *Connector) Start() error {
 	return fmt.Errorf("server: unsupported type %s", connector.configuration.Type)
 }
 
-// Stop closes the listener
-func (connector *Connector) Stop() error {
-	graceful.Shutdown()
-	return nil
-}
-
-// DefaultServer implements Server interface. Each server can have multiple
+// Server implements Server interface. Each server can have multiple
 // connectors (listeners).
 type Server struct {
 	Connectors []*Connector
@@ -74,34 +67,45 @@ type Server struct {
 
 var _ core.Server = (*Server)(nil)
 
-// NewDefaultServer allocates and returns a new DefaultServer.
+// NewServer allocates and returns a new Server.
 func NewServer() *Server {
 	return &Server{}
 }
 
 // Start starts all connectors of the server.
 func (server *Server) Start() error {
-	errorChan := make(chan error)
-	sigChan := make(chan os.Signal)
-	signal.Notify(sigChan, os.Interrupt)
-
 	logger := gol.GetLogger(loggerName)
+
+	// Handle SIG_INT
+	graceful.HandleSignals()
+	graceful.PreHook(func() {
+		logger.Info("stopping")
+	})
+	graceful.PostHook(func() {
+		logger.Info("stopped")
+	})
+	defer graceful.Wait()
+
+	errorChan := make(chan error, len(server.Connectors))
+	defer close(errorChan)
+
+	wg := sync.WaitGroup{}
+	defer wg.Wait()
 
 	for _, connector := range server.Connectors {
 		logger.Info("listening %s", connector.configuration.Addr)
+		wg.Add(1)
 		go func(c *Connector) {
-			errorChan <- c.Start()
+			defer wg.Done()
+			errorChan <- c.Listen()
 		}(connector)
 	}
-	for i := len(server.Connectors); i > 0; i-- {
+	for _, _ = range server.Connectors {
 		select {
 		case err := <-errorChan:
 			if err != nil {
+				graceful.ShutdownNow()
 				return err
-			}
-		case sig := <-sigChan:
-			if sig == os.Interrupt {
-				return nil
 			}
 		}
 	}
@@ -110,12 +114,8 @@ func (server *Server) Start() error {
 
 // Stop stops all running connectors of the server.
 func (server *Server) Stop() error {
-	logger := gol.GetLogger(loggerName)
-	for _, connector := range server.Connectors {
-		if err := connector.Stop(); err != nil {
-			logger.Warn("error closing connector: %v", err)
-		}
-	}
+	graceful.Shutdown()
+	graceful.Wait()
 	return nil
 }
 
