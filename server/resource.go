@@ -23,13 +23,13 @@ type webResource interface {
 
 // ResourceHandler allows user to register basic HTTP resource.
 type ResourceHandler struct {
-	serverHandler  core.ServerHandler
+	serverHandler  *Handler
 	endpointLogger core.EndpointLogger
 }
 
 var _ (core.ResourceHandler) = (*ResourceHandler)(nil)
 
-func NewResourceHandler(serverHandler core.ServerHandler, endpointLogger core.EndpointLogger) *ResourceHandler {
+func NewResourceHandler(serverHandler *Handler, endpointLogger core.EndpointLogger) *ResourceHandler {
 	return &ResourceHandler{
 		serverHandler:  serverHandler,
 		endpointLogger: endpointLogger,
@@ -37,6 +37,10 @@ func NewResourceHandler(serverHandler core.ServerHandler, endpointLogger core.En
 }
 
 func (h *ResourceHandler) HandleResource(v interface{}) {
+	// HTTP filters
+	if r, ok := v.(Filter); ok {
+		h.serverHandler.FilterChain.Add(r)
+	}
 	// Goji supports http.Handler and web.Handler
 	if r, ok := v.(HTTPResource); ok {
 		h.serverHandler.Handle(r.Method(), r.Path(), r)

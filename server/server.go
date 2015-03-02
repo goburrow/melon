@@ -129,7 +129,11 @@ func (server *Server) AddConnectors(handler http.Handler, configurations []Conne
 
 // Handler handles HTTP requests.
 type Handler struct {
-	ServeMux   *web.Mux
+	// ServerMux is the HTTP request router.
+	ServeMux *web.Mux
+	// FilterChain is the builder for HTTP filters.
+	FilterChain FilterChain
+
 	pathPrefix string
 }
 
@@ -209,6 +213,9 @@ func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server
 	// Application
 	appHandler := NewHandler(nil)
 	server.AddConnectors(appHandler.ServeMux, factory.ApplicationConnectors)
+	appHandler.ServeMux.Use(func(h http.Handler) http.Handler {
+		return appHandler.FilterChain.Build(h)
+	})
 	environment.Server.ServerHandler = appHandler
 	environment.Server.AddResourceHandler(NewResourceHandler(appHandler, environment.Server))
 
@@ -240,12 +247,14 @@ func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server,
 
 	// Both application and admin share same handler
 	appHandler := NewHandler(nil)
-	adminHandler := NewHandler(appHandler.ServeMux)
-
 	appHandler.pathPrefix = factory.ApplicationContextPath
+	appHandler.ServeMux.Use(func(h http.Handler) http.Handler {
+		return appHandler.FilterChain.Build(h)
+	})
 	environment.Server.ServerHandler = appHandler
 	environment.Server.AddResourceHandler(NewResourceHandler(appHandler, environment.Server))
 
+	adminHandler := NewHandler(appHandler.ServeMux)
 	adminHandler.pathPrefix = factory.AdminContextPath
 	environment.Admin.ServerHandler = adminHandler
 
