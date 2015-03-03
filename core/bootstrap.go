@@ -20,7 +20,7 @@ func NewBootstrap(app Application) *Bootstrap {
 	return bootstrap
 }
 
-// Bundles returns registed bundles.
+// Bundles returns registered bundles.
 func (bootstrap *Bootstrap) Bundles() []Bundle {
 	return bootstrap.bundles
 }
@@ -31,12 +31,12 @@ func (bootstrap *Bootstrap) AddBundle(bundle Bundle) {
 	bootstrap.bundles = append(bootstrap.bundles, bundle)
 }
 
-// Commands returns registed commands.
+// Commands returns registered commands.
 func (bootstrap *Bootstrap) Commands() []Command {
 	return bootstrap.commands
 }
 
-// AddCommand add the given command to the bootstrao. AddCommand is not concurrent-safe.
+// AddCommand add the given command to the bootstrap. AddCommand is not concurrent-safe.
 func (bootstrap *Bootstrap) AddCommand(command Command) {
 	bootstrap.commands = append(bootstrap.commands, command)
 }
