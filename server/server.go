@@ -10,6 +10,7 @@ import (
 
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/gomelon/server/filter"
 	"github.com/zenazn/goji/graceful"
 	"github.com/zenazn/goji/web"
 )
@@ -132,7 +133,7 @@ type Handler struct {
 	// ServerMux is the HTTP request router.
 	ServeMux *web.Mux
 	// FilterChain is the builder for HTTP filters.
-	FilterChain FilterChain
+	FilterChain filter.Chain
 
 	pathPrefix string
 }

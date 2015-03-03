@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/gomelon/server/filter"
 	"github.com/zenazn/goji/web"
 )
 
@@ -38,7 +39,7 @@ func NewResourceHandler(serverHandler *Handler, endpointLogger core.EndpointLogg
 
 func (h *ResourceHandler) HandleResource(v interface{}) {
 	// HTTP filters
-	if r, ok := v.(Filter); ok {
+	if r, ok := v.(filter.Filter); ok {
 		h.serverHandler.FilterChain.Add(r)
 	}
 	// Goji supports http.Handler and web.Handler
