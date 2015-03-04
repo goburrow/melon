@@ -11,6 +11,7 @@ import (
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gomelon/core"
 	"github.com/goburrow/gomelon/server/filter"
+	"github.com/goburrow/polytype"
 	"github.com/zenazn/goji/graceful"
 	"github.com/zenazn/goji/web"
 )
@@ -18,6 +19,18 @@ import (
 const (
 	loggerName = "gomelon/server"
 )
+
+func init() {
+	polytype.Register("default_server", func() interface{} {
+		return &DefaultFactory{}
+	})
+	polytype.Register("simple_server", func() interface{} {
+		return &SimpleFactory{
+			ApplicationContextPath: "/application",
+			AdminContextPath:       "/admin",
+		}
+	})
+}
 
 type ConnectorConfiguration struct {
 	Type string `valid:"nonzero"`
@@ -189,36 +202,23 @@ type DefaultFactory struct {
 	AdminConnectors       []ConnectorConfiguration `valid:"nonzero"`
 }
 
-// Initialize sets default value for the factory.
-func (factory *DefaultFactory) Initialize() {
-	factory.ApplicationConnectors = []ConnectorConfiguration{
-		ConnectorConfiguration{
-			Type: "http",
-			Addr: ":8080",
-		},
-	}
-	factory.AdminConnectors = []ConnectorConfiguration{
-		ConnectorConfiguration{
-			Type: "http",
-			Addr: ":8081",
-		},
-	}
-}
-
 func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server, error) {
 	server := NewServer()
 
 	// Application
 	appHandler := NewHandler()
-	server.AddConnectors(appHandler.ServeMux, factory.ApplicationConnectors)
 	appHandler.ServeMux.Use(func(h http.Handler) http.Handler {
 		return appHandler.FilterChain.Build(h)
 	})
+	server.AddConnectors(appHandler.ServeMux, factory.ApplicationConnectors)
 	environment.Server.ServerHandler = appHandler
 	environment.Server.AddResourceHandler(NewResourceHandler(appHandler, environment.Server))
 
 	// Admin
 	adminHandler := NewHandler()
+	adminHandler.ServeMux.Use(func(h http.Handler) http.Handler {
+		return adminHandler.FilterChain.Build(h)
+	})
 	server.AddConnectors(adminHandler.ServeMux, factory.AdminConnectors)
 	environment.Admin.ServerHandler = adminHandler
 
@@ -230,14 +230,6 @@ type SimpleFactory struct {
 	ApplicationContextPath string `valid:"nonzero"`
 	AdminContextPath       string `valid:"nonzero"`
 	Connector              ConnectorConfiguration
-}
-
-// Initialize sets default value for the factory.
-func (factory *SimpleFactory) Initialize() {
-	factory.ApplicationContextPath = "/application"
-	factory.AdminContextPath = "/admin"
-	factory.Connector.Type = "http"
-	factory.Connector.Addr = ":8080"
 }
 
 func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server, error) {
@@ -254,6 +246,9 @@ func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server,
 
 	adminHandler := NewHandler()
 	adminHandler.pathPrefix = factory.AdminContextPath
+	adminHandler.ServeMux.Use(func(h http.Handler) http.Handler {
+		return adminHandler.FilterChain.Build(h)
+	})
 	environment.Admin.ServerHandler = adminHandler
 
 	serveMux := factory.newServeMux(appHandler, adminHandler)
@@ -273,23 +268,14 @@ func (factory *SimpleFactory) newServeMux(handlers ...*Handler) http.Handler {
 
 // Factory is an union of DefaultFactory and SimpleFactory.
 type Factory struct {
-	Type string
-
-	DefaultFactory
-	SimpleFactory
+	polytype.Type
 }
 
 var _ core.ServerFactory = (*Factory)(nil)
 
-// Initialize sets default value for the factory.
-func (factory *Factory) Initialize() {
-	factory.DefaultFactory.Initialize()
-	factory.SimpleFactory.Initialize()
-}
-
 func (factory *Factory) Build(environment *core.Environment) (core.Server, error) {
-	if factory.Type == "simple" {
-		return factory.SimpleFactory.Build(environment)
+	if f, ok := factory.Value.(core.ServerFactory); ok {
+		return f.Build(environment)
 	}
-	return factory.DefaultFactory.Build(environment)
+	return nil, fmt.Errorf("unsupported server %#v", factory.Value)
 }

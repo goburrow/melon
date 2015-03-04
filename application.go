@@ -27,9 +27,7 @@ func (app *Application) SetName(name string) {
 
 func (app *Application) Configuration() interface{} {
 	if app.configuration == nil {
-		c := &Configuration{}
-		c.Initialize()
-		app.configuration = c
+		app.configuration = &Configuration{}
 	}
 	return app.configuration
 }

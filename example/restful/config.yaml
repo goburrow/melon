@@ -1,4 +1,5 @@
 server:
+  type: default_server
   applicationConnectors:
   - type: http
     addr: :8080
@@ -12,6 +13,9 @@ logging:
     gomelon.server: INFO
     gomelon.configuration: WARN
   appenders:
+  - type: file_appender
+    threshold: INFO
+    currentLogFilename: /tmp/gomelon.log
   - type: console_appender
 
 metrics:

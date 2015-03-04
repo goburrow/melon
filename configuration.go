@@ -25,11 +25,6 @@ type Configuration struct {
 // Configuration implements core.Configuration interface.
 var _ core.Configuration = (*Configuration)(nil)
 
-// Initialize set default values for this configuration.
-func (c *Configuration) Initialize() {
-	c.Server.Initialize()
-}
-
 func (c *Configuration) ServerFactory() core.ServerFactory {
 	return &c.Server
 }

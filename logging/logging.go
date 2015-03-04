@@ -31,9 +31,9 @@ var (
 )
 
 func init() {
-	polytype.Add("console_appender", func() interface{} { return &ConsoleAppenderFactory{} })
-	polytype.Add("file_appender", func() interface{} { return &FileAppenderFactory{} })
-	polytype.Add("syslog_appender", func() interface{} { return &SyslogAppenderFactory{} })
+	polytype.Register("console_appender", func() interface{} { return &ConsoleAppenderFactory{} })
+	polytype.Register("file_appender", func() interface{} { return &FileAppenderFactory{} })
+	polytype.Register("syslog_appender", func() interface{} { return &SyslogAppenderFactory{} })
 }
 
 func getLogLevel(level string) (gol.Level, bool) {

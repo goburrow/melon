@@ -1,6 +1,6 @@
 {
   "server": {
-    "type": "simple",
+    "type": "simple_server",
     "connector": {
       "type": "http",
       "addr": ":8080"

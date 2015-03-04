@@ -1,5 +1,6 @@
 {
   "server": {
+    "type": "default_server",
     "applicationConnectors": [
       {
         "type": "http",
@@ -21,7 +22,7 @@
     },
     "appenders": [
       {
-	"type": "console_appender",
+	"type": "console_appender"
       }
     ]
   },
