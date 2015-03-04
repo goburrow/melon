@@ -5,7 +5,6 @@ package metrics
 
 import (
 	"expvar"
-	"fmt"
 	"net/http"
 
 	_ "github.com/codahale/metrics"
@@ -15,6 +14,7 @@ import (
 
 const (
 	metricsUri = "/metrics"
+	metricsVar = "metrics"
 )
 
 // metricsHandler displays expvars.
@@ -33,17 +33,15 @@ func (handler *metricsHandler) Path() string {
 
 func (*metricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
+
+	val := expvar.Get(metricsVar)
+	if val == nil {
+		w.WriteHeader(http.StatusNotImplemented)
+		w.Write([]byte("No metrics."))
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte("{"))
-	first := true
-	expvar.Do(func(kv expvar.KeyValue) {
-		if !first {
-			w.Write([]byte(","))
-		}
-		first = false
-		fmt.Fprintf(w, "%q: %s", kv.Key, kv.Value)
-	})
-	w.Write([]byte("}"))
+	w.Write([]byte(val.String()))
 }
 
 type Factory struct {
