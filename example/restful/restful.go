@@ -11,6 +11,7 @@ import (
 	"github.com/goburrow/gomelon"
 	"github.com/goburrow/gomelon/assets"
 	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/gomelon/debug"
 	"github.com/goburrow/gomelon/rest"
 	"github.com/goburrow/health"
 	"golang.org/x/net/context"
@@ -173,6 +174,7 @@ func (app *application) Initialize(bootstrap *core.Bootstrap) {
 	bootstrap.AddBundle(&rest.Bundle{})
 	// Also serve static files
 	bootstrap.AddBundle(assets.NewBundle(os.TempDir(), "/static/"))
+	bootstrap.AddBundle(debug.NewBundle())
 }
 
 func (app *application) Run(configuration interface{}, environment *core.Environment) error {
