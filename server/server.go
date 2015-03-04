@@ -142,12 +142,9 @@ type Handler struct {
 var _ core.ServerHandler = (*Handler)(nil)
 
 // NewHandler creates a new multiplexer if not provided.
-func NewHandler(mux *web.Mux) *Handler {
-	if mux == nil {
-		mux = web.New()
-	}
+func NewHandler() *Handler {
 	return &Handler{
-		ServeMux: mux,
+		ServeMux: web.New(),
 	}
 }
 
@@ -212,7 +209,7 @@ func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server
 	server := NewServer()
 
 	// Application
-	appHandler := NewHandler(nil)
+	appHandler := NewHandler()
 	server.AddConnectors(appHandler.ServeMux, factory.ApplicationConnectors)
 	appHandler.ServeMux.Use(func(h http.Handler) http.Handler {
 		return appHandler.FilterChain.Build(h)
@@ -221,7 +218,7 @@ func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server
 	environment.Server.AddResourceHandler(NewResourceHandler(appHandler, environment.Server))
 
 	// Admin
-	adminHandler := NewHandler(nil)
+	adminHandler := NewHandler()
 	server.AddConnectors(adminHandler.ServeMux, factory.AdminConnectors)
 	environment.Admin.ServerHandler = adminHandler
 
@@ -247,7 +244,7 @@ func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server,
 	server := NewServer()
 
 	// Both application and admin share same handler
-	appHandler := NewHandler(nil)
+	appHandler := NewHandler()
 	appHandler.pathPrefix = factory.ApplicationContextPath
 	appHandler.ServeMux.Use(func(h http.Handler) http.Handler {
 		return appHandler.FilterChain.Build(h)
@@ -255,12 +252,23 @@ func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server,
 	environment.Server.ServerHandler = appHandler
 	environment.Server.AddResourceHandler(NewResourceHandler(appHandler, environment.Server))
 
-	adminHandler := NewHandler(appHandler.ServeMux)
+	adminHandler := NewHandler()
 	adminHandler.pathPrefix = factory.AdminContextPath
 	environment.Admin.ServerHandler = adminHandler
 
-	server.AddConnectors(appHandler.ServeMux, []ConnectorConfiguration{factory.Connector})
+	serveMux := factory.newServeMux(appHandler, adminHandler)
+	server.AddConnectors(serveMux, []ConnectorConfiguration{factory.Connector})
 	return server, nil
+}
+
+func (factory *SimpleFactory) newServeMux(handlers ...*Handler) http.Handler {
+	serveMux := web.New()
+
+	for _, handler := range handlers {
+		serveMux.Handle(handler.pathPrefix+"/*", handler.ServeMux)
+		serveMux.Get(handler.pathPrefix, http.RedirectHandler(handler.pathPrefix+"/", http.StatusMovedPermanently))
+	}
+	return serveMux
 }
 
 // Factory is an union of DefaultFactory and SimpleFactory.
