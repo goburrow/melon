@@ -155,27 +155,35 @@ func (handler *healthCheckHandler) Path() string {
 
 func (handler *healthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
-	w.Header().Set("Content-Type", "text/plain")
 
 	results := handler.registry.RunHealthChecks()
-
 	if len(results) == 0 {
 		w.WriteHeader(http.StatusNotImplemented)
 		w.Write([]byte("No health checks registered."))
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	if !isAllHealthy(results) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+	first := true
+	w.Write([]byte("{"))
 	for name, result := range results {
-		fmt.Fprintf(w, "%s:\n\tHealthy: %t\n", name, result.Healthy())
+		if first {
+			first = false
+		} else {
+			w.Write([]byte(","))
+		}
+		fmt.Fprintf(w, "\n%q: {\"Healthy\": %t", name, result.Healthy())
 		if result.Message() != "" {
-			fmt.Fprintf(w, "\tMessage: %s\n", result.Message())
+			fmt.Fprintf(w, ", \"Message\": %q", result.Message())
 		}
 		if result.Cause() != nil {
-			fmt.Fprintf(w, "\tCause: %+v\n", result.Cause())
+			fmt.Fprintf(w, ", \"Cause\": %q", result.Cause())
 		}
+		w.Write([]byte("}"))
 	}
+	w.Write([]byte("\n}\n"))
 }
 
 // isAllHealthy checks if all are healthy
