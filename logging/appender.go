@@ -10,6 +10,7 @@ import (
 	"github.com/goburrow/gomelon/core"
 
 	golfile "github.com/goburrow/gol/file"
+	golrotation "github.com/goburrow/gol/file/rotation"
 	golfilter "github.com/goburrow/gol/filter"
 	golsyslog "github.com/goburrow/gol/syslog"
 )
@@ -115,12 +116,12 @@ type FileAppenderFactory struct {
 func (factory *FileAppenderFactory) Build(environment *core.Environment) (gol.Appender, error) {
 	fa := golfile.NewAppender(factory.CurrentLogFilename)
 	if factory.Archive {
-		triggeringPolicy := golfile.NewTimeTriggeringPolicy()
+		triggeringPolicy := golrotation.NewTimeTriggeringPolicy()
 		if err := triggeringPolicy.Start(); err != nil {
 			return nil, err
 		}
 
-		rollingPolicy := golfile.NewTimeRollingPolicy()
+		rollingPolicy := golrotation.NewTimeRollingPolicy()
 		rollingPolicy.FilePattern = factory.ArchivedLogFilenamePattern
 		rollingPolicy.FileCount = factory.ArchivedFileCount
 
