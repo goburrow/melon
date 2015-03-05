@@ -1,7 +1,7 @@
 /*
-Package accesslog provides logging for HTTP requests.
+Package logging provides a logger for HTTP requests as a filter.
 */
-package accesslog
+package logging
 
 import (
 	"bufio"

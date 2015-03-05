@@ -1,4 +1,4 @@
-package accesslog
+package logging
 
 import (
 	"bytes"
