@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/server/filter"
 	"github.com/zenazn/goji/web"
 )
 
@@ -22,26 +21,22 @@ type webResource interface {
 	web.Handler
 }
 
-// ResourceHandler allows user to register basic HTTP resource.
-type ResourceHandler struct {
-	serverHandler  *Handler
+// resourceHandler allows user to register basic HTTP resource.
+type resourceHandler struct {
+	serverHandler  core.ServerHandler
 	endpointLogger core.EndpointLogger
 }
 
-var _ (core.ResourceHandler) = (*ResourceHandler)(nil)
+var _ (core.ResourceHandler) = (*resourceHandler)(nil)
 
-func NewResourceHandler(serverHandler *Handler, endpointLogger core.EndpointLogger) *ResourceHandler {
-	return &ResourceHandler{
+func newResourceHandler(serverHandler core.ServerHandler, endpointLogger core.EndpointLogger) *resourceHandler {
+	return &resourceHandler{
 		serverHandler:  serverHandler,
 		endpointLogger: endpointLogger,
 	}
 }
 
-func (h *ResourceHandler) HandleResource(v interface{}) {
-	// HTTP filters
-	if r, ok := v.(filter.Filter); ok {
-		h.serverHandler.FilterChain.Add(r)
-	}
+func (h *resourceHandler) HandleResource(v interface{}) {
 	// Goji supports http.Handler and web.Handler
 	if r, ok := v.(HTTPResource); ok {
 		h.serverHandler.Handle(r.Method(), r.Path(), r)

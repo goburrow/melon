@@ -212,7 +212,7 @@ func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server
 	})
 	server.AddConnectors(appHandler.ServeMux, factory.ApplicationConnectors)
 	environment.Server.ServerHandler = appHandler
-	environment.Server.AddResourceHandler(NewResourceHandler(appHandler, environment.Server))
+	environment.Server.AddResourceHandler(newResourceHandler(appHandler, environment.Server))
 
 	// Admin
 	adminHandler := NewHandler()
@@ -242,7 +242,7 @@ func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server,
 		return appHandler.FilterChain.Build(h)
 	})
 	environment.Server.ServerHandler = appHandler
-	environment.Server.AddResourceHandler(NewResourceHandler(appHandler, environment.Server))
+	environment.Server.AddResourceHandler(newResourceHandler(appHandler, environment.Server))
 
 	adminHandler := NewHandler()
 	adminHandler.pathPrefix = factory.AdminContextPath
