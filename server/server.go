@@ -32,45 +32,38 @@ func init() {
 	})
 }
 
-type ConnectorConfiguration struct {
+// Connector utilizes graceful.Server.
+// Each connector has its own listener which will be closed when closing the
+// server it belongs to. SetHandler() must be called before listening.
+type Connector struct {
 	Type string `valid:"nonzero"`
 	Addr string
 
 	CertFile string
 	KeyFile  string
+
+	server *graceful.Server
 }
 
-// Connector utilizes graceful.Server.
-// Each connector has its own listener which will be closed when closing the
-// server it belongs to.
-type Connector struct {
-	Server *graceful.Server
-
-	configuration *ConnectorConfiguration
-}
-
-// NewConnector allocates and returns a new DefaultServerConnector.
-func NewConnector(handler http.Handler, configuration *ConnectorConfiguration) *Connector {
-	server := &graceful.Server{
-		Addr:    configuration.Addr,
-		Handler: handler,
+// SetHandler setup the server with the given handler.
+func (connector *Connector) SetHandler(handler http.Handler) {
+	if connector.server == nil {
+		connector.server = &graceful.Server{}
 	}
-	connector := &Connector{
-		Server:        server,
-		configuration: configuration,
-	}
-	return connector
+	connector.server.Handler = handler
 }
 
 // Listen creates and serves a listerner.
 func (connector *Connector) Listen() error {
-	switch connector.configuration.Type {
+	connector.server.Addr = connector.Addr
+
+	switch connector.Type {
 	case "http":
-		return connector.Server.ListenAndServe()
+		return connector.server.ListenAndServe()
 	case "https":
-		return connector.Server.ListenAndServeTLS(connector.configuration.CertFile, connector.configuration.KeyFile)
+		return connector.server.ListenAndServeTLS(connector.CertFile, connector.KeyFile)
 	}
-	return fmt.Errorf("server: unsupported type %s", connector.configuration.Type)
+	return fmt.Errorf("server: unsupported type %s", connector.Type)
 }
 
 // Server implements Server interface. Each server can have multiple
@@ -107,7 +100,7 @@ func (server *Server) Start() error {
 	defer wg.Wait()
 
 	for _, connector := range server.Connectors {
-		logger.Info("listening %s", connector.configuration.Addr)
+		logger.Info("listening %s", connector.Addr)
 		wg.Add(1)
 		go func(c *Connector) {
 			defer wg.Done()
@@ -133,11 +126,11 @@ func (server *Server) Stop() error {
 	return nil
 }
 
-// AddConnectors adds a new connector to the server.
-func (server *Server) AddConnectors(handler http.Handler, configurations []ConnectorConfiguration) {
-	for i, _ := range configurations {
-		connector := NewConnector(handler, &configurations[i])
-		server.Connectors = append(server.Connectors, connector)
+// addConnectors adds a new connector to the server.
+func (server *Server) addConnectors(handler http.Handler, connectors []Connector) {
+	for i, _ := range connectors {
+		connectors[i].SetHandler(handler)
+		server.Connectors = append(server.Connectors, &connectors[i])
 	}
 }
 
@@ -198,8 +191,8 @@ func (h *Handler) PathPrefix() string {
 // DefaultFactory allows multiple sets of application and admin connectors running
 // on separate ports.
 type DefaultFactory struct {
-	ApplicationConnectors []ConnectorConfiguration `valid:"nonzero"`
-	AdminConnectors       []ConnectorConfiguration `valid:"nonzero"`
+	ApplicationConnectors []Connector `valid:"nonzero"`
+	AdminConnectors       []Connector `valid:"nonzero"`
 }
 
 func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server, error) {
@@ -210,7 +203,7 @@ func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server
 	appHandler.ServeMux.Use(func(h http.Handler) http.Handler {
 		return appHandler.FilterChain.Build(h)
 	})
-	server.AddConnectors(appHandler.ServeMux, factory.ApplicationConnectors)
+	server.addConnectors(appHandler.ServeMux, factory.ApplicationConnectors)
 	environment.Server.ServerHandler = appHandler
 	environment.Server.AddResourceHandler(newResourceHandler(appHandler, environment.Server))
 
@@ -219,7 +212,7 @@ func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server
 	adminHandler.ServeMux.Use(func(h http.Handler) http.Handler {
 		return adminHandler.FilterChain.Build(h)
 	})
-	server.AddConnectors(adminHandler.ServeMux, factory.AdminConnectors)
+	server.addConnectors(adminHandler.ServeMux, factory.AdminConnectors)
 	environment.Admin.ServerHandler = adminHandler
 
 	return server, nil
@@ -229,7 +222,7 @@ func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server
 type SimpleFactory struct {
 	ApplicationContextPath string `valid:"nonzero"`
 	AdminContextPath       string `valid:"nonzero"`
-	Connector              ConnectorConfiguration
+	Connector              Connector
 }
 
 func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server, error) {
@@ -252,7 +245,7 @@ func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server,
 	environment.Admin.ServerHandler = adminHandler
 
 	serveMux := factory.newServeMux(appHandler, adminHandler)
-	server.AddConnectors(serveMux, []ConnectorConfiguration{factory.Connector})
+	server.addConnectors(serveMux, []Connector{factory.Connector})
 	return server, nil
 }
 
