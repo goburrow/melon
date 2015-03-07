@@ -8,7 +8,7 @@ import (
 
 // SimpleFactory creates a single-connector server.
 type SimpleFactory struct {
-	CommonFactory
+	commonFactory
 
 	ApplicationContextPath string `valid:"nonzero"`
 	AdminContextPath       string `valid:"nonzero"`
@@ -48,7 +48,7 @@ func (factory *SimpleFactory) buildServer(env *core.Environment, handlers ...*Ha
 		handler.ServeMux.Get(h.pathPrefix, http.RedirectHandler(h.pathPrefix+"/", http.StatusMovedPermanently))
 	}
 	// Only need filters in the root handler.
-	if err := factory.CommonFactory.AddFilters(env, handler); err != nil {
+	if err := factory.commonFactory.AddFilters(env, handler); err != nil {
 		return nil, err
 	}
 	server := NewServer()

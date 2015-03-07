@@ -2,8 +2,11 @@ package rest
 
 import "testing"
 
+var _ providerMap = (*defaultProviders)(nil)
+var _ providerMap = (*restrictedProviders)(nil)
+
 func TestDefaultProviders(t *testing.T) {
-	p := NewProviders()
+	p := newProviders()
 
 	jsonProvider := &JSONProvider{}
 	p.AddProvider(jsonProvider)
@@ -43,11 +46,11 @@ func TestDefaultProviders(t *testing.T) {
 }
 
 func TestRestrictedProviders(t *testing.T) {
-	parent := NewProviders()
+	parent := newProviders()
 
 	parent.AddProvider(&JSONProvider{})
 
-	p := NewRestrictedProviders(parent)
+	p := newRestrictedProviders(parent)
 	readers := p.GetRequestReaders("application/json")
 	if len(readers) != 1 {
 		t.Fatalf("providers does not support application/json %#v", p)
@@ -56,7 +59,7 @@ func TestRestrictedProviders(t *testing.T) {
 	if len(readers) == len(jsonMIMETypes) {
 		t.Fatalf("providers does not support */* %#v", p)
 	}
-	p.Consumes = []string{"text/json"}
+	p.consumes = []string{"text/json"}
 	readers = p.GetRequestReaders("application/json")
 	if len(readers) != 0 {
 		t.Fatalf("providers should not allow application/json %#v", p)
@@ -76,7 +79,7 @@ func TestRestrictedProviders(t *testing.T) {
 	if len(writers) == len(jsonMIMETypes)+len(xmlMIMETypes) {
 		t.Fatalf("providers does not support */* %#v", p)
 	}
-	p.Produces = []string{"text/xml"}
+	p.produces = []string{"text/xml"}
 	writers = p.GetResponseWriters("application/xml")
 	if len(writers) != 0 {
 		t.Fatalf("providers should not allow application/xml %#v", p)

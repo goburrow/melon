@@ -14,15 +14,15 @@ type RequestLogConfiguration struct {
 	polytype.Type
 }
 
-// CommonFactory is the shared configuration of DefaultFactory and
+// commonFactory is the shared configuration of DefaultFactory and
 // SimpleFactory.
-type CommonFactory struct {
+type commonFactory struct {
 	RequestLog RequestLogConfiguration
 }
 
 // AddFilters adds request log and panic recovery to the filter chain
 // of the given handlers.
-func (f *CommonFactory) AddFilters(env *core.Environment, handlers ...*Handler) error {
+func (f *commonFactory) AddFilters(env *core.Environment, handlers ...*Handler) error {
 	requestLogFilter, err := f.getRequestLog(env)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func (f *CommonFactory) AddFilters(env *core.Environment, handlers ...*Handler) 
 	return nil
 }
 
-func (f *CommonFactory) getRequestLog(env *core.Environment) (filter.Filter, error) {
+func (f *commonFactory) getRequestLog(env *core.Environment) (filter.Filter, error) {
 	if f.RequestLog.Value() == nil {
 		return &noRequestLog{}, nil
 	}

@@ -16,12 +16,12 @@ type Bundle struct {
 
 var _ core.Bundle = (*Bundle)(nil)
 
+// NewBundle allocates and returns a new Bundle.
 func NewBundle() *Bundle {
 	return &Bundle{}
 }
 
 func (b *Bundle) Initialize(bootstrap *core.Bootstrap) {
-
 }
 
 func (b *Bundle) Run(conf interface{}, env *core.Environment) error {

@@ -18,7 +18,7 @@ func (bundle *Bundle) Initialize(bootstrap *core.Bootstrap) {
 //   environment.Server.Register(&rest.XMLProvider{})
 func (bundle *Bundle) Run(conf interface{}, env *core.Environment) error {
 	restHandler := NewResourceHandler(env)
-	restHandler.Providers.AddProvider(&JSONProvider{})
+	restHandler.AddProvider(&JSONProvider{})
 	//restHandler.Providers.AddProvider(&XMLProvider{})
 	env.Server.AddResourceHandler(restHandler)
 	return nil

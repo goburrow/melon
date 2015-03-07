@@ -9,7 +9,7 @@ import (
 // DefaultFactory allows multiple sets of application and admin connectors running
 // on separate ports.
 type DefaultFactory struct {
-	CommonFactory
+	commonFactory
 
 	ApplicationConnectors []Connector `valid:"nonzero"`
 	AdminConnectors       []Connector `valid:"nonzero"`
@@ -33,7 +33,7 @@ func (factory *DefaultFactory) Build(env *core.Environment) (core.Server, error)
 	})
 	env.Admin.ServerHandler = adminHandler
 
-	if err := factory.CommonFactory.AddFilters(env, appHandler, adminHandler); err != nil {
+	if err := factory.commonFactory.AddFilters(env, appHandler, adminHandler); err != nil {
 		return nil, err
 	}
 	server := NewServer()

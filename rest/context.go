@@ -38,7 +38,7 @@ type contextFunc func(context.Context) (interface{}, error)
 // contextHandler is a HTTP handler for a resource giving user a request/response context.
 // It implements web.Handler.
 type contextHandler struct {
-	providers Providers
+	providers providerMap
 	handle    contextFunc
 
 	resourceHandler *ResourceHandler

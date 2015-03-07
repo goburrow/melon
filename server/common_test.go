@@ -8,7 +8,7 @@ import (
 
 func TestCommonFactory(t *testing.T) {
 	env := core.NewEnvironment()
-	factory := CommonFactory{}
+	factory := commonFactory{}
 
 	handler := NewHandler()
 	err := factory.AddFilters(env, handler)

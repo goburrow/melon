@@ -11,8 +11,8 @@ const (
 
 // ResourceHandler implements core.ResourceHandler
 type ResourceHandler struct {
-	// Providers contains all supported Provider.
-	Providers *DefaultProviders
+	// providers contains all supported Provider.
+	providers *defaultProviders
 
 	serverHandler  core.ServerHandler
 	endpointLogger core.EndpointLogger
@@ -26,12 +26,12 @@ var _ core.ResourceHandler = (*ResourceHandler)(nil)
 
 func NewResourceHandler(env *core.Environment) *ResourceHandler {
 	return &ResourceHandler{
-		Providers:      NewProviders(),
+		providers:      newProviders(),
 		serverHandler:  env.Server.ServerHandler,
 		endpointLogger: env.Server,
 
 		// TODO: configuable error mapper
-		errorMapper: NewErrorMapper(),
+		errorMapper: newErrorMapper(),
 		validator:   env.Validator,
 		logger:      gol.GetLogger(resourceLoggerName),
 	}
@@ -41,7 +41,7 @@ func NewResourceHandler(env *core.Environment) *ResourceHandler {
 func (h *ResourceHandler) HandleResource(v interface{}) {
 	// Also supports additional Provider
 	if r, ok := v.(Provider); ok {
-		h.Providers.AddProvider(r)
+		h.providers.AddProvider(r)
 	}
 	// FIXME: share Providers
 	if r, ok := v.(GET); ok {
@@ -61,6 +61,11 @@ func (h *ResourceHandler) HandleResource(v interface{}) {
 	}
 }
 
+// AddProvider adds the given provider to the resource handler.
+func (h *ResourceHandler) AddProvider(provider Provider) {
+	h.providers.AddProvider(provider)
+}
+
 func (h *ResourceHandler) handle(v interface{}, method, path string, f contextFunc) {
 	providers := h.getProviders(v)
 	context := &contextHandler{providers: providers, handle: f, resourceHandler: h}
@@ -69,23 +74,23 @@ func (h *ResourceHandler) handle(v interface{}, method, path string, f contextFu
 	h.endpointLogger.LogEndpoint(method, path, v)
 }
 
-func (h *ResourceHandler) getProviders(v interface{}) Providers {
+func (h *ResourceHandler) getProviders(v interface{}) providerMap {
 	// If v does implement Consumes nor Produces interfaces, the provider
 	// is from this resource handler.
 	consumes, hasConsumes := v.(Consumes)
 	produces, hasProduces := v.(Produces)
 
 	if !hasConsumes && !hasProduces {
-		return h.Providers
+		return h.providers
 	}
 
-	providers := NewRestrictedProviders(h.Providers)
+	providers := &restrictedProviders{parent: h.providers}
 	// Transfer readers and writers for given mime types.
 	if hasConsumes {
-		providers.Consumes = consumes.Consumes()
+		providers.consumes = consumes.Consumes()
 	}
 	if hasProduces {
-		providers.Produces = produces.Produces()
+		providers.produces = produces.Produces()
 	}
 	return providers
 }

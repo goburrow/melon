@@ -14,30 +14,30 @@ const (
 	assetsLoggerName = "gomelon/assets"
 )
 
-// AssetsBundle serves static asset files.
-type bundle struct {
+// Bundle serves static asset files.
+type Bundle struct {
 	dir     string
 	urlPath string
 }
 
 // AssetsBundle implements Bundle interface
-var _ core.Bundle = (*bundle)(nil)
+var _ core.Bundle = (*Bundle)(nil)
 
 // NewAssetsBundle allocates and returns a new AssetsBundle.
 // urlPath must always start with "/".
-func NewBundle(dir, urlPath string) core.Bundle {
-	return &bundle{
+func NewBundle(dir, urlPath string) *Bundle {
+	return &Bundle{
 		dir:     dir,
 		urlPath: urlPath,
 	}
 }
 
-func (bundle *bundle) Initialize(bootstrap *core.Bootstrap) {
+func (bundle *Bundle) Initialize(bootstrap *core.Bootstrap) {
 	// Do nothing
 }
 
 // Run registers current AssetsBundle to the server in the given environment.
-func (bundle *bundle) Run(_ interface{}, env *core.Environment) error {
+func (bundle *Bundle) Run(_ interface{}, env *core.Environment) error {
 	gol.GetLogger(assetsLoggerName).Info("registering AssetsBundle for path %s", bundle.urlPath)
 
 	// Add slashes if necessary

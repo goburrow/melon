@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	golrotation "github.com/goburrow/gol/file/rotation"
+	"github.com/goburrow/gol/file/rotation"
 	"github.com/goburrow/gomelon/core"
 	"github.com/goburrow/gomelon/logging"
 	"github.com/goburrow/gomelon/server/filter"
@@ -48,16 +48,16 @@ func (f *DefaultRequestLogFactory) Build(env *core.Environment) (filter.Filter, 
 				return nil, fmt.Errorf("server: unsupported appender target %v", appenderFactory.Target)
 			}
 		case *logging.FileAppenderFactory:
-			writer := golrotation.NewFile(appenderFactory.CurrentLogFilename)
+			writer := rotation.NewFile(appenderFactory.CurrentLogFilename)
 			if err := writer.Open(requestLogFileOpenFlag, requestLogFileOpenMode); err != nil {
 				return nil, err
 			}
 			if appenderFactory.Archive {
-				triggeringPolicy := golrotation.NewTimeTriggeringPolicy()
+				triggeringPolicy := rotation.NewTimeTriggeringPolicy()
 				if err := triggeringPolicy.Start(); err != nil {
 					return nil, err
 				}
-				rollingPolicy := golrotation.NewTimeRollingPolicy()
+				rollingPolicy := rotation.NewTimeRollingPolicy()
 				rollingPolicy.FilePattern = appenderFactory.ArchivedLogFilenamePattern
 				rollingPolicy.FileCount = appenderFactory.ArchivedFileCount
 

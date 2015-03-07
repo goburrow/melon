@@ -57,14 +57,14 @@ func getThreshold(threshold string) (gol.Level, error) {
 	return level, nil
 }
 
-// FilteredAppenderFactory is an abstract factory to create a new filteredAppender.
-type FilteredAppenderFactory struct {
+// filteredAppenderFactory is an abstract factory to create a new filteredAppender.
+type filteredAppenderFactory struct {
 	Threshold string
 	Includes  []string
 	Excludes  []string
 }
 
-func (factory *FilteredAppenderFactory) Build(appender gol.Appender) (gol.Appender, error) {
+func (factory *filteredAppenderFactory) Build(appender gol.Appender) (gol.Appender, error) {
 	threshold, err := getThreshold(factory.Threshold)
 	if err != nil {
 		return nil, err
@@ -82,13 +82,14 @@ func (factory *FilteredAppenderFactory) Build(appender gol.Appender) (gol.Append
 
 // ConsoleAppenderFactory provides an appender that writes logging events to the console.
 type ConsoleAppenderFactory struct {
-	FilteredAppenderFactory
+	filteredAppenderFactory
 
 	Target string
 }
 
 func (factory *ConsoleAppenderFactory) Build(environment *core.Environment) (gol.Appender, error) {
 	var writer io.Writer
+	// TODO: Mutex wrapper for os.Stdout and os.Stderr
 	switch factory.Target {
 	case "", "stdout":
 		writer = os.Stdout
@@ -98,13 +99,13 @@ func (factory *ConsoleAppenderFactory) Build(environment *core.Environment) (gol
 		return nil, fmt.Errorf("logging: unsupported target %s", factory.Target)
 	}
 
-	return factory.FilteredAppenderFactory.Build(gol.NewAppender(writer))
+	return factory.filteredAppenderFactory.Build(gol.NewAppender(writer))
 }
 
 // FileAppenderFactory provides an appender that writes logging events to file system.
 // It also archives older files as needed.
 type FileAppenderFactory struct {
-	FilteredAppenderFactory
+	filteredAppenderFactory
 
 	CurrentLogFilename string `valid:"nonzero"`
 
@@ -128,7 +129,7 @@ func (factory *FileAppenderFactory) Build(environment *core.Environment) (gol.Ap
 		fa.SetTriggeringPolicy(triggeringPolicy)
 		fa.SetRollingPolicy(rollingPolicy)
 	}
-	appender, err := factory.FilteredAppenderFactory.Build(fa)
+	appender, err := factory.filteredAppenderFactory.Build(fa)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +143,7 @@ func (factory *FileAppenderFactory) Build(environment *core.Environment) (gol.Ap
 
 // SyslogAppenderFactory provides an appender that writes logging events to syslog.
 type SyslogAppenderFactory struct {
-	FilteredAppenderFactory
+	filteredAppenderFactory
 
 	Network  string
 	Addr     string
@@ -160,7 +161,7 @@ func (factory *SyslogAppenderFactory) Build(environment *core.Environment) (gol.
 		}
 		sa.Facility = facility
 	}
-	appender, err := factory.FilteredAppenderFactory.Build(sa)
+	appender, err := factory.filteredAppenderFactory.Build(sa)
 	if err != nil {
 		return nil, err
 	}

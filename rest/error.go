@@ -31,18 +31,18 @@ type ErrorMapper interface {
 	MapError(error, http.ResponseWriter, *http.Request)
 }
 
-// DefaultErrorHandler implements ErrorHandler interface.
-type DefaultErrorMapper struct {
+// defaultErrorHandler implements ErrorHandler interface.
+type defaultErrorMapper struct {
 	logger gol.Logger
 }
 
-func NewErrorMapper() *DefaultErrorMapper {
-	return &DefaultErrorMapper{
+func newErrorMapper() *defaultErrorMapper {
+	return &defaultErrorMapper{
 		logger: gol.GetLogger("gomelon/rest/error"),
 	}
 }
 
-func (h *DefaultErrorMapper) MapError(err error, w http.ResponseWriter, r *http.Request) {
+func (h *defaultErrorMapper) MapError(err error, w http.ResponseWriter, r *http.Request) {
 	h.logger.Debug("%#v", err)
 	// TODO: log error
 	switch v := err.(type) {
