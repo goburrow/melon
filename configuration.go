@@ -61,7 +61,7 @@ func (command *ConfigurationCommand) Run(bootstrap *core.Bootstrap) error {
 		gol.GetLogger(configurationLoggerName).Error(
 			"configuration does not implement core.Configuration interface %[1]v %[1]T",
 			command.Configuration)
-		return fmt.Errorf("unsupported configuration %T", command.Configuration)
+		return fmt.Errorf("configuration: unsupported type %T", command.Configuration)
 	}
 	return nil
 }

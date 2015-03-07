@@ -33,10 +33,10 @@ var _ core.ConfigurationFactory = (*Factory)(nil)
 func (factory *Factory) Build(bootstrap *core.Bootstrap) (interface{}, error) {
 	if len(bootstrap.Arguments) < 2 {
 		gol.GetLogger(loggerName).Error("configuration file is not specified in command arguments: %v", bootstrap.Arguments)
-		return nil, errors.New("no configuration file specified")
+		return nil, errors.New("configuration: no file specified")
 	}
 	if err := Unmarshal(bootstrap.Arguments[1], factory.Configuration); err != nil {
-		gol.GetLogger(loggerName).Error("could not read configuration: %v", err)
+		gol.GetLogger(loggerName).Error("%v", err)
 		return nil, err
 	}
 	return factory.Configuration, nil
@@ -57,7 +57,7 @@ func Unmarshal(path string, output interface{}) error {
 	case ".yaml", ".yml":
 		return unmarshalYAML(f, output)
 	default:
-		return fmt.Errorf("unsupported file type %s", ext)
+		return fmt.Errorf("configuration: unsupported file type %s", ext)
 	}
 }
 

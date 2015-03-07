@@ -38,6 +38,7 @@ const (
 	gcTaskName = "gc"
 )
 
+// AdminHandler is an item listed in the admin homepage.
 type AdminHandler interface {
 	Path() string
 	Name() string
@@ -75,7 +76,7 @@ func (env *AdminEnvironment) AddHandler(handler ...AdminHandler) {
 
 // onStarting registers all required HTTP handlers
 func (env *AdminEnvironment) onStarting() {
-	env.ServerHandler.Handle("GET", "/", &adminHomeHandler{
+	env.ServerHandler.Handle("GET", "/", &adminIndex{
 		handlers:    env.handlers,
 		contextPath: env.ServerHandler.PathPrefix(),
 	})
@@ -119,14 +120,14 @@ func (env *AdminEnvironment) logHealthChecks() {
 	logger.Debug("health checks = %v", names)
 }
 
-// adminHomeHandler implement http.Handler
-type adminHomeHandler struct {
+// adminIndex is the home page of admin.
+type adminIndex struct {
 	handlers    []AdminHandler
 	contextPath string
 }
 
 // ServeHTTP handles request to the root of Admin page
-func (handler *adminHomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *adminIndex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 
 	for _, h := range handler.handlers {

@@ -63,7 +63,7 @@ func (connector *Connector) Listen() error {
 	case "https":
 		return connector.server.ListenAndServeTLS(connector.CertFile, connector.KeyFile)
 	}
-	return fmt.Errorf("server: unsupported type %s", connector.Type)
+	return fmt.Errorf("server: unsupported connector type %s", connector.Type)
 }
 
 // Server implements Server interface. Each server can have multiple
@@ -83,7 +83,7 @@ func NewServer() *Server {
 func (server *Server) Start() error {
 	logger := gol.GetLogger(loggerName)
 
-	// Handle SIG_INT
+	// Handle SIGINT
 	graceful.HandleSignals()
 	graceful.PreHook(func() {
 		logger.Info("stopping")
@@ -178,7 +178,7 @@ func (h *Handler) Handle(method, pattern string, handler interface{}) {
 	case "PATCH":
 		f = h.ServeMux.Patch
 	default:
-		panic("http: method not supported " + method)
+		panic("server: unsupported method " + method)
 	}
 	f(h.pathPrefix+pattern, handler)
 }
@@ -270,5 +270,5 @@ func (factory *Factory) Build(environment *core.Environment) (core.Server, error
 	if f, ok := factory.Value.(core.ServerFactory); ok {
 		return f.Build(environment)
 	}
-	return nil, fmt.Errorf("unsupported server %#v", factory.Value)
+	return nil, fmt.Errorf("server: unsupported server type %#v", factory.Value)
 }

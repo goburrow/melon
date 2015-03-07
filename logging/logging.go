@@ -67,11 +67,11 @@ func (factory *Factory) Configure(env *core.Environment) error {
 	var err error
 
 	if err = factory.configureLevels(); err != nil {
-		gol.GetLogger(loggerName).Error("could not configure logging levels: %v", err)
+		gol.GetLogger(loggerName).Error("%v", err)
 		return err
 	}
 	if err = factory.configureAppenders(env); err != nil {
-		gol.GetLogger(loggerName).Error("could not configure appenders: %v", err)
+		gol.GetLogger(loggerName).Error("%v", err)
 		return err
 	}
 	env.Admin.AddTask(&logTask{})
@@ -83,7 +83,7 @@ func (factory *Factory) configureLevels() error {
 	if factory.Level != "" {
 		logLevel, ok := getLogLevel(factory.Level)
 		if !ok {
-			return fmt.Errorf("unknown log level %s", factory.Level)
+			return fmt.Errorf("logging: unsupported level %s", factory.Level)
 		}
 		setLogLevel(gol.RootLoggerName, logLevel)
 	}
@@ -91,7 +91,7 @@ func (factory *Factory) configureLevels() error {
 	for k, v := range factory.Loggers {
 		logLevel, ok := getLogLevel(v)
 		if !ok {
-			return fmt.Errorf("unknown log level %s", v)
+			return fmt.Errorf("logging: unsupported level %s", v)
 		}
 		setLogLevel(k, logLevel)
 	}
@@ -102,22 +102,22 @@ func (factory *Factory) configureAppenders(environment *core.Environment) error 
 	// appenders is a list of appenders for root logger.
 	var appenders []gol.Appender
 
-	for _, appender := range factory.Appenders {
-		if a, ok := appender.Value.(AppenderFactory); ok {
+	for _, appenderFactory := range factory.Appenders {
+		if a, ok := appenderFactory.Value.(AppenderFactory); ok {
 			appender, err := a.Build(environment)
 			if err != nil {
 				return err
 			}
 			appenders = append(appenders, appender)
 		} else {
-			return fmt.Errorf("unsupported appender %#v", a)
+			return fmt.Errorf("logging: unsupported appender %#v", appenderFactory)
 		}
 	}
 	// Override default appender of the root logger
 	if len(appenders) > 0 {
 		logger, ok := gol.GetLogger(gol.RootLoggerName).(*gol.DefaultLogger)
 		if !ok {
-			return fmt.Errorf("logger is not gol.DefaultLogger %T", logger)
+			return fmt.Errorf("logging: logger is not gol.DefaultLogger %T", logger)
 		}
 		a := golasync.NewAppender(appenders...)
 		logger.SetAppender(a)

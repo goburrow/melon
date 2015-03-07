@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
@@ -29,12 +28,9 @@ const (
 )
 
 var (
-	errNoHTTPRequest  = errors.New("rest: no http request")
-	errContextHandler = errors.New("rest: no context handler")
-
-	errInternalServerError  = NewHTTPError("500 internal server error", http.StatusInternalServerError)
-	errNotAcceptable        = NewHTTPError("406 not acceptable", http.StatusNotAcceptable)
-	errUnsupportedMediaType = NewHTTPError("415 unsupported media type", http.StatusUnsupportedMediaType)
+	errInternalServerError  = NewHTTPError(http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	errNotAcceptable        = NewHTTPError(http.StatusText(http.StatusNotAcceptable), http.StatusNotAcceptable)
+	errUnsupportedMediaType = NewHTTPError(http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
 )
 
 type contextFunc func(context.Context) (interface{}, error)
@@ -116,32 +112,40 @@ func (h *contextHandler) getRequestReaders(r *http.Request) []RequestReader {
 }
 
 // ResponseWriterFromContext returns http.ResponseWriter.
-func ResponseWriterFromContext(c context.Context) (http.ResponseWriter, bool) {
+// Panic if http.ResponseWriter is not in the given context.
+func ResponseWriterFromContext(c context.Context) http.ResponseWriter {
 	v, ok := c.Value(responseWriterKey).(http.ResponseWriter)
-	return v, ok
+	if !ok {
+		panic("rest: no http.ResponseWriter in context")
+	}
+	return v
 }
 
 // RequestFromContext returns http.Request.
-func RequestFromContext(c context.Context) (*http.Request, bool) {
+// Panic if http.Request is not in the given context.
+func RequestFromContext(c context.Context) *http.Request {
 	v, ok := c.Value(requestKey).(*http.Request)
-	return v, ok
+	if !ok {
+		panic("rest: no http.Request in context")
+	}
+	return v
 }
 
 // ParamsFromContext returns path params.
-func ParamsFromContext(c context.Context) (map[string]string, bool) {
+func ParamsFromContext(c context.Context) map[string]string {
 	v, ok := c.Value(pathParamsKey).(map[string]string)
-	return v, ok
+	if !ok {
+		return nil
+	}
+	return v
 }
 
 // EntityFromContext returns marshalled http.Request.Body.
 func EntityFromContext(c context.Context, v interface{}) error {
-	request, ok := c.Value(requestKey).(*http.Request)
-	if !ok {
-		return errNoHTTPRequest
-	}
+	request := c.Value(requestKey).(*http.Request)
 	contextHandler, ok := c.Value(contextHandlerKey).(*contextHandler)
 	if !ok {
-		return errContextHandler
+		panic("rest: no handler in context")
 	}
 	requestReaders := contextHandler.getRequestReaders(request)
 	if len(requestReaders) == 0 {
@@ -165,7 +169,10 @@ func ValidEntityFromContext(c context.Context, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	contextHandler, _ := c.Value(contextHandlerKey).(*contextHandler)
+	contextHandler, ok := c.Value(contextHandlerKey).(*contextHandler)
+	if !ok {
+		panic("rest: no handler in context")
+	}
 	err = contextHandler.resourceHandler.validator.Validate(v)
 	if err != nil {
 		return NewHTTPError(err.Error(), statusUnprocessableEntity)

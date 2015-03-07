@@ -52,7 +52,7 @@ func getThreshold(threshold string) (gol.Level, error) {
 	}
 	level, ok := getLogLevel(threshold)
 	if !ok {
-		return 0, fmt.Errorf("unknown threshold %s", threshold)
+		return 0, fmt.Errorf("logging: unsupported threshold %s", threshold)
 	}
 	return level, nil
 }
@@ -95,7 +95,7 @@ func (factory *ConsoleAppenderFactory) Build(environment *core.Environment) (gol
 	case "stderr":
 		writer = os.Stderr
 	default:
-		return nil, fmt.Errorf("unknown target %s", factory.Target)
+		return nil, fmt.Errorf("logging: unsupported target %s", factory.Target)
 	}
 
 	return factory.FilteredAppenderFactory.Build(gol.NewAppender(writer))
@@ -156,7 +156,7 @@ func (factory *SyslogAppenderFactory) Build(environment *core.Environment) (gol.
 	if factory.Facility != "" {
 		facility, ok := facilities[strings.ToUpper(factory.Facility)]
 		if !ok {
-			return nil, fmt.Errorf("unknown facility %s", factory.Facility)
+			return nil, fmt.Errorf("logging: unsupported facility %s", factory.Facility)
 		}
 		sa.Facility = facility
 	}

@@ -31,7 +31,7 @@ func (*logTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if level != "" {
 		logLevel, ok := getLogLevel(level)
 		if !ok {
-			http.Error(w, "Level is not supported", http.StatusBadRequest)
+			http.Error(w, "Unsupported level "+level, http.StatusBadRequest)
 			return
 		}
 		for _, name := range loggers {

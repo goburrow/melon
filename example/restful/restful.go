@@ -80,7 +80,7 @@ func (r *userResource) Path() string {
 }
 
 func (r *userResource) GET(c context.Context) (interface{}, error) {
-	params, _ := rest.ParamsFromContext(c)
+	params := rest.ParamsFromContext(c)
 	mu.RLock()
 	defer mu.RUnlock()
 
@@ -92,7 +92,7 @@ func (r *userResource) GET(c context.Context) (interface{}, error) {
 }
 
 func (r *userResource) POST(c context.Context) (interface{}, error) {
-	params, _ := rest.ParamsFromContext(c)
+	params := rest.ParamsFromContext(c)
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -108,7 +108,7 @@ func (r *userResource) POST(c context.Context) (interface{}, error) {
 }
 
 func (r *userResource) DELETE(c context.Context) (interface{}, error) {
-	params, _ := rest.ParamsFromContext(c)
+	params := rest.ParamsFromContext(c)
 	mu.Lock()
 	defer mu.Unlock()
 	_, ok := users[params["name"]]

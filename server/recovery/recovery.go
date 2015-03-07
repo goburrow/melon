@@ -45,7 +45,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 		if e != nil {
 			panics.Add()
 			f.logger.Error("%v\n%s", e, stack())
-			http.Error(w, "500 internal server error", http.StatusInternalServerError)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}()
 	chain[0].ServeHTTP(w, r, chain[1:])
