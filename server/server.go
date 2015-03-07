@@ -21,14 +21,17 @@ const (
 )
 
 func init() {
-	polytype.Register("default_server", func() interface{} {
+	polytype.Register("DefaultServer", func() interface{} {
 		return &DefaultFactory{}
 	})
-	polytype.Register("simple_server", func() interface{} {
+	polytype.Register("SimpleServer", func() interface{} {
 		return &SimpleFactory{
 			ApplicationContextPath: "/application",
 			AdminContextPath:       "/admin",
 		}
+	})
+	polytype.Register("DefaultRequestLog", func() interface{} {
+		return &DefaultRequestLogFactory{}
 	})
 }
 
@@ -188,77 +191,6 @@ func (h *Handler) PathPrefix() string {
 	return h.pathPrefix
 }
 
-// DefaultFactory allows multiple sets of application and admin connectors running
-// on separate ports.
-type DefaultFactory struct {
-	ApplicationConnectors []Connector `valid:"nonzero"`
-	AdminConnectors       []Connector `valid:"nonzero"`
-}
-
-func (factory *DefaultFactory) Build(environment *core.Environment) (core.Server, error) {
-	server := NewServer()
-
-	// Application
-	appHandler := NewHandler()
-	appHandler.ServeMux.Use(func(h http.Handler) http.Handler {
-		return appHandler.FilterChain.Build(h)
-	})
-	server.addConnectors(appHandler.ServeMux, factory.ApplicationConnectors)
-	environment.Server.ServerHandler = appHandler
-	environment.Server.AddResourceHandler(newResourceHandler(appHandler, environment.Server))
-
-	// Admin
-	adminHandler := NewHandler()
-	adminHandler.ServeMux.Use(func(h http.Handler) http.Handler {
-		return adminHandler.FilterChain.Build(h)
-	})
-	server.addConnectors(adminHandler.ServeMux, factory.AdminConnectors)
-	environment.Admin.ServerHandler = adminHandler
-
-	return server, nil
-}
-
-// SimpleFactory creates a single-connector server.
-type SimpleFactory struct {
-	ApplicationContextPath string `valid:"nonzero"`
-	AdminContextPath       string `valid:"nonzero"`
-	Connector              Connector
-}
-
-func (factory *SimpleFactory) Build(environment *core.Environment) (core.Server, error) {
-	server := NewServer()
-
-	// Both application and admin share same handler
-	appHandler := NewHandler()
-	appHandler.pathPrefix = factory.ApplicationContextPath
-	appHandler.ServeMux.Use(func(h http.Handler) http.Handler {
-		return appHandler.FilterChain.Build(h)
-	})
-	environment.Server.ServerHandler = appHandler
-	environment.Server.AddResourceHandler(newResourceHandler(appHandler, environment.Server))
-
-	adminHandler := NewHandler()
-	adminHandler.pathPrefix = factory.AdminContextPath
-	adminHandler.ServeMux.Use(func(h http.Handler) http.Handler {
-		return adminHandler.FilterChain.Build(h)
-	})
-	environment.Admin.ServerHandler = adminHandler
-
-	serveMux := factory.newServeMux(appHandler, adminHandler)
-	server.addConnectors(serveMux, []Connector{factory.Connector})
-	return server, nil
-}
-
-func (factory *SimpleFactory) newServeMux(handlers ...*Handler) http.Handler {
-	serveMux := web.New()
-
-	for _, handler := range handlers {
-		serveMux.Handle(handler.pathPrefix+"/*", handler.ServeMux)
-		serveMux.Get(handler.pathPrefix, http.RedirectHandler(handler.pathPrefix+"/", http.StatusMovedPermanently))
-	}
-	return serveMux
-}
-
 // Factory is an union of DefaultFactory and SimpleFactory.
 type Factory struct {
 	polytype.Type
@@ -270,5 +202,5 @@ func (factory *Factory) Build(environment *core.Environment) (core.Server, error
 	if f, ok := factory.Value().(core.ServerFactory); ok {
 		return f.Build(environment)
 	}
-	return nil, fmt.Errorf("server: unsupported server type %#v", factory.Value)
+	return nil, fmt.Errorf("server: unsupported server %#v", factory.Value())
 }

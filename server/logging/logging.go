@@ -37,7 +37,7 @@ func NewFilter(writer io.Writer) *Filter {
 }
 
 func (f *Filter) Name() string {
-	return "requestlog"
+	return "logging"
 }
 
 func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
@@ -60,9 +60,12 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 	responseTime := end.Sub(start).Nanoseconds() / int64(time.Millisecond)
 	requestID := r.Header.Get(xRequestID)
 
+	// Can't use fmt.Fprintf here as the writer might use asynchronous
+	// writing method and buffer is freed after the format function is
+	// called.
+
 	// Common log format
-	fmt.Fprintf(f.writer,
-		"%s %s %s [%s] \"%s %s %s\" %d %d %q %q %d %q\n",
+	record := fmt.Sprintf("%s %s %s [%s] \"%s %s %s\" %d %d %q %q %d %q\n",
 		remoteAddr,
 		"-", // Identity is not supported.
 		"-", // UserID is not supported.
@@ -77,6 +80,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 		responseTime,
 		requestID,
 	)
+	f.writer.Write([]byte(record))
 }
 
 func getRemoteAddr(r *http.Request) string {

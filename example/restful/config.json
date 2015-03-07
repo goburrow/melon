@@ -1,6 +1,6 @@
 {
   "server": {
-    "type": "default_server",
+    "type": "DefaultServer",
     "applicationConnectors": [
       {
         "type": "http",
@@ -12,7 +12,15 @@
         "type": "http",
         "addr": ":8081"
       }
-    ]
+    ],
+    "requestLog": {
+      "type": "DefaultRequestLog",
+      "appenders": [
+        {
+          "type": "ConsoleAppender"
+        }
+      ]
+    }
   },
   "logging": {
     "level": "DEBUG",
@@ -22,7 +30,7 @@
     },
     "appenders": [
       {
-	"type": "console_appender"
+        "type": "ConsoleAppender"
       }
     ]
   },

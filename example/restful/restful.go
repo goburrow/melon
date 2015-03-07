@@ -188,6 +188,11 @@ func (app *application) Run(configuration interface{}, environment *core.Environ
 	environment.Server.Register(&usersResource{})
 	// http://localhost:8080/user/:name
 	environment.Server.Register(&userResource{})
+	// http://localhost:8080/panic
+	environment.Server.ServerHandler.Handle("GET", "/panic",
+		http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			panic("ugh!")
+		}))
 
 	// http://localhost:8081/tasks/rmusers
 	environment.Admin.AddTask(&usersTask{})

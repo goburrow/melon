@@ -1,3 +1,6 @@
+/*
+Package recovery provides a filter which can recover panics.
+*/
 package recovery
 
 import (
@@ -41,10 +44,9 @@ func (f *Filter) Name() string {
 
 func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
 	defer func() {
-		e := recover()
-		if e != nil {
+		if err := recover(); err != nil {
 			panics.Add()
-			f.logger.Error("%v\n%s", e, stack())
+			f.logger.Error("%v\n%s", err, stack())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}()

@@ -31,9 +31,9 @@ var (
 )
 
 func init() {
-	polytype.Register("console_appender", func() interface{} { return &ConsoleAppenderFactory{} })
-	polytype.Register("file_appender", func() interface{} { return &FileAppenderFactory{} })
-	polytype.Register("syslog_appender", func() interface{} { return &SyslogAppenderFactory{} })
+	polytype.Register("ConsoleAppender", func() interface{} { return &ConsoleAppenderFactory{} })
+	polytype.Register("FileAppender", func() interface{} { return &FileAppenderFactory{} })
+	polytype.Register("SyslogAppender", func() interface{} { return &SyslogAppenderFactory{} })
 }
 
 func getLogLevel(level string) (gol.Level, bool) {
@@ -110,7 +110,7 @@ func (factory *Factory) configureAppenders(environment *core.Environment) error 
 			}
 			appenders = append(appenders, appender)
 		} else {
-			return fmt.Errorf("logging: unsupported appender %#v", appenderFactory)
+			return fmt.Errorf("logging: unsupported appender %#v", appenderFactory.Value())
 		}
 	}
 	// Override default appender of the root logger

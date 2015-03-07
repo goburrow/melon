@@ -1,11 +1,17 @@
 server:
-  type: default_server
+  type: DefaultServer
   applicationConnectors:
   - type: http
     addr: :8080
   adminConnectors:
   - type: http
     addr: :8081
+  requestLog:
+    type: DefaultRequestLog
+    appenders:
+    - type: ConsoleAppender
+    - type: FileAppender
+      currentLogFilename: /tmp/gomelon-access.log
 
 logging:
   level: DEBUG
@@ -13,10 +19,10 @@ logging:
     gomelon.server: INFO
     gomelon.configuration: WARN
   appenders:
-  - type: file_appender
+  - type: FileAppender
     threshold: INFO
     currentLogFilename: /tmp/gomelon.log
-  - type: console_appender
+  - type: ConsoleAppender
 
 metrics:
   frequency: 1s

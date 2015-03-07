@@ -31,6 +31,9 @@ var _ io.WriteCloser = (*AsyncWriter)(nil)
 
 // NewAsyncWriter allocates and returns a new AsyncWriter.
 // Start() must be called before writing data.
+// IMPORTANT: don't use fmt.Fprintf() directly on this writer since the printf
+// buffer might be freed/reused and the data is contaminated before the
+// underline writers receive it. Use fmt.Sprintf() then Write() instead.
 func NewAsyncWriter(bufferSize int, writers ...io.Writer) *AsyncWriter {
 	a := &AsyncWriter{
 		writers: writers,
