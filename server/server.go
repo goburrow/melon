@@ -267,7 +267,7 @@ type Factory struct {
 var _ core.ServerFactory = (*Factory)(nil)
 
 func (factory *Factory) Build(environment *core.Environment) (core.Server, error) {
-	if f, ok := factory.Value.(core.ServerFactory); ok {
+	if f, ok := factory.Value().(core.ServerFactory); ok {
 		return f.Build(environment)
 	}
 	return nil, fmt.Errorf("server: unsupported server type %#v", factory.Value)

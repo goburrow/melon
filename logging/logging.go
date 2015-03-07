@@ -103,7 +103,7 @@ func (factory *Factory) configureAppenders(environment *core.Environment) error 
 	var appenders []gol.Appender
 
 	for _, appenderFactory := range factory.Appenders {
-		if a, ok := appenderFactory.Value.(AppenderFactory); ok {
+		if a, ok := appenderFactory.Value().(AppenderFactory); ok {
 			appender, err := a.Build(environment)
 			if err != nil {
 				return err
