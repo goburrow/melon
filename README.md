@@ -2,7 +2,9 @@
 Lightweight Go framework for building web services, inspired by Dropwizard.
 
 ## Overview
-Gomelon includes a number of libraries to build a web application quickly:
+Gomelon is a partial port of [Dropwizard](http://dropwizard.io/) in Go.
+Besides of builtin Go packages, it utilizes a number of [libraries](https://github.com/goburrow/gomelon/blob/master/THIRDPARTY.md)
+in order to build a server stack quickly, including:
 
 * [goji](https://github.com/zenazn/goji): a robust web framework.
 * [gol](https://github.com/goburrow/gol): a simple hierarchical logging API.
@@ -18,12 +20,13 @@ Features supported:
 - Metrics: for monitoring and statistics.
 - Tasks: for administration.
 - Resources: for RESTful endpoints.
+- Filters: for injecting middlewares.
 - Logging: for understanding behaviors of your application.
 - Configuration: for application parameters.
 - Banner: for fun. :)
-- (maybe more)
+- and more...
 
-## Example
+## Examples
 See [example](https://github.com/goburrow/gomelon/tree/master/example)
 
 ```
