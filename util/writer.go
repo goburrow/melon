@@ -9,9 +9,11 @@ import (
 	"github.com/goburrow/gol"
 )
 
-var (
-	writerLoggerName = "gomelon/util/writer"
-)
+var writerLogger gol.Logger
+
+func init() {
+	writerLogger = gol.GetLogger("gomelon/util/writer")
+}
 
 // AsyncWriter writes asynchronously to the given writers.
 type AsyncWriter struct {
@@ -23,8 +25,6 @@ type AsyncWriter struct {
 
 	wg     sync.WaitGroup
 	finish chan struct{}
-
-	logger gol.Logger
 }
 
 var _ io.WriteCloser = (*AsyncWriter)(nil)
@@ -39,7 +39,6 @@ func NewAsyncWriter(bufferSize int, writers ...io.Writer) *AsyncWriter {
 		writers: writers,
 		chans:   make([]chan []byte, len(writers)),
 		finish:  make(chan struct{}),
-		logger:  gol.GetLogger(writerLoggerName),
 
 		Timeout: 10 * time.Second,
 	}
@@ -97,7 +96,7 @@ func (a *AsyncWriter) listen(c chan []byte, w io.Writer) {
 			return
 		case b := <-c:
 			if _, err := w.Write(b); err != nil {
-				a.logger.Error("error writing %T: %v", w, err)
+				writerLogger.Error("error writing %T: %v", w, err)
 			}
 		}
 	}
@@ -112,7 +111,7 @@ func (a *AsyncWriter) flush(c chan []byte, w io.Writer) {
 		select {
 		case <-timeout:
 			// Timed out.
-			a.logger.Warn("timeout flushing %T", w)
+			writerLogger.Warn("timeout flushing %T", w)
 			return
 		default:
 		}
@@ -120,7 +119,7 @@ func (a *AsyncWriter) flush(c chan []byte, w io.Writer) {
 		case b := <-c:
 			// Succeed.
 			if _, err := w.Write(b); err != nil {
-				a.logger.Error("error writing %T: %v", w, err)
+				writerLogger.Error("error writing %T: %v", w, err)
 				return
 			}
 		default:

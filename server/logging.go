@@ -15,9 +15,7 @@ import (
 )
 
 const (
-	requestLogBufferSize   = 1024
-	requestLogFileOpenFlag = os.O_RDWR | os.O_CREATE | os.O_APPEND
-	requestLogFileOpenMode = 0644
+	requestLogBufferSize = 1024
 )
 
 // RequestLogFactory builds logging filter.
@@ -49,7 +47,7 @@ func (f *DefaultRequestLogFactory) Build(env *core.Environment) (filter.Filter, 
 			}
 		case *logging.FileAppenderFactory:
 			writer := rotation.NewFile(appenderFactory.CurrentLogFilename)
-			if err := writer.Open(requestLogFileOpenFlag, requestLogFileOpenMode); err != nil {
+			if err := writer.Open(); err != nil {
 				return nil, err
 			}
 			if appenderFactory.Archive {

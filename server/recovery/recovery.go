@@ -16,26 +16,28 @@ import (
 
 const (
 	filterName = "recovery"
-	loggerName = "gomelon/server"
 	stackSkip  = 4
 	stackMax   = 50
 )
 
 var (
-	panics = metrics.Counter("HTTP.Panics")
+	panics metrics.Counter
+	logger gol.Logger
 )
+
+func init() {
+	panics = metrics.Counter("HTTP.Panics")
+	logger = gol.GetLogger("gomelon/server/recovery")
+}
 
 // Filter handles panics.
 type Filter struct {
-	logger gol.Logger
 }
 
 var _ filter.Filter = (*Filter)(nil)
 
 func NewFilter() *Filter {
-	return &Filter{
-		logger: gol.GetLogger(loggerName),
-	}
+	return &Filter{}
 }
 
 func (f *Filter) Name() string {
@@ -46,7 +48,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 	defer func() {
 		if err := recover(); err != nil {
 			panics.Add()
-			f.logger.Error("%v\n%s", err, stack())
+			logger.Error("%v\n%s", err, stack())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}()

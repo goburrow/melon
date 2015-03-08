@@ -12,7 +12,7 @@ import (
 
 func init() {
 	// Disable logger
-	gol.GetLogger(loggerName).(*gol.DefaultLogger).SetLevel(gol.LevelOff)
+	logger.(*gol.DefaultLogger).SetLevel(gol.LevelOff)
 }
 
 func TestPanicHandler(t *testing.T) {

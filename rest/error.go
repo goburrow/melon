@@ -6,9 +6,11 @@ import (
 	"github.com/goburrow/gol"
 )
 
-const (
-	errorLoggerName = "gomelon/rest/error"
-)
+var errorLogger gol.Logger
+
+func init() {
+	errorLogger = gol.GetLogger("gomelon/rest/error")
+}
 
 type HTTPError struct {
 	Message string
@@ -33,17 +35,14 @@ type ErrorMapper interface {
 
 // defaultErrorHandler implements ErrorHandler interface.
 type defaultErrorMapper struct {
-	logger gol.Logger
 }
 
 func newErrorMapper() *defaultErrorMapper {
-	return &defaultErrorMapper{
-		logger: gol.GetLogger("gomelon/rest/error"),
-	}
+	return &defaultErrorMapper{}
 }
 
 func (h *defaultErrorMapper) MapError(err error, w http.ResponseWriter, r *http.Request) {
-	h.logger.Debug("%#v", err)
+	errorLogger.Debug("%v: %#v", r.URL, err)
 	// TODO: log error
 	switch v := err.(type) {
 	case *HTTPError:
