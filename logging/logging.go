@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	loggerName = "gomelon/logging"
+	loggerName      = "gomelon/logging"
+	asyncBufferSize = 1024
 )
 
 var (
@@ -119,7 +120,7 @@ func (factory *Factory) configureAppenders(environment *core.Environment) error 
 		if !ok {
 			return fmt.Errorf("logging: logger is not gol.DefaultLogger %T", logger)
 		}
-		a := golasync.NewAppender(appenders...)
+		a := golasync.NewAppender(asyncBufferSize, appenders...)
 		logger.SetAppender(a)
 		environment.Lifecycle.Manage(a)
 	}
