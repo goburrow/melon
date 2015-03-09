@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -17,8 +16,8 @@ func init() {
 
 // AsyncWriter writes asynchronously to the given writers.
 type AsyncWriter struct {
-	// Timeout is maximum duration before timing out flush a channel.
-	Timeout time.Duration
+	// DrainTimeout is maximum duration before timing out flush a channel.
+	DrainTimeout time.Duration
 
 	writers []io.Writer
 	chans   []chan []byte
@@ -40,7 +39,7 @@ func NewAsyncWriter(bufferSize int, writers ...io.Writer) *AsyncWriter {
 		chans:   make([]chan []byte, len(writers)),
 		finish:  make(chan struct{}),
 
-		Timeout: 10 * time.Second,
+		DrainTimeout: 10 * time.Second,
 	}
 	for i, _ := range a.writers {
 		a.chans[i] = make(chan []byte, bufferSize)
@@ -67,16 +66,9 @@ func (a *AsyncWriter) Stop() error {
 
 // Write sends data to all writers and returns error if a channel if full.
 func (a *AsyncWriter) Write(b []byte) (int, error) {
-	for i, c := range a.chans {
-		select {
-		case c <- b:
-			// Succeed.
-		default:
-			// This channel is full.
-			// TODO: Retry policy.
-			err := fmt.Errorf("util: writer channel full %T", a.writers[i])
-			return 0, err
-		}
+	for _, c := range a.chans {
+		// FIXME: still blocked if channel buffer is full.
+		c <- b
 	}
 	return len(b), nil
 }
@@ -105,7 +97,7 @@ func (a *AsyncWriter) listen(c chan []byte, w io.Writer) {
 // Flush sends all pending data in the channel to writer or timeout after
 // maximum of a.Timeout and the writer timeout.
 func (a *AsyncWriter) flush(c chan []byte, w io.Writer) {
-	timeout := time.After(a.Timeout)
+	timeout := time.After(a.DrainTimeout)
 	for {
 		// Timeout channel has higher priority.
 		select {

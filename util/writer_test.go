@@ -100,7 +100,7 @@ func TestAsyncWriterFull(t *testing.T) {
 
 	count := 3
 	writer := NewAsyncWriter(count, sw)
-	writer.Timeout = 1 * time.Millisecond
+	writer.DrainTimeout = 1 * time.Millisecond
 
 	err := writer.Start()
 	if err != nil {
@@ -115,7 +115,7 @@ func TestAsyncWriterFull(t *testing.T) {
 		}
 	}
 	_, err = writer.Write([]byte("full"))
-	if err == nil {
-		t.Fatal("an error expected")
+	if err != nil {
+		t.Fatal(err)
 	}
 }
