@@ -25,17 +25,6 @@ func (app *Application) SetName(name string) {
 	app.name = name
 }
 
-func (app *Application) Configuration() interface{} {
-	if app.configuration == nil {
-		app.configuration = &Configuration{}
-	}
-	return app.configuration
-}
-
-func (app *Application) SetConfiguration(c interface{}) {
-	app.configuration = c
-}
-
 // Initializes the application bootstrap.
 func (app *Application) Initialize(bootstrap *core.Bootstrap) {
 	bootstrap.AddCommand(&CheckCommand{})
