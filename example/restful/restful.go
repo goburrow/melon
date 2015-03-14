@@ -71,6 +71,16 @@ func (r *usersResource) POST(c context.Context) (interface{}, error) {
 	return "Created.", nil
 }
 
+// Consumes indicates that usersResource only accepts JSON.
+func (r *usersResource) Consumes() []string {
+	return []string{"application/json"}
+}
+
+// Produces indicates that usersResource only returns JSON.
+func (r *usersResource) Produces() []string {
+	return []string{"application/json"}
+}
+
 // userResource modifies single user.
 type userResource struct {
 }
@@ -168,6 +178,8 @@ type application struct {
 	gomelon.Application
 }
 
+// Initialize adds support for RESTful API, serving static files at /static
+// and debug endpoint in admin page.
 func (app *application) Initialize(bootstrap *core.Bootstrap) {
 	app.Application.Initialize(bootstrap)
 	// Support RESTful API
@@ -203,11 +215,13 @@ func (app *application) Run(configuration interface{}, environment *core.Environ
 	return nil
 }
 
-// Try these:
-// curl -XPOST -H'Content-Type: application/json' -d'{"name":"a","age":2}' 'http://localhost:8080/users'
-// curl -XGET 'http://localhost:8080/user/a'
-// curl -XDELETE 'http://localhost:8080/user/a'
-//
+// To run the application:
+//  ./restful server config.yaml
+// And try these commands to create, retrieve and delete an user:
+//  curl -XPOST -H'Content-Type: application/json' -d'{"name":"a","age":2}' 'http://localhost:8080/users'
+//  curl -XGET 'http://localhost:8080/user/a'
+//  curl -XDELETE 'http://localhost:8080/user/a'
+// Admin page can be accessed at http://localhost:8081
 func main() {
 	app := &application{}
 	app.SetName("MyApp")

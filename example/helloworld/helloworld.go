@@ -8,7 +8,7 @@ import (
 	"github.com/goburrow/gomelon/core"
 )
 
-// resousce is the HTTP handler for homepage.
+// resource is the HTTP handler of the application homepage.
 type resource struct {
 }
 
@@ -38,8 +38,8 @@ func (app *application) Run(conf interface{}, env *core.Environment) error {
 }
 
 // Build application and run with command:
-//   helloworld server path/to/config.yaml
-// Then open in browser:
+//   ./helloworld server path/to/config.yaml
+// Then open these links in browser for application and admin page respectively:
 //   http://localhost:8080/application/
 //   http://localhost:8080/admin/
 func main() {
