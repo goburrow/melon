@@ -12,6 +12,7 @@ import (
 	"github.com/goburrow/polytype"
 
 	golasync "github.com/goburrow/gol/async"
+	_ "github.com/goburrow/gol/log"
 )
 
 const (
