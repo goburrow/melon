@@ -8,8 +8,6 @@ import (
 	slogging "github.com/goburrow/gomelon/server/logging"
 )
 
-var _ RequestLogFactory = (*DefaultRequestLogFactory)(nil)
-
 func TestDefaultRequestLogFactory(t *testing.T) {
 	env := core.NewEnvironment()
 	factory := DefaultRequestLogFactory{}

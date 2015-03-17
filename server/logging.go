@@ -30,42 +30,27 @@ type DefaultRequestLogFactory struct {
 	Appenders []logging.AppenderConfiguration
 }
 
+var _ RequestLogFactory = (*DefaultRequestLogFactory)(nil)
+
 func (f *DefaultRequestLogFactory) Build(env *core.Environment) (filter.Filter, error) {
 	var writers []io.Writer
 
-	// FIXME: Clean up this mess
 	for _, appender := range f.Appenders {
 		switch appenderFactory := appender.Value().(type) {
 		case *logging.ConsoleAppenderFactory:
-			switch appenderFactory.Target {
-			case "", "stdout":
-				writers = append(writers, os.Stdout)
-			case "stderr":
-				writers = append(writers, os.Stderr)
-			default:
-				return nil, fmt.Errorf("server: unsupported appender target %v", appenderFactory.Target)
-			}
-		case *logging.FileAppenderFactory:
-			writer := rotation.NewFile(appenderFactory.CurrentLogFilename)
-			if err := writer.Open(); err != nil {
+			w, err := buildConsoleWriter(appenderFactory)
+			if err != nil {
 				return nil, err
 			}
-			if appenderFactory.Archive {
-				triggeringPolicy := rotation.NewTimeTriggeringPolicy()
-				if err := triggeringPolicy.Start(); err != nil {
-					return nil, err
-				}
-				rollingPolicy := rotation.NewTimeRollingPolicy()
-				rollingPolicy.FilePattern = appenderFactory.ArchivedLogFilenamePattern
-				rollingPolicy.FileCount = appenderFactory.ArchivedFileCount
-
-				writer.SetTriggeringPolicy(triggeringPolicy)
-				writer.SetRollingPolicy(rollingPolicy)
+			writers = append(writers, w)
+		case *logging.FileAppenderFactory:
+			w, err := buildFileWriter(appenderFactory)
+			if err != nil {
+				return nil, err
 			}
-			// TODO: Close file
-			writers = append(writers, writer)
+			writers = append(writers, w)
 		default:
-			return nil, fmt.Errorf("server: unsupported request log appender %#v", appender)
+			return nil, fmt.Errorf("server: unsupported request log appender %#v", appender.Value())
 		}
 	}
 	if len(writers) == 0 {
@@ -75,6 +60,39 @@ func (f *DefaultRequestLogFactory) Build(env *core.Environment) (filter.Filter, 
 	asyncWriter := util.NewAsyncWriter(requestLogBufferSize, writers...)
 	env.Lifecycle.Manage(asyncWriter)
 	return slogging.NewFilter(asyncWriter), nil
+}
+
+func buildConsoleWriter(config *logging.ConsoleAppenderFactory) (io.Writer, error) {
+	// TODO: Mutex on os.Std{out,err}
+	switch config.Target {
+	case "", "stdout":
+		return os.Stdout, nil
+	case "stderr":
+		return os.Stderr, nil
+	default:
+		return nil, fmt.Errorf("server: unsupported appender target %v", config.Target)
+	}
+}
+
+func buildFileWriter(config *logging.FileAppenderFactory) (io.Writer, error) {
+	writer := rotation.NewFile(config.CurrentLogFilename)
+	if err := writer.Open(); err != nil {
+		return nil, err
+	}
+	if config.Archive {
+		triggeringPolicy := rotation.NewTimeTriggeringPolicy()
+		if err := triggeringPolicy.Start(); err != nil {
+			return nil, err
+		}
+		rollingPolicy := rotation.NewTimeRollingPolicy()
+		rollingPolicy.FilePattern = config.ArchivedLogFilenamePattern
+		rollingPolicy.FileCount = config.ArchivedFileCount
+
+		writer.SetTriggeringPolicy(triggeringPolicy)
+		writer.SetRollingPolicy(rollingPolicy)
+		// TODO: Close file
+	}
+	return writer, nil
 }
 
 type noRequestLog struct{}

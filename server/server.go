@@ -110,7 +110,7 @@ func (server *Server) Start() error {
 			errorChan <- c.Listen()
 		}(connector)
 	}
-	for _, _ = range server.Connectors {
+	for _ = range server.Connectors {
 		select {
 		case err := <-errorChan:
 			if err != nil {
@@ -159,7 +159,7 @@ func NewHandler() *Handler {
 
 // Handle registers the handler for the given pattern.
 func (h *Handler) Handle(method, pattern string, handler interface{}) {
-	var f func(pattern web.PatternType, handler web.HandlerType)
+	var f func(web.PatternType, web.HandlerType)
 
 	switch method {
 	case "GET":
