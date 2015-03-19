@@ -82,7 +82,7 @@ func (env *AdminEnvironment) onStarting() {
 	})
 	// Registered handlers
 	for _, h := range env.handlers {
-		env.ServerHandler.Handle("GET", h.Path(), h)
+		env.ServerHandler.Handle("*", h.Path(), h)
 	}
 	// Registered tasks
 	for _, task := range env.tasks {

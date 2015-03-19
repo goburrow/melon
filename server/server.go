@@ -180,6 +180,8 @@ func (h *Handler) Handle(method, pattern string, handler interface{}) {
 		f = h.ServeMux.Connect
 	case "PATCH":
 		f = h.ServeMux.Patch
+	case "*":
+		f = h.ServeMux.Handle
 	default:
 		panic("server: unsupported method " + method)
 	}
