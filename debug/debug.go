@@ -6,42 +6,20 @@ package debug
 import (
 	"expvar"
 	"fmt"
-	"html/template"
 	"net/http"
-	httppprof "net/http/pprof"
+	"net/http/pprof"
 	"strings"
-
-	"runtime/pprof"
 
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gomelon/core"
 )
 
 const (
-	pprofPath = "/debug/pprof"
+	pprofPath = "/debug/pprof/"
 )
 
 var (
 	logger gol.Logger
-
-	pprofIndexTmpl = template.Must(template.New("index").Parse(`<html>
-<head>
-<title>{{.Path}}</title>
-</head>
-<body>
-{{.Path}}<br>
-<br>
-profiles:<br>
-<table>
-{{range .Profiles}}
-<tr><td align=right>{{.Count}}<td><a href="{{$.Path}}{{.Name}}?debug=1">{{.Name}}</a>
-{{end}}
-</table>
-<br>
-<a href="{{.Path}}goroutine?debug=2">full goroutine stack dump</a><br>
-</body>
-</html>
-`))
 )
 
 func init() {
@@ -62,13 +40,13 @@ func NewBundle() *Bundle {
 func (b *Bundle) Initialize(bootstrap *core.Bootstrap) {
 }
 
-// Run registers /debug/vars and /debug/pprof.
+// Run registers /debug/vars and /debug/pprof/.
 func (b *Bundle) Run(conf interface{}, env *core.Environment) error {
 	env.Admin.AddHandler(&expvarHandler{})
 
-	pprofIndex := &pprofHandler{env.Admin.ServerHandler.PathPrefix() + pprofPath + "/"}
-	env.Admin.AddHandler(pprofIndex)
-	env.Admin.ServerHandler.Handle("*", pprofPath+"/*", pprofIndex)
+	pprofIndexHandler := &pprofHandler{env.Admin.ServerHandler.PathPrefix() + pprofPath}
+	env.Admin.AddHandler(pprofIndexHandler)
+	env.Admin.ServerHandler.Handle("*", pprofPath+"*", pprofIndexHandler)
 	return nil
 }
 
@@ -86,32 +64,23 @@ func (h *pprofHandler) Path() string {
 }
 
 func (h *pprofHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if strings.HasPrefix(r.URL.Path, h.pprofPath) {
-		name := strings.TrimPrefix(r.URL.Path, h.pprofPath)
-		if name != "" {
-			switch name {
-			case "cmdline":
-				httppprof.Cmdline(w, r)
-			case "profile":
-				httppprof.Profile(w, r)
-			case "symbol":
-				httppprof.Symbol(w, r)
-			// TODO: httpprof.Trace
-			default:
-				httppprof.Handler(name).ServeHTTP(w, r)
-			}
-			return
+	name := strings.TrimPrefix(r.URL.Path, h.pprofPath)
+	if name != "" {
+		switch name {
+		case "cmdline":
+			pprof.Cmdline(w, r)
+		case "profile":
+			pprof.Profile(w, r)
+		case "symbol":
+			pprof.Symbol(w, r)
+		// TODO: pprof.Trace
+		default:
+			pprof.Handler(name).ServeHTTP(w, r)
 		}
+		return
 	}
-	var context struct {
-		Path     string
-		Profiles []*pprof.Profile
-	}
-	context.Path = h.pprofPath
-	context.Profiles = pprof.Profiles()
-	if err := pprofIndexTmpl.Execute(w, &context); err != nil {
-		logger.Error("error applying profiles to template: %v", err)
-	}
+	// The paths in template have been fixed in go upstream.
+	pprof.Index(w, r)
 }
 
 type expvarHandler struct {
