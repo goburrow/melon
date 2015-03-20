@@ -44,8 +44,8 @@ func (bundle *Bundle) Run(_ interface{}, env *core.Environment) error {
 	p := addSlashes(bundle.urlPath)
 	handler := http.FileServer(http.Dir(bundle.dir))
 	// Strip path prefix if needed
-	if p != "/" || env.Server.ServerHandler.PathPrefix() != "" {
-		handler = http.StripPrefix(env.Server.ServerHandler.PathPrefix()+p, handler)
+	if p != "/" {
+		handler = http.StripPrefix(p, handler)
 	}
 	env.Server.ServerHandler.Handle("GET", p+"*", handler)
 	return nil

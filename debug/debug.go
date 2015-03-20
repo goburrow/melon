@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	pprofPath = "/debug/pprof/"
+	pprofPath  = "/debug/pprof/"
+	expvarPath = "/debug/vars"
 )
 
 var (
@@ -44,7 +45,7 @@ func (b *Bundle) Initialize(bootstrap *core.Bootstrap) {
 func (b *Bundle) Run(conf interface{}, env *core.Environment) error {
 	env.Admin.AddHandler(&expvarHandler{})
 
-	pprofIndexHandler := &pprofHandler{env.Admin.ServerHandler.PathPrefix() + pprofPath}
+	pprofIndexHandler := &pprofHandler{}
 	env.Admin.AddHandler(pprofIndexHandler)
 	env.Admin.ServerHandler.Handle("*", pprofPath+"*", pprofIndexHandler)
 	return nil
@@ -52,7 +53,6 @@ func (b *Bundle) Run(conf interface{}, env *core.Environment) error {
 
 // pprofHandler is a modification of httppprof.Index with path prefix support.
 type pprofHandler struct {
-	pprofPath string
 }
 
 func (h *pprofHandler) Name() string {
@@ -64,7 +64,7 @@ func (h *pprofHandler) Path() string {
 }
 
 func (h *pprofHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	name := strings.TrimPrefix(r.URL.Path, h.pprofPath)
+	name := strings.TrimPrefix(r.URL.Path, pprofPath)
 	if name != "" {
 		switch name {
 		case "cmdline":
@@ -91,7 +91,7 @@ func (h *expvarHandler) Name() string {
 }
 
 func (h *expvarHandler) Path() string {
-	return "/debug/vars"
+	return expvarPath
 }
 
 // expvarHandler is taken from expvar package.

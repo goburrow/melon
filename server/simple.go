@@ -44,8 +44,8 @@ func (factory *SimpleFactory) buildServer(env *core.Environment, handlers ...*Ha
 	})
 	// Sub routers
 	for _, h := range handlers {
-		handler.ServeMux.Handle(h.pathPrefix+"/*", h.ServeMux)
-		handler.ServeMux.Get(h.pathPrefix, http.RedirectHandler(h.pathPrefix+"/", http.StatusMovedPermanently))
+		handler.ServeMux.Handle(h.pathPrefix+"/*", h)
+		handler.ServeMux.Handle(h.pathPrefix, http.RedirectHandler(h.pathPrefix+"/", http.StatusMovedPermanently))
 	}
 	// Only need filters in the root handler.
 	if err := factory.commonFactory.AddFilters(env, handler); err != nil {

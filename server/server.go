@@ -6,6 +6,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/goburrow/gol"
@@ -185,12 +186,22 @@ func (h *Handler) Handle(method, pattern string, handler interface{}) {
 	default:
 		panic("server: unsupported method " + method)
 	}
-	f(h.pathPrefix+pattern, handler)
+	f(pattern, handler)
 }
 
 // PathPrefix returns server root context path.
 func (h *Handler) PathPrefix() string {
 	return h.pathPrefix
+}
+
+// ServeHTTP strips path prefix in the request URL path.
+// This method is actually only used when path prefix is set
+// (i.e. simple server - the handler acts as subrouter).
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if h.pathPrefix != "" {
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, h.pathPrefix)
+	}
+	h.ServeMux.ServeHTTP(w, r)
 }
 
 // Factory is an union of DefaultFactory and SimpleFactory.
