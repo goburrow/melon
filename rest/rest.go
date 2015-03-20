@@ -60,3 +60,8 @@ type Consumes interface {
 type Produces interface {
 	Produces() []string
 }
+
+// Metrics adds metrics of timing for the endpoint.
+type Metrics interface {
+	Metrics() string
+}

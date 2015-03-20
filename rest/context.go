@@ -3,7 +3,9 @@ package rest
 import (
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/codahale/metrics"
 	"github.com/zenazn/goji/web"
 	"golang.org/x/net/context"
 )
@@ -42,10 +44,19 @@ type contextHandler struct {
 	handle    contextFunc
 
 	resourceHandler *ResourceHandler
+
+	metrics        bool
+	metricRequests metrics.Counter
+	metricLatency  *metrics.Histogram
 }
 
 // ServeHTTPC converts web.C to context.Context
 func (h *contextHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
+	if h.metrics {
+		h.metricRequests.Add()
+		defer h.recordLatency(time.Now())
+	}
+
 	responseWriters := h.getResponseWriters(r)
 	if len(responseWriters) == 0 {
 		h.resourceHandler.errorMapper.MapError(errNotAcceptable, w, r)
@@ -109,6 +120,22 @@ func (h *contextHandler) getResponseWriters(r *http.Request) []ResponseWriter {
 func (h *contextHandler) getRequestReaders(r *http.Request) []RequestReader {
 	mime := r.Header.Get("Content-Type")
 	return h.providers.GetRequestReaders(strings.TrimSpace(mime))
+}
+
+func (h *contextHandler) setMetrics(name string) {
+	h.metricRequests = metrics.Counter("HTTP.Requests." + name)
+	// 5 min window tracking
+	h.metricLatency = metrics.NewHistogram("HTTP.Latency."+name,
+		1,         // 1ms
+		1000*60*3, // 3min
+		3)         // precision
+	h.metrics = true
+}
+
+// recordLatency is taken from codahale/http-handlers.
+func (h *contextHandler) recordLatency(start time.Time) {
+	elapsedMS := time.Now().Sub(start).Seconds() * 1000.0
+	_ = h.metricLatency.RecordValue(int64(elapsedMS))
 }
 
 // ResponseWriterFromContext returns http.ResponseWriter.

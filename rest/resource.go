@@ -69,7 +69,9 @@ func (h *ResourceHandler) AddProvider(provider Provider) {
 func (h *ResourceHandler) handle(v interface{}, method, path string, f contextFunc) {
 	providers := h.getProviders(v)
 	context := &contextHandler{providers: providers, handle: f, resourceHandler: h}
-
+	if r, hasMetrics := v.(Metrics); hasMetrics {
+		context.setMetrics(method + "." + r.Metrics())
+	}
 	h.serverHandler.Handle(method, path, context)
 	h.endpointLogger.LogEndpoint(method, path, v)
 }

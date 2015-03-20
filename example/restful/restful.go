@@ -129,6 +129,10 @@ func (r *userResource) DELETE(c context.Context) (interface{}, error) {
 	return "Deleted.", nil
 }
 
+func (r *userResource) Metrics() string {
+	return "User"
+}
+
 // usersTask is an admin task to remove all users.
 type usersTask struct {
 }
