@@ -40,7 +40,7 @@ type eventListener interface {
 }
 
 func (env *Environment) SetStarting() {
-	for i, _ := range env.eventListeners {
+	for i := range env.eventListeners {
 		env.eventListeners[i].onStarting()
 	}
 }

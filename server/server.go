@@ -132,7 +132,7 @@ func (server *Server) Stop() error {
 
 // addConnectors adds a new connector to the server.
 func (server *Server) addConnectors(handler http.Handler, connectors []Connector) {
-	for i, _ := range connectors {
+	for i := range connectors {
 		connectors[i].SetHandler(handler)
 		server.Connectors = append(server.Connectors, &connectors[i])
 	}

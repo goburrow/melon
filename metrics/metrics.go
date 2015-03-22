@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	metricsUri = "/metrics"
+	metricsURI = "/metrics"
 	metricsVar = "metrics"
 )
 
@@ -28,7 +28,7 @@ func (handler *metricsHandler) Name() string {
 }
 
 func (handler *metricsHandler) Path() string {
-	return metricsUri
+	return metricsURI
 }
 
 func (*metricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	pingUri        = "/ping"
-	runtimeUri     = "/runtime"
-	healthCheckUri = "/healthcheck"
-	tasksUri       = "/tasks"
+	pingURI        = "/ping"
+	runtimeURI     = "/runtime"
+	healthCheckURI = "/healthcheck"
+	tasksURI       = "/tasks"
 
 	adminHTML = `<!DOCTYPE html>
 <html>
@@ -86,7 +86,7 @@ func (env *AdminEnvironment) onStarting() {
 	}
 	// Registered tasks
 	for _, task := range env.tasks {
-		path := tasksUri + "/" + task.Name()
+		path := tasksURI + "/" + task.Name()
 		env.ServerHandler.Handle("POST", path, task)
 	}
 	env.logTasks()
@@ -105,7 +105,7 @@ func (env *AdminEnvironment) logTasks() {
 	var buf bytes.Buffer
 	for _, task := range env.tasks {
 		fmt.Fprintf(&buf, "    %-7s %s%s/%s (%T)\n", "POST",
-			env.ServerHandler.PathPrefix(), tasksUri, task.Name(), task)
+			env.ServerHandler.PathPrefix(), tasksURI, task.Name(), task)
 	}
 	logger.Info("tasks =\n\n%s", buf.String())
 }
@@ -151,7 +151,7 @@ func (handler *healthCheckHandler) Name() string {
 }
 
 func (handler *healthCheckHandler) Path() string {
-	return healthCheckUri
+	return healthCheckURI
 }
 
 func (handler *healthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -206,7 +206,7 @@ func (handler *pingHandler) Name() string {
 }
 
 func (handler *pingHandler) Path() string {
-	return pingUri
+	return pingURI
 }
 
 func (handler *pingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -224,7 +224,7 @@ func (handler *runtimeHandler) Name() string {
 }
 
 func (handler *runtimeHandler) Path() string {
-	return runtimeUri
+	return runtimeURI
 }
 
 func (handler *runtimeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

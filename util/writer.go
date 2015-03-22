@@ -41,7 +41,7 @@ func NewAsyncWriter(bufferSize int, writers ...io.Writer) *AsyncWriter {
 
 		DrainTimeout: 10 * time.Second,
 	}
-	for i, _ := range a.writers {
+	for i := range a.writers {
 		a.chans[i] = make(chan []byte, bufferSize)
 	}
 	return a
