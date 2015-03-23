@@ -4,9 +4,13 @@ import (
 	"github.com/goburrow/gol"
 )
 
-const (
-	lifecycleLoggerName = "gomelon/lifecycle"
+var (
+	lifecycleLogger gol.Logger
 )
+
+func init() {
+	lifecycleLogger = gol.GetLogger("gomelon/lifecycle")
+}
 
 // Managed is an interface for objects which need to be started and stopped as
 // the application is started or stopped.
@@ -34,26 +38,34 @@ func (env *LifecycleEnvironment) Manage(obj Managed) {
 	env.managedObjects = append(env.managedObjects, obj)
 }
 
-// starting indicates the environment that the application is going to start.
+// onStarting indicates the application is going to start.
 func (env *LifecycleEnvironment) onStarting() {
-	logger := gol.GetLogger(lifecycleLoggerName)
-
 	// Starting managed objects in order.
-	for i := range env.managedObjects {
-		if err := env.managedObjects[i].Start(); err != nil {
-			logger.Warn("error starting a managed object: %v", err)
+	for _, m := range env.managedObjects {
+		// Panic from a managed object will stop the application.
+		if err := m.Start(); err != nil {
+			lifecycleLogger.Error("error starting managed object %#v: %v", m, err)
 		}
 	}
 }
 
-// stopped indicates the environment that the application has stopped.
+// onStopped indicates the application has stopped.
 func (env *LifecycleEnvironment) onStopped() {
-	logger := gol.GetLogger(lifecycleLoggerName)
-
 	// Stopping managed objects in reversed order.
 	for i := len(env.managedObjects) - 1; i >= 0; i-- {
-		if err := env.managedObjects[i].Stop(); err != nil {
-			logger.Warn("error stopping a managed object: %v", err)
-		}
+		// Panic from a managed object will NOT stop the application immediately.
+		stopManagedObject(env.managedObjects[i])
 	}
+}
+
+func stopManagedObject(m Managed) {
+	var err error
+	defer func() {
+		if err != nil {
+			lifecycleLogger.Error("error stopping managed object %#v: %v", m, err)
+		} else if r := recover(); r != nil {
+			lifecycleLogger.Error("panic stopping managed object %#v: %v", m, r)
+		}
+	}()
+	err = m.Stop()
 }
