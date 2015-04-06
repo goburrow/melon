@@ -11,7 +11,7 @@ import (
 var writerLogger gol.Logger
 
 func init() {
-	writerLogger = gol.GetLogger("gomelon/util/writer")
+	writerLogger = gol.GetLogger("melon/util/writer")
 }
 
 // AsyncWriter writes asynchronously to the given writers.

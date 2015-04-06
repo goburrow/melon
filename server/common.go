@@ -3,9 +3,9 @@ package server
 import (
 	"fmt"
 
-	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/server/filter"
-	"github.com/goburrow/gomelon/server/recovery"
+	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/server/filter"
+	"github.com/goburrow/melon/server/recovery"
 	"github.com/goburrow/polytype"
 )
 

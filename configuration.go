@@ -1,17 +1,17 @@
-package gomelon
+package melon
 
 import (
 	"fmt"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/logging"
-	"github.com/goburrow/gomelon/metrics"
-	"github.com/goburrow/gomelon/server"
+	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/logging"
+	"github.com/goburrow/melon/metrics"
+	"github.com/goburrow/melon/server"
 )
 
 const (
-	configurationLoggerName = "gomelon/configuration"
+	configurationLoggerName = "melon/configuration"
 )
 
 // Configuration is the default configuration that implements core.Configuration

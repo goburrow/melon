@@ -9,7 +9,7 @@ import (
 var errorLogger gol.Logger
 
 func init() {
-	errorLogger = gol.GetLogger("gomelon/rest/error")
+	errorLogger = gol.GetLogger("melon/rest/error")
 }
 
 type HTTPError struct {

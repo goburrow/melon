@@ -1,15 +1,15 @@
 /*
-Package gomelon provides a lightweight framework for building web services.
+Package melon provides a lightweight framework for building web services.
 */
-package gomelon
+package melon
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/goburrow/gomelon/configuration"
-	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/validation"
+	"github.com/goburrow/melon/configuration"
+	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/validation"
 )
 
 func printHelp(bootstrap *core.Bootstrap) {

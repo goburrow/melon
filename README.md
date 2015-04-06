@@ -1,9 +1,9 @@
-# gomelon [![Build Status](https://travis-ci.org/goburrow/gomelon.svg)](https://travis-ci.org/goburrow/gomelon) [![GoDoc](https://godoc.org/github.com/goburrow/gomelon?status.svg)](https://godoc.org/github.com/goburrow/gomelon)
+# Melon [![Build Status](https://travis-ci.org/goburrow/melon.svg)](https://travis-ci.org/goburrow/melon) [![GoDoc](https://godoc.org/github.com/goburrow/melon?status.svg)](https://godoc.org/github.com/goburrow/melon)
 Lightweight Go framework for building web services, inspired by Dropwizard.
 
 ## Overview
-Gomelon is a partial port of [Dropwizard](http://dropwizard.io/) in Go.
-Besides of builtin Go packages, it utilizes a number of [libraries](https://github.com/goburrow/gomelon/blob/master/THIRDPARTY.md)
+Melon is a partial port of [Dropwizard](http://dropwizard.io/) in Go.
+Besides of builtin Go packages, it utilizes a number of [libraries](https://github.com/goburrow/melon/blob/master/THIRDPARTY.md)
 in order to build a server stack quickly, including:
 
 * [goji](https://github.com/zenazn/goji): a robust web framework.
@@ -27,10 +27,10 @@ Features supported:
 - and more...
 
 ## Examples
-See [example](https://github.com/goburrow/gomelon/tree/master/example)
+See [example](https://github.com/goburrow/melon/tree/master/example)
 
 ```
-INFO  [2015-02-04T12:00:01.289+10:00] gomelon/server: starting MyApp
+INFO  [2015-02-04T12:00:01.289+10:00] melon/server: starting MyApp
     ______
    /\   __\______
   /..\  \  \     \
@@ -40,9 +40,9 @@ INFO  [2015-02-04T12:00:01.289+10:00] gomelon/server: starting MyApp
    \/_____/./__   /
           \/_____/
 
-INFO  [2015-02-04T12:00:01.289+10:00] gomelon/assets: registering AssetsBundle for path /static/
-DEBUG [2015-02-04T12:00:01.289+10:00] gomelon/server: resources = [*rest.XMLProvider,*main.usersResource,*main.userResource]
-INFO  [2015-02-04T12:00:01.289+10:00] gomelon/server: endpoints =
+INFO  [2015-02-04T12:00:01.289+10:00] melon/assets: registering AssetsBundle for path /static/
+DEBUG [2015-02-04T12:00:01.289+10:00] melon/server: resources = [*rest.XMLProvider,*main.usersResource,*main.userResource]
+INFO  [2015-02-04T12:00:01.289+10:00] melon/server: endpoints =
 
     GET     /users (*main.usersResource)
     POST    /users (*main.usersResource)
@@ -50,16 +50,16 @@ INFO  [2015-02-04T12:00:01.289+10:00] gomelon/server: endpoints =
     POST    /user/:name (*main.userResource)
     DELETE  /user/:name (*main.userResource)
 
-INFO  [2015-02-04T12:00:01.290+10:00] gomelon/admin: tasks =
+INFO  [2015-02-04T12:00:01.290+10:00] melon/admin: tasks =
 
     POST    /tasks/gc (*core.gcTask)
     POST    /tasks/log (*logging.logTask)
     POST    /tasks/rmusers (*main.usersTask)
 
-DEBUG [2015-02-04T12:00:01.290+10:00] gomelon/admin: health checks = [UsersHealthCheck]
+DEBUG [2015-02-04T12:00:01.290+10:00] melon/admin: health checks = [UsersHealthCheck]
 INFO  [2015-02-04T12:00:01.290+10:00] example: hello MyApp
-INFO  [2015-02-04T12:00:01.290+10:00] gomelon/server: listening :8080
-INFO  [2015-02-04T12:00:01.290+10:00] gomelon/server: listening :8081
+INFO  [2015-02-04T12:00:01.290+10:00] melon/server: listening :8080
+INFO  [2015-02-04T12:00:01.290+10:00] melon/server: listening :8081
 ```
 
 ## Contributing

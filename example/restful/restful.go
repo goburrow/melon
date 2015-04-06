@@ -8,12 +8,12 @@ import (
 	"sync"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon"
-	"github.com/goburrow/gomelon/assets"
-	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/debug"
-	"github.com/goburrow/gomelon/rest"
 	"github.com/goburrow/health"
+	"github.com/goburrow/melon"
+	"github.com/goburrow/melon/assets"
+	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/debug"
+	"github.com/goburrow/melon/rest"
 	"golang.org/x/net/context"
 )
 
@@ -179,7 +179,7 @@ func (*usersHealthCheck) Check() health.Result {
 
 // application support managing users.
 type application struct {
-	gomelon.Application
+	melon.Application
 }
 
 // Initialize adds support for RESTful API, serving static files at /static
@@ -229,7 +229,7 @@ func (app *application) Run(configuration interface{}, environment *core.Environ
 func main() {
 	app := &application{}
 	app.SetName("MyApp")
-	if err := gomelon.Run(app, os.Args[1:]); err != nil {
+	if err := melon.Run(app, os.Args[1:]); err != nil {
 		panic(err.Error()) // Show stacks
 	}
 }

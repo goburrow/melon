@@ -25,8 +25,8 @@
   "logging": {
     "level": "DEBUG",
     "loggers": {
-      "gomelon/server": "INFO",
-      "gomelon/configuration": "WARN"
+      "melon/server": "INFO",
+      "melon/configuration": "WARN"
     },
     "appenders": [
       {

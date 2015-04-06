@@ -1,6 +1,6 @@
 package core
 
-// Application defines the interface of gomelon application.
+// Application defines the interface of Melon application.
 type Application interface {
 	// Name returns the name of this application.
 	Name() string

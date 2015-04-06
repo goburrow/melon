@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/codahale/metrics"
 	_ "github.com/codahale/metrics/runtime"
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
 const (

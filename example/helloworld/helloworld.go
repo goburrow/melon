@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/goburrow/gomelon"
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon"
+	"github.com/goburrow/melon/core"
 )
 
 // resource is the HTTP handler of the application homepage.
@@ -26,7 +26,7 @@ func (*resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // application adds resources into the application.
 type application struct {
-	gomelon.Application
+	melon.Application
 }
 
 func (app *application) Run(conf interface{}, env *core.Environment) error {
@@ -44,5 +44,5 @@ func (app *application) Run(conf interface{}, env *core.Environment) error {
 //   http://localhost:8080/admin/
 func main() {
 	app := &application{}
-	gomelon.Run(app, os.Args[1:])
+	melon.Run(app, os.Args[1:])
 }

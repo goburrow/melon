@@ -22,8 +22,8 @@
   "logging": {
     "level": "INFO",
     "loggers": {
-      "gomelon.server": "DEBUG",
-      "gomelon.configuration": "WARN"
+      "melon.server": "DEBUG",
+      "melon.configuration": "WARN"
     }
   },
   "metrics": {

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/server"
+	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/server"
 )
 
 func TestBundle(t *testing.T) {

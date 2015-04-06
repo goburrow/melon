@@ -1,10 +1,10 @@
-package gomelon
+package melon
 
 import (
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
-// Application is the default gomelon application which supports server command.
+// Application is the default application which supports server command.
 type Application struct {
 	// Name of the application
 	name          string
@@ -16,7 +16,7 @@ var _ core.Application = (*Application)(nil)
 
 func (app *Application) Name() string {
 	if app.name == "" {
-		app.name = "gomelon-app"
+		app.name = "melon-app"
 	}
 	return app.name
 }

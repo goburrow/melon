@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goburrow/gomelon/server/filter"
+	"github.com/goburrow/melon/server/filter"
 )
 
 var today = time.Date(2015, time.January, 14, 1, 2, 3, 789000000, time.FixedZone("Asia/Ho_Chi_Minh", 7*60*60))
@@ -76,7 +76,7 @@ func TestResponseError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set("User-Agent", "gomelon/1.0")
+	req.Header.Set("User-Agent", "melon/1.0")
 	req.Header.Set("Referer", "test")
 	req.Header.Set("X-Request-Id", "go123")
 	req.Header.Set("X-Forwarded-For", "4.3.2.1")
@@ -92,7 +92,7 @@ func TestResponseError(t *testing.T) {
 	if string(content) != "bad request" {
 		t.Fatal("unexpected response %s", content)
 	}
-	expected := `4.3.2.1 - - [14/Jan/2015:01:02:03 +0700] "POST /test HTTP/1.1" 400 11 "test" "gomelon/1.0" 0 "go123"` + "\n"
+	expected := `4.3.2.1 - - [14/Jan/2015:01:02:03 +0700] "POST /test HTTP/1.1" 400 11 "test" "melon/1.0" 0 "go123"` + "\n"
 	if expected != buf.String() {
 		t.Fatalf("unexpected access log %v", buf.String())
 	}

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
 const (
@@ -24,7 +24,7 @@ var (
 )
 
 func init() {
-	logger = gol.GetLogger("gomelon/debug")
+	logger = gol.GetLogger("melon/debug")
 }
 
 // Bundle adds pprof into admin environment.

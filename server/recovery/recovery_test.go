@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/server/filter"
+	"github.com/goburrow/melon/server/filter"
 )
 
 func init() {

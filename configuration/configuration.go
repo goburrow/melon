@@ -1,5 +1,5 @@
 /*
-Package configuration provides JSON and YAML support for gomelon configuration.
+Package configuration provides JSON and YAML support for Melon configuration.
 */
 package configuration
 
@@ -12,16 +12,16 @@ import (
 	"path/filepath"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 
 	"github.com/ghodss/yaml"
 )
 
 const (
-	loggerName = "gomelon/configuration"
+	loggerName = "melon/configuration"
 )
 
-// Factory implements gomelon.ConfigurationFactory interface.
+// Factory implements melon.ConfigurationFactory interface.
 type Factory struct {
 	// Configuration is the type/pointer of application configuration.
 	Configuration interface{}

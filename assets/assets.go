@@ -7,11 +7,11 @@ import (
 	"net/http"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
 const (
-	assetsLoggerName = "gomelon/assets"
+	assetsLoggerName = "melon/assets"
 )
 
 // Bundle serves static asset files.

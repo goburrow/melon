@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
 // DefaultFactory allows multiple sets of application and admin connectors running

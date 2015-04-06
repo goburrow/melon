@@ -33,7 +33,7 @@ const (
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 `
 
-	adminLoggerName = "gomelon/admin"
+	adminLoggerName = "melon/admin"
 
 	gcTaskName = "gc"
 )

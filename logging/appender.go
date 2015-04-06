@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 
 	golfile "github.com/goburrow/gol/file"
 	golrotation "github.com/goburrow/gol/file/rotation"

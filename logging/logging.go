@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 	"github.com/goburrow/polytype"
 
 	golasync "github.com/goburrow/gol/async"
@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	loggerName      = "gomelon/logging"
+	loggerName      = "melon/logging"
 	asyncBufferSize = 1024
 )
 

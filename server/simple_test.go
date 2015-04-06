@@ -3,7 +3,7 @@ package server
 import (
 	"testing"
 
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
 func TestSimpleFactory(t *testing.T) {

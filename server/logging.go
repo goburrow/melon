@@ -7,11 +7,11 @@ import (
 	"os"
 
 	"github.com/goburrow/gol/file/rotation"
-	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/logging"
-	"github.com/goburrow/gomelon/server/filter"
-	slogging "github.com/goburrow/gomelon/server/logging"
-	"github.com/goburrow/gomelon/util"
+	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/logging"
+	"github.com/goburrow/melon/server/filter"
+	slogging "github.com/goburrow/melon/server/logging"
+	"github.com/goburrow/melon/util"
 )
 
 const (

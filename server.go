@@ -1,14 +1,14 @@
-package gomelon
+package melon
 
 import (
 	"os"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
 const (
-	serverLoggerName = "gomelon/server"
+	serverLoggerName = "melon/server"
 	maxBannerSize    = 50 * 1024 // 50KB
 )
 

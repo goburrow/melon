@@ -10,15 +10,15 @@ import (
 	"sync"
 
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/server/filter"
+	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/server/filter"
 	"github.com/goburrow/polytype"
 	"github.com/zenazn/goji/graceful"
 	"github.com/zenazn/goji/web"
 )
 
 const (
-	loggerName = "gomelon/server"
+	loggerName = "melon/server"
 )
 
 func init() {
@@ -148,7 +148,7 @@ type Handler struct {
 	pathPrefix string
 }
 
-// Handler implements gomelon.ServerHandler
+// Handler implements melon.ServerHandler
 var _ core.ServerHandler = (*Handler)(nil)
 
 // NewHandler creates a new multiplexer if not provided.

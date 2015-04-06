@@ -11,17 +11,17 @@ server:
     appenders:
     - type: ConsoleAppender
     - type: FileAppender
-      currentLogFilename: /tmp/gomelon-access.log
+      currentLogFilename: /tmp/melon-access.log
 
 logging:
   level: DEBUG
   loggers:
-    gomelon.server: INFO
-    gomelon.configuration: WARN
+    melon.server: INFO
+    melon.configuration: WARN
   appenders:
   - type: FileAppender
     threshold: INFO
-    currentLogFilename: /tmp/gomelon.log
+    currentLogFilename: /tmp/melon.log
   - type: ConsoleAppender
 
 metrics:

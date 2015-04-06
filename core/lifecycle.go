@@ -9,7 +9,7 @@ var (
 )
 
 func init() {
-	lifecycleLogger = gol.GetLogger("gomelon/lifecycle")
+	lifecycleLogger = gol.GetLogger("melon/lifecycle")
 }
 
 // Managed is an interface for objects which need to be started and stopped as

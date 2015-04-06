@@ -11,7 +11,7 @@ import (
 
 	"github.com/codahale/metrics"
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/server/filter"
+	"github.com/goburrow/melon/server/filter"
 )
 
 const (
@@ -27,7 +27,7 @@ var (
 
 func init() {
 	panics = metrics.Counter("HTTP.Panics")
-	logger = gol.GetLogger("gomelon/server/recovery")
+	logger = gol.GetLogger("melon/server/recovery")
 }
 
 // Filter handles panics.

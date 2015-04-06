@@ -1,7 +1,7 @@
-package gomelon
+package melon
 
 import (
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
 // EnvironmentCommand creates a new Environment from provided Bootstrap.

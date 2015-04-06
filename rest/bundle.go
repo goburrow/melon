@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
 // Bundle adds support for RESTful application.

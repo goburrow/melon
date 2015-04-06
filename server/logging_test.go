@@ -3,9 +3,9 @@ package server
 import (
 	"testing"
 
-	"github.com/goburrow/gomelon/core"
-	"github.com/goburrow/gomelon/logging"
-	slogging "github.com/goburrow/gomelon/server/logging"
+	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/logging"
+	slogging "github.com/goburrow/melon/server/logging"
 )
 
 func TestDefaultRequestLogFactory(t *testing.T) {

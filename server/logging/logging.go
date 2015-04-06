@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goburrow/gomelon/server/filter"
+	"github.com/goburrow/melon/server/filter"
 )
 
 const (

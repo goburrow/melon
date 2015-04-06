@@ -1,4 +1,4 @@
 /*
-Package util provides various utilities for gomelon applications.
+Package util provides various utilities for Melon applications.
 */
 package util

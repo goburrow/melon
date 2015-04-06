@@ -4,7 +4,7 @@ Package validation provides validator for applications.
 package validation
 
 import (
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 	"github.com/goburrow/validator"
 )
 

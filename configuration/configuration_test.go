@@ -3,7 +3,7 @@ package configuration
 import (
 	"testing"
 
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
 type configuration struct {
@@ -79,8 +79,8 @@ func testFactory(t *testing.T, bootstrap *core.Bootstrap) {
 		t.Fatalf("Invalid AdminConnectors: %+v", config.Server.AdminConnectors)
 	}
 	if config.Logging.Level != "INFO" ||
-		config.Logging.Loggers["gomelon.server"] != "DEBUG" ||
-		config.Logging.Loggers["gomelon.configuration"] != "WARN" {
+		config.Logging.Loggers["melon.server"] != "DEBUG" ||
+		config.Logging.Loggers["melon.configuration"] != "WARN" {
 		t.Fatalf("Invalid Logging: %+v", config.Logging)
 	}
 	if config.Metrics.Frequency != "1s" {

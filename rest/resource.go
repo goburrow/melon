@@ -2,11 +2,11 @@ package rest
 
 import (
 	"github.com/goburrow/gol"
-	"github.com/goburrow/gomelon/core"
+	"github.com/goburrow/melon/core"
 )
 
 const (
-	resourceLoggerName = "gomelon/rest/resource"
+	resourceLoggerName = "melon/rest/resource"
 )
 
 // ResourceHandler implements core.ResourceHandler
