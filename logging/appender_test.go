@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/goburrow/melon/core"
@@ -109,6 +110,10 @@ func TestSyslogLogging(t *testing.T) {
 	factory := &SyslogAppenderFactory{}
 	appender, err := factory.Build(environment)
 	if err != nil {
+		if strings.Contains(err.Error(), "syslog delivery error") {
+			// Syslog is not supported.
+			t.Skip(err)
+		}
 		t.Fatal(err)
 	}
 	defer environment.SetStopped()
