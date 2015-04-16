@@ -84,7 +84,7 @@ func (h *contextHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Requ
 		if responseWriters[i].IsWriteable(r, response, w) {
 			err = responseWriters[i].Write(r, response, w)
 			if err != nil {
-				h.resourceHandler.logger.Warn("response writer: %v", err)
+				h.resourceHandler.logger.Warnf("response writer: %v", err)
 				h.resourceHandler.errorMapper.MapError(errInternalServerError, w, r)
 			}
 			return

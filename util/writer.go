@@ -88,7 +88,7 @@ func (a *AsyncWriter) listen(c chan []byte, w io.Writer) {
 			return
 		case b := <-c:
 			if _, err := w.Write(b); err != nil {
-				writerLogger.Error("error writing %T: %v", w, err)
+				writerLogger.Errorf("error writing %T: %v", w, err)
 			}
 		}
 	}
@@ -103,7 +103,7 @@ func (a *AsyncWriter) flush(c chan []byte, w io.Writer) {
 		select {
 		case <-timeout:
 			// Timed out.
-			writerLogger.Warn("timeout flushing %T", w)
+			writerLogger.Warnf("timeout flushing %T", w)
 			return
 		default:
 		}
@@ -111,7 +111,7 @@ func (a *AsyncWriter) flush(c chan []byte, w io.Writer) {
 		case b := <-c:
 			// Succeed.
 			if _, err := w.Write(b); err != nil {
-				writerLogger.Error("error writing %T: %v", w, err)
+				writerLogger.Errorf("error writing %T: %v", w, err)
 				return
 			}
 		default:

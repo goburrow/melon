@@ -69,11 +69,11 @@ func (factory *Factory) Configure(env *core.Environment) error {
 	var err error
 
 	if err = factory.configureLevels(); err != nil {
-		gol.GetLogger(loggerName).Error("%v", err)
+		gol.GetLogger(loggerName).Errorf("%v", err)
 		return err
 	}
 	if err = factory.configureAppenders(env); err != nil {
-		gol.GetLogger(loggerName).Error("%v", err)
+		gol.GetLogger(loggerName).Errorf("%v", err)
 		return err
 	}
 	env.Admin.AddTask(&logTask{})

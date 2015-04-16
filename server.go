@@ -40,25 +40,25 @@ func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 	logger := gol.GetLogger(serverLoggerName)
 	// Build server
 	if command.Server, err = command.configuration.ServerFactory().Build(command.Environment); err != nil {
-		logger.Error("could not create server: %v", err)
+		logger.Errorf("could not create server: %v", err)
 		return err
 	}
 	// Now can start everything
 	printBanner(logger, command.Environment.Name)
 	// Run all bundles in bootstrap
 	if err = bootstrap.Run(command.Configuration, command.Environment); err != nil {
-		logger.Error("could not run bootstrap: %v", err)
+		logger.Errorf("could not run bootstrap: %v", err)
 		return err
 	}
 	// Run application
 	if err = bootstrap.Application.Run(command.Configuration, command.Environment); err != nil {
-		logger.Error("could not run application: %v", err)
+		logger.Errorf("could not run application: %v", err)
 		return err
 	}
 	command.Environment.SetStarting()
 	defer command.Server.Stop()
 	if err = command.Server.Start(); err != nil {
-		logger.Error("could not start server: %v", err)
+		logger.Errorf("could not start server: %v", err)
 	}
 	return err
 }
@@ -67,9 +67,9 @@ func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 func printBanner(logger gol.Logger, name string) {
 	banner := readBanner()
 	if banner != "" {
-		logger.Info("starting %s\n%s", name, banner)
+		logger.Infof("starting %s\n%s", name, banner)
 	} else {
-		logger.Info("starting %s", name)
+		logger.Infof("starting %s", name)
 	}
 }
 

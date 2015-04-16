@@ -52,13 +52,13 @@ func (command *ConfigurationCommand) Run(bootstrap *core.Bootstrap) error {
 		return err
 	}
 	if err = bootstrap.ValidatorFactory.Validator().Validate(command.Configuration); err != nil {
-		gol.GetLogger(configurationLoggerName).Error("configuration is invalid: %v", err)
+		gol.GetLogger(configurationLoggerName).Errorf("configuration is invalid: %v", err)
 		return err
 	}
 	// Configuration provided must implement core.Configuration interface.
 	var ok bool
 	if command.configuration, ok = command.Configuration.(core.Configuration); !ok {
-		gol.GetLogger(configurationLoggerName).Error(
+		gol.GetLogger(configurationLoggerName).Errorf(
 			"configuration does not implement core.Configuration interface %[1]v %[1]T",
 			command.Configuration)
 		return fmt.Errorf("configuration: unsupported type %T", command.Configuration)
@@ -85,7 +85,7 @@ func (c *CheckCommand) Run(bootstrap *core.Bootstrap) error {
 		return err
 	}
 
-	gol.GetLogger(configurationLoggerName).Debug("configuration: %+v", c.ConfigurationCommand.Configuration)
+	gol.GetLogger(configurationLoggerName).Debugf("configuration: %+v", c.ConfigurationCommand.Configuration)
 	fmt.Println("Configuration is OK")
 	return nil
 }

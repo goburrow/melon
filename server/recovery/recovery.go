@@ -48,7 +48,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 	defer func() {
 		if err := recover(); err != nil {
 			panics.Add()
-			logger.Error("%v\n%s", err, stack())
+			logger.Errorf("%v\n%s", err, stack())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}()

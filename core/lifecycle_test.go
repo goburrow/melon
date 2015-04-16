@@ -40,12 +40,12 @@ func TestLifecycle(t *testing.T) {
 
 	lifecycle.onStarting()
 	if "12" != buf.String() {
-		t.Fatal("unexpected starting order %s", buf.String())
+		t.Fatalf("unexpected starting order %s", buf.String())
 	}
 	buf.Reset()
 	lifecycle.onStopped()
 	if "21" != buf.String() {
-		t.Fatal("unexpected stopping order %s", buf.String())
+		t.Fatalf("unexpected stopping order %s", buf.String())
 	}
 }
 
@@ -58,6 +58,6 @@ func TestPanicManagedObject(t *testing.T) {
 
 	lifecycle.onStopped()
 	if "21" != buf.String() {
-		t.Fatal("unexpected stopping order %s", buf.String())
+		t.Fatalf("unexpected stopping order %s", buf.String())
 	}
 }

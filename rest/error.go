@@ -42,7 +42,7 @@ func newErrorMapper() *defaultErrorMapper {
 }
 
 func (h *defaultErrorMapper) MapError(err error, w http.ResponseWriter, r *http.Request) {
-	errorLogger.Debug("%v: %#v", r.URL, err)
+	errorLogger.Debugf("%v: %#v", r.URL, err)
 	// TODO: log error
 	switch v := err.(type) {
 	case *HTTPError:

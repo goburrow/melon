@@ -95,10 +95,10 @@ func (env *ServerEnvironment) logResources() {
 		}
 		fmt.Fprintf(&buf, "%T", component)
 	}
-	logger.Debug("resources = [%v]", buf.String())
+	logger.Debugf("resources = [%v]", buf.String())
 }
 
 func (env *ServerEnvironment) logEndpoints() {
-	gol.GetLogger(serverLoggerName).Info("endpoints =\n\n%s", env.endpointLogger.String())
+	gol.GetLogger(serverLoggerName).Infof("endpoints =\n\n%s", env.endpointLogger.String())
 	env.endpointLogger.Reset()
 }

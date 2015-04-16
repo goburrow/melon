@@ -90,10 +90,10 @@ func (server *Server) Start() error {
 	// Handle SIGINT
 	graceful.HandleSignals()
 	graceful.PreHook(func() {
-		logger.Info("stopping")
+		logger.Infof("stopping")
 	})
 	graceful.PostHook(func() {
-		logger.Info("stopped")
+		logger.Infof("stopped")
 	})
 	defer graceful.Wait()
 
@@ -104,7 +104,7 @@ func (server *Server) Start() error {
 	defer wg.Wait()
 
 	for _, connector := range server.Connectors {
-		logger.Info("listening %s", connector.Addr)
+		logger.Infof("listening %s", connector.Addr)
 		wg.Add(1)
 		go func(c *Connector) {
 			defer wg.Done()

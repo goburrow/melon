@@ -107,7 +107,7 @@ func (env *AdminEnvironment) logTasks() {
 		fmt.Fprintf(&buf, "    %-7s %s%s/%s (%T)\n", "POST",
 			env.ServerHandler.PathPrefix(), tasksURI, task.Name(), task)
 	}
-	logger.Info("tasks =\n\n%s", buf.String())
+	logger.Infof("tasks =\n\n%s", buf.String())
 }
 
 // logTasks prints all registered tasks to the log
@@ -115,9 +115,9 @@ func (env *AdminEnvironment) logHealthChecks() {
 	logger := gol.GetLogger(adminLoggerName)
 	names := env.HealthChecks.Names()
 	if len(names) <= 0 {
-		logger.Warn(noHealthChecksWarning)
+		logger.Warnf(noHealthChecksWarning)
 	}
-	logger.Debug("health checks = %v", names)
+	logger.Debugf("health checks = %v", names)
 }
 
 // adminIndex is the home page of admin.

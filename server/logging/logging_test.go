@@ -48,7 +48,7 @@ func TestResponseOK(t *testing.T) {
 		t.Fatal(err)
 	}
 	if string(content) != "ok" {
-		t.Fatal("unexpected response %s", content)
+		t.Fatalf("unexpected response %s", content)
 	}
 	expected := `127.0.0.1 - - [14/Jan/2015:01:02:03 +0700] "GET / HTTP/1.1" 200 2 "-" "-" 0 ""` + "\n"
 	if expected != buf.String() {
@@ -90,7 +90,7 @@ func TestResponseError(t *testing.T) {
 		t.Fatal(err)
 	}
 	if string(content) != "bad request" {
-		t.Fatal("unexpected response %s", content)
+		t.Fatalf("unexpected response %s", content)
 	}
 	expected := `4.3.2.1 - - [14/Jan/2015:01:02:03 +0700] "POST /test HTTP/1.1" 400 11 "test" "melon/1.0" 0 "go123"` + "\n"
 	if expected != buf.String() {

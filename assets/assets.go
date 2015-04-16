@@ -38,7 +38,7 @@ func (bundle *Bundle) Initialize(bootstrap *core.Bootstrap) {
 
 // Run registers current AssetsBundle to the server in the given environment.
 func (bundle *Bundle) Run(_ interface{}, env *core.Environment) error {
-	gol.GetLogger(assetsLoggerName).Info("registering AssetsBundle for path %s", bundle.urlPath)
+	gol.GetLogger(assetsLoggerName).Infof("registering AssetsBundle for path %s", bundle.urlPath)
 
 	// Add slashes if necessary
 	p := addSlashes(bundle.urlPath)

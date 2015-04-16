@@ -155,12 +155,12 @@ type greetings struct {
 }
 
 func (g *greetings) Start() error {
-	logger.Info("hello %s", g.name)
+	logger.Infof("hello %s", g.name)
 	return nil
 }
 
 func (g *greetings) Stop() error {
-	logger.Info("bye %s", g.name)
+	logger.Infof("bye %s", g.name)
 	return nil
 }
 
