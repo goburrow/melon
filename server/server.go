@@ -12,7 +12,7 @@ import (
 	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/server/filter"
-	"github.com/goburrow/polytype"
+	"github.com/goburrow/dynamic"
 	"github.com/zenazn/goji/graceful"
 	"github.com/zenazn/goji/web"
 )
@@ -22,16 +22,16 @@ const (
 )
 
 func init() {
-	polytype.Register("DefaultServer", func() interface{} {
+	dynamic.Register("DefaultServer", func() interface{} {
 		return &DefaultFactory{}
 	})
-	polytype.Register("SimpleServer", func() interface{} {
+	dynamic.Register("SimpleServer", func() interface{} {
 		return &SimpleFactory{
 			ApplicationContextPath: "/application",
 			AdminContextPath:       "/admin",
 		}
 	})
-	polytype.Register("DefaultRequestLog", func() interface{} {
+	dynamic.Register("DefaultRequestLog", func() interface{} {
 		return &DefaultRequestLogFactory{}
 	})
 }
@@ -206,7 +206,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Factory is an union of DefaultFactory and SimpleFactory.
 type Factory struct {
-	polytype.Type
+	dynamic.Type
 }
 
 var _ core.ServerFactory = (*Factory)(nil)

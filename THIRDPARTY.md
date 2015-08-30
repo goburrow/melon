@@ -7,4 +7,4 @@
 - https://github.com/ghodss/yaml
 - https://github.com/go-validator/validator
 - https://github.com/goburrow/health
-- https://github.com/goburrow/polytype
+- https://github.com/goburrow/dynamic

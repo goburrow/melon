@@ -6,12 +6,12 @@ import (
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/server/filter"
 	"github.com/goburrow/melon/server/recovery"
-	"github.com/goburrow/polytype"
+	"github.com/goburrow/dynamic"
 )
 
 // RequestLogConfiguration is the user defined type of RequestLogFactory.
 type RequestLogConfiguration struct {
-	polytype.Type
+	dynamic.Type
 }
 
 // commonFactory is the shared configuration of DefaultFactory and

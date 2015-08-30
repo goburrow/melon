@@ -9,7 +9,7 @@ import (
 
 	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
-	"github.com/goburrow/polytype"
+	"github.com/goburrow/dynamic"
 
 	golasync "github.com/goburrow/gol/async"
 	_ "github.com/goburrow/gol/log"
@@ -33,9 +33,9 @@ var (
 )
 
 func init() {
-	polytype.Register("ConsoleAppender", func() interface{} { return &ConsoleAppenderFactory{} })
-	polytype.Register("FileAppender", func() interface{} { return &FileAppenderFactory{} })
-	polytype.Register("SyslogAppender", func() interface{} { return &SyslogAppenderFactory{} })
+	dynamic.Register("ConsoleAppender", func() interface{} { return &ConsoleAppenderFactory{} })
+	dynamic.Register("FileAppender", func() interface{} { return &FileAppenderFactory{} })
+	dynamic.Register("SyslogAppender", func() interface{} { return &SyslogAppenderFactory{} })
 }
 
 func getLogLevel(level string) (gol.Level, bool) {
@@ -52,7 +52,7 @@ func setLogLevel(name string, level gol.Level) {
 
 // AppenderConfiguration is an union of console, file and syslog configuration.
 type AppenderConfiguration struct {
-	polytype.Type
+	dynamic.Type
 }
 
 // Factory configures logging environment.
