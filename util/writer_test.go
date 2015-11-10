@@ -11,7 +11,7 @@ import (
 
 func init() {
 	// Mute logger
-	writerLogger.(*gol.DefaultLogger).SetLevel(gol.LevelOff)
+	writerLogger.(*gol.DefaultLogger).SetLevel(gol.Off)
 }
 
 // chanWriter is used for testing async writer,

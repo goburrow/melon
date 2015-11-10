@@ -8,28 +8,28 @@ import (
 
 func TestGetLogLevel(t *testing.T) {
 	level, ok := getLogLevel("ALL")
-	if !ok || level != gol.LevelAll {
-		t.Fatalf("%v != %v", gol.LevelAll, level)
+	if !ok || level != gol.All {
+		t.Fatalf("%v != %v", gol.All, level)
 	}
 	level, ok = getLogLevel("DEBUG")
-	if !ok || level != gol.LevelDebug {
-		t.Fatalf("%v != %v", gol.LevelDebug, level)
+	if !ok || level != gol.Debug {
+		t.Fatalf("%v != %v", gol.Debug, level)
 	}
 	level, ok = getLogLevel("INFO")
-	if !ok || level != gol.LevelInfo {
-		t.Fatalf("%v != %v", gol.LevelInfo, level)
+	if !ok || level != gol.Info {
+		t.Fatalf("%v != %v", gol.Info, level)
 	}
 	level, ok = getLogLevel("WARN")
-	if !ok || level != gol.LevelWarn {
-		t.Fatalf("%v != %v", gol.LevelWarn, level)
+	if !ok || level != gol.Warn {
+		t.Fatalf("%v != %v", gol.Warn, level)
 	}
 	level, ok = getLogLevel("ERROR")
-	if !ok || level != gol.LevelError {
-		t.Fatalf("%v != %v", gol.LevelError, level)
+	if !ok || level != gol.Error {
+		t.Fatalf("%v != %v", gol.Error, level)
 	}
 	level, ok = getLogLevel("OFF")
-	if !ok || level != gol.LevelOff {
-		t.Fatalf("%v != %v", gol.LevelOff, level)
+	if !ok || level != gol.Off {
+		t.Fatalf("%v != %v", gol.Off, level)
 	}
 	_, ok = getLogLevel("WHATEVER")
 	if ok {

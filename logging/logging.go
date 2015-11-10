@@ -22,13 +22,13 @@ const (
 
 var (
 	logLevels = map[string]gol.Level{
-		"ALL":   gol.LevelAll,
-		"TRACE": gol.LevelTrace,
-		"DEBUG": gol.LevelDebug,
-		"INFO":  gol.LevelInfo,
-		"WARN":  gol.LevelWarn,
-		"ERROR": gol.LevelError,
-		"OFF":   gol.LevelOff,
+		"ALL":   gol.All,
+		"TRACE": gol.Trace,
+		"DEBUG": gol.Debug,
+		"INFO":  gol.Info,
+		"WARN":  gol.Warn,
+		"ERROR": gol.Error,
+		"OFF":   gol.Off,
 	}
 )
 

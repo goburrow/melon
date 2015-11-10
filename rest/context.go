@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	loggerContextName         = "melon.rest.context"
 	statusUnprocessableEntity = 422
 )
 

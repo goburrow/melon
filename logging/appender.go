@@ -45,10 +45,10 @@ type AppenderFactory interface {
 	Build(*core.Environment) (gol.Appender, error)
 }
 
-// getThreshold returns gol.LevelAll if threshold is empty.
+// getThreshold returns gol.All if threshold is empty.
 func getThreshold(threshold string) (gol.Level, error) {
 	if threshold == "" {
-		return gol.LevelAll, nil
+		return gol.All, nil
 	}
 	level, ok := getLogLevel(threshold)
 	if !ok {
