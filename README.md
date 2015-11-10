@@ -57,7 +57,6 @@ INFO  [2015-02-04T12:00:01.290+10:00] melon/admin: tasks =
     POST    /tasks/rmusers (*main.usersTask)
 
 DEBUG [2015-02-04T12:00:01.290+10:00] melon/admin: health checks = [UsersHealthCheck]
-INFO  [2015-02-04T12:00:01.290+10:00] example: hello MyApp
 INFO  [2015-02-04T12:00:01.290+10:00] melon/server: listening :8080
 INFO  [2015-02-04T12:00:01.290+10:00] melon/server: listening :8081
 ```

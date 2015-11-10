@@ -26,6 +26,10 @@ func Run(app core.Application, args []string) error {
 	bootstrap.ConfigurationFactory = &configuration.Factory{&Configuration{}}
 	bootstrap.ValidatorFactory = &validation.Factory{}
 
+	// Register default server commands
+	bootstrap.AddCommand(&CheckCommand{})
+	bootstrap.AddCommand(&ServerCommand{})
+
 	app.Initialize(bootstrap)
 	if len(args) > 0 {
 		for _, command := range bootstrap.Commands() {

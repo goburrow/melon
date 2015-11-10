@@ -149,21 +149,6 @@ func (*usersTask) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Removed."))
 }
 
-// greetings logs when application starts and stops. It implements core.Managed.
-type greetings struct {
-	name string
-}
-
-func (g *greetings) Start() error {
-	logger.Infof("hello %s", g.name)
-	return nil
-}
-
-func (g *greetings) Stop() error {
-	logger.Infof("bye %s", g.name)
-	return nil
-}
-
 // usersHealthCheck checks if users list if full
 type usersHealthCheck struct {
 }
@@ -177,15 +162,9 @@ func (*usersHealthCheck) Check() health.Result {
 	return health.Healthy
 }
 
-// application support managing users.
-type application struct {
-	melon.Application
-}
-
 // Initialize adds support for RESTful API, serving static files at /static
 // and debug endpoint in admin page.
-func (app *application) Initialize(bootstrap *core.Bootstrap) {
-	app.Application.Initialize(bootstrap)
+func initialize(bootstrap *core.Bootstrap) {
 	// Support RESTful API
 	bootstrap.AddBundle(&rest.Bundle{})
 	// Also serve static files
@@ -193,10 +172,7 @@ func (app *application) Initialize(bootstrap *core.Bootstrap) {
 	bootstrap.AddBundle(debug.NewBundle())
 }
 
-func (app *application) Run(configuration interface{}, environment *core.Environment) error {
-	if err := app.Application.Run(configuration, environment); err != nil {
-		return err
-	}
+func run(configuration interface{}, environment *core.Environment) error {
 	// Register xml provider (json is supported by default)
 	environment.Server.Register(&rest.XMLProvider{})
 
@@ -215,7 +191,6 @@ func (app *application) Run(configuration interface{}, environment *core.Environ
 
 	// http://localhost:8081/healthcheck
 	environment.Admin.HealthChecks.Register("UsersHealthCheck", &usersHealthCheck{})
-	environment.Lifecycle.Manage(&greetings{app.Name()})
 	return nil
 }
 
@@ -227,8 +202,7 @@ func (app *application) Run(configuration interface{}, environment *core.Environ
 //  curl -XDELETE 'http://localhost:8080/user/a'
 // Admin page can be accessed at http://localhost:8081
 func main() {
-	app := &application{}
-	app.SetName("MyApp")
+	app := &melon.Application{"MyApp", initialize, run}
 	if err := melon.Run(app, os.Args[1:]); err != nil {
 		panic(err.Error()) // Show stacks
 	}

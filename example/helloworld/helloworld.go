@@ -24,25 +24,17 @@ func (*resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello world"))
 }
 
-// application adds resources into the application.
-type application struct {
-	melon.Application
-}
-
-func (app *application) Run(conf interface{}, env *core.Environment) error {
-	if err := app.Application.Run(conf, env); err != nil {
-		return err
-	}
-	env.Server.Register(&resource{})
-	return nil
-}
-
 // Build application and run with command:
 //   ./helloworld server path/to/config.yaml
 // Then open these links in browser for application and admin page respectively:
 //   http://localhost:8080/application/
 //   http://localhost:8080/admin/
 func main() {
-	app := &application{}
+	app := &melon.Application{
+		RunFunc: func(conf interface{}, env *core.Environment) error {
+			env.Server.Register(&resource{})
+			return nil
+		},
+	}
 	melon.Run(app, os.Args[1:])
 }
