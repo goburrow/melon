@@ -202,7 +202,7 @@ func run(configuration interface{}, environment *core.Environment) error {
 //  curl -XDELETE 'http://localhost:8080/user/a'
 // Admin page can be accessed at http://localhost:8081
 func main() {
-	app := &melon.Application{"MyApp", initialize, run}
+	app := &melon.Application{initialize, run}
 	if err := melon.Run(app, os.Args[1:]); err != nil {
 		panic(err.Error()) // Show stacks
 	}

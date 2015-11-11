@@ -17,7 +17,6 @@ func (command *EnvironmentCommand) Run(bootstrap *core.Bootstrap) error {
 	}
 	// Create environment
 	command.Environment = core.NewEnvironment()
-	command.Environment.Name = bootstrap.Application.Name()
 	command.Environment.Validator = bootstrap.ValidatorFactory.Validator()
 	// Config other factories that affect this environment.
 	if err := command.configuration.LoggingFactory().Configure(command.Environment); err != nil {

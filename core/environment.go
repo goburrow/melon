@@ -3,8 +3,6 @@ package core
 // Environment also implements Managed interface so that it can be initilizen
 // when server starts.
 type Environment struct {
-	// Name is taken from the application name.
-	Name string
 	// Server manages HTTP resources
 	Server *ServerEnvironment
 	// Lifecycle controls managed services, allow them to start and stop

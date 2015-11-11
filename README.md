@@ -30,7 +30,7 @@ Features supported:
 See [example](https://github.com/goburrow/melon/tree/master/example)
 
 ```
-INFO  [2015-02-04T12:00:01.289+10:00] melon/server: starting MyApp
+INFO  [2015-02-04T12:00:01.289+10:00] melon/server: starting
     ______
    /\   __\______
   /..\  \  \     \

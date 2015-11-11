@@ -44,7 +44,7 @@ func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 		return err
 	}
 	// Now can start everything
-	printBanner(logger, command.Environment.Name)
+	printBanner(logger)
 	// Run all bundles in bootstrap
 	if err = bootstrap.Run(command.Configuration, command.Environment); err != nil {
 		logger.Errorf("could not run bootstrap: %v", err)
@@ -64,12 +64,12 @@ func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 }
 
 // printBanner prints application banner to the given logger
-func printBanner(logger gol.Logger, name string) {
+func printBanner(logger gol.Logger) {
 	banner := readBanner()
-	if banner != "" {
-		logger.Infof("starting %s\n%s", name, banner)
+	if banner == "" {
+		logger.Infof("starting")
 	} else {
-		logger.Infof("starting %s", name)
+		logger.Infof("starting\n%s", banner)
 	}
 }
 

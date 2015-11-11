@@ -6,20 +6,12 @@ import (
 
 // Application is the default application which does nothing.
 type Application struct {
-	AppName        string
 	InitializeFunc func(*core.Bootstrap)
 	RunFunc        func(interface{}, *core.Environment) error
 }
 
 // Application implements core.Application interface.
 var _ core.Application = (*Application)(nil)
-
-func (app *Application) Name() string {
-	if app.AppName == "" {
-		return "melon-app"
-	}
-	return app.AppName
-}
 
 // Initializes the application bootstrap.
 func (app *Application) Initialize(b *core.Bootstrap) {
