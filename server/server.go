@@ -9,10 +9,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/goburrow/dynamic"
 	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/server/filter"
-	"github.com/goburrow/dynamic"
 	"github.com/zenazn/goji/graceful"
 	"github.com/zenazn/goji/web"
 )
@@ -46,14 +46,11 @@ type Connector struct {
 	CertFile string
 	KeyFile  string
 
-	server *graceful.Server
+	server graceful.Server
 }
 
 // SetHandler setup the server with the given handler.
 func (connector *Connector) SetHandler(handler http.Handler) {
-	if connector.server == nil {
-		connector.server = &graceful.Server{}
-	}
 	connector.server.Handler = handler
 }
 
@@ -115,7 +112,9 @@ func (server *Server) Start() error {
 		select {
 		case err := <-errorChan:
 			if err != nil {
-				graceful.ShutdownNow()
+				// FIXME: if ShutdownNow is called before connector.Listen, that listener
+				// will not be notified to close gracefully.
+				go graceful.ShutdownNow()
 				return err
 			}
 		}

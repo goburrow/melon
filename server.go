@@ -56,11 +56,13 @@ func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 		return err
 	}
 	command.Environment.SetStarting()
-	defer command.Server.Stop()
+	// Start is blocking
 	if err = command.Server.Start(); err != nil {
 		logger.Errorf("could not start server: %v", err)
+		return err
 	}
-	return err
+	command.Server.Stop()
+	return nil
 }
 
 // printBanner prints application banner to the given logger
