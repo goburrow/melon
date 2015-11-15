@@ -71,16 +71,6 @@ func (r *usersResource) POST(c context.Context) (interface{}, error) {
 	return "Created.", nil
 }
 
-// Consumes indicates that usersResource only accepts JSON.
-func (r *usersResource) Consumes() []string {
-	return []string{"application/json"}
-}
-
-// Produces indicates that usersResource only returns JSON.
-func (r *usersResource) Produces() []string {
-	return []string{"application/json"}
-}
-
 // userResource modifies single user.
 type userResource struct {
 }
@@ -173,9 +163,6 @@ func initialize(bootstrap *core.Bootstrap) {
 }
 
 func run(configuration interface{}, environment *core.Environment) error {
-	// Register xml provider (json is supported by default)
-	environment.Server.Register(&rest.XMLProvider{})
-
 	// http://localhost:8080/users
 	environment.Server.Register(&usersResource{})
 	// http://localhost:8080/user/:name
