@@ -91,9 +91,15 @@ func readFileContents(file string, maxBytes int) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	n := maxBytes
+	if fi, err := f.Stat(); err == nil {
+		if int(fi.Size()) < n {
+			n = int(fi.Size())
+		}
+	}
 	defer f.Close()
-	buf := make([]byte, maxBytes)
-	n, err := f.Read(buf)
+	buf := make([]byte, n)
+	n, err = f.Read(buf)
 	if err != nil {
 		return "", err
 	}
