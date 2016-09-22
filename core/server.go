@@ -41,13 +41,16 @@ type ServerEnvironment struct {
 	components       []interface{}
 	resourceHandlers []ResourceHandler
 
-	endpointLogger *bytes.Buffer
+	visibleEndpoints []string
 }
 
+// NewServerEnvironment creates a new ServerEnvironment.
 func NewServerEnvironment() *ServerEnvironment {
 	return &ServerEnvironment{}
 }
 
+// Register registers component to the environment. These components will be
+// handled by all handlers added by AddResourceHandler.
 func (env *ServerEnvironment) Register(component ...interface{}) {
 	env.components = append(env.components, component...)
 }
@@ -61,11 +64,9 @@ func (env *ServerEnvironment) AddResourceHandler(handler ...ResourceHandler) {
 // LogEndpoint records all endpoints to display on application start.
 // FIXME: recording endpoints automatically in ServerHandler or ResourceHandler?
 func (env *ServerEnvironment) LogEndpoint(method, path string, component interface{}) {
-	if env.endpointLogger == nil {
-		env.endpointLogger = &bytes.Buffer{}
-	}
-	fmt.Fprintf(env.endpointLogger, "    %-7s %s%s (%T)\n",
+	endpoint := fmt.Sprintf("%-7s %s%s (%T)",
 		method, env.ServerHandler.PathPrefix(), path, component)
+	env.visibleEndpoints = append(env.visibleEndpoints, endpoint)
 }
 
 func (env *ServerEnvironment) onStarting() {
@@ -103,12 +104,12 @@ func (env *ServerEnvironment) logResources() {
 
 func (env *ServerEnvironment) logEndpoints() {
 	logger := gol.GetLogger(serverLoggerName)
-	if logger.InfoEnabled() {
-		endpoints := ""
-		if env.endpointLogger != nil {
-			endpoints = env.endpointLogger.String()
-		}
-		logger.Infof("endpoints =\n\n%s", endpoints)
+	if !logger.InfoEnabled() {
+		return
 	}
-	env.endpointLogger = nil
+	var buf bytes.Buffer
+	for _, e := range env.visibleEndpoints {
+		fmt.Fprintf(&buf, "    %s\n", e)
+	}
+	logger.Infof("endpoints =\n\n%s", buf.String())
 }
