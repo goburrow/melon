@@ -44,11 +44,11 @@ func (*metricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(val.String()))
 }
 
+// Factory implements core.MetricsFactory interface.
 type Factory struct {
 	Frequency string
 }
 
-// Factory implements core.MetricsFactory interface.
 var _ core.MetricsFactory = (*Factory)(nil)
 
 func (factory *Factory) Configure(env *core.Environment) error {

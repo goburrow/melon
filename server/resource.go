@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/server/filter"
@@ -10,45 +11,51 @@ import (
 
 // HTTPResource is a http.Handler associated with the given method and path.
 type HTTPResource interface {
-	Method() string
-	Path() string
+	RequestLine() string
 	http.Handler
 }
 
 // webResource is a Goji web.Handler associated with the given method and path.
 type webResource interface {
-	Method() string
-	Path() string
+	RequestLine() string
 	web.Handler
 }
 
 // resourceHandler allows user to register basic HTTP resource.
 type resourceHandler struct {
-	serverHandler  *Handler
-	endpointLogger core.EndpointLogger
+	serverHandler *Handler
 }
 
 var _ (core.ResourceHandler) = (*resourceHandler)(nil)
 
-func newResourceHandler(serverHandler *Handler, endpointLogger core.EndpointLogger) *resourceHandler {
+func newResourceHandler(serverHandler *Handler) *resourceHandler {
 	return &resourceHandler{
-		serverHandler:  serverHandler,
-		endpointLogger: endpointLogger,
+		serverHandler: serverHandler,
 	}
 }
 
 func (h *resourceHandler) HandleResource(v interface{}) {
-	// Goji supports http.Handler and web.Handler
 	if r, ok := v.(HTTPResource); ok {
-		h.serverHandler.Handle(r.Method(), r.Path(), r)
-		h.endpointLogger.LogEndpoint(r.Method(), r.Path(), v)
+		method, path := parseRequestLine(r.RequestLine())
+		h.serverHandler.Handle(method, path, r)
 	}
 	if r, ok := v.(webResource); ok {
-		h.serverHandler.Handle(r.Method(), r.Path(), r)
-		h.endpointLogger.LogEndpoint(r.Method(), r.Path(), v)
+		method, path := parseRequestLine(r.RequestLine())
+		h.serverHandler.Handle(method, path, r)
 	}
 
 	if r, ok := v.(filter.Filter); ok {
-		h.serverHandler.FilterChain.Insert(r, h.serverHandler.FilterChain.Length()-1)
+		h.serverHandler.filterChain.Insert(r, h.serverHandler.filterChain.Length()-1)
 	}
+}
+
+func parseRequestLine(reqLine string) (method string, path string) {
+	idx := strings.Index(reqLine, " ")
+	if idx < 0 {
+		path = reqLine
+	} else {
+		method = reqLine[:idx]
+		path = reqLine[idx+1:]
+	}
+	return
 }

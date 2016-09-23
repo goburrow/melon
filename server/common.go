@@ -29,8 +29,8 @@ func (f *commonFactory) AddFilters(env *core.Environment, handlers ...*Handler) 
 	}
 	recoveryFilter := recovery.NewFilter()
 	for _, h := range handlers {
-		if !h.FilterChain.Insert(requestLogFilter, h.FilterChain.Length()-1) ||
-			!h.FilterChain.Insert(recoveryFilter, h.FilterChain.Length()-1) {
+		if !h.filterChain.Insert(requestLogFilter, h.filterChain.Length()-1) ||
+			!h.filterChain.Insert(recoveryFilter, h.filterChain.Length()-1) {
 			return fmt.Errorf("server: could not add default filters")
 		}
 	}

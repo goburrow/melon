@@ -138,26 +138,25 @@ func (server *Server) addConnectors(handler http.Handler, connectors []Connector
 }
 
 // Handler handles HTTP requests.
+// It implements melon.ServerHandler
 type Handler struct {
-	// ServerMux is the HTTP request router.
-	ServeMux *web.Mux
-	// FilterChain is the builder for HTTP filters.
-	FilterChain *filter.Chain
+	// serverMux is the HTTP request router.
+	serveMux *web.Mux
+	// filterChain is the builder for HTTP filters.
+	filterChain *filter.Chain
 
 	pathPrefix string
+	endpoints  []string
 }
 
-// Handler implements melon.ServerHandler
-var _ core.ServerHandler = (*Handler)(nil)
-
-// NewHandler creates a new multiplexer if not provided.
+// NewHandler creates a new Handler.
 func NewHandler() *Handler {
 	mux := web.New()
 	chain := filter.NewChain()
 	chain.Add(filter.Last(mux))
 	return &Handler{
-		ServeMux:    mux,
-		FilterChain: chain,
+		serveMux:    mux,
+		filterChain: chain,
 	}
 }
 
@@ -167,34 +166,42 @@ func (h *Handler) Handle(method, pattern string, handler interface{}) {
 
 	switch method {
 	case "GET":
-		f = h.ServeMux.Get
+		f = h.serveMux.Get
 	case "HEAD":
-		f = h.ServeMux.Head
+		f = h.serveMux.Head
 	case "POST":
-		f = h.ServeMux.Post
+		f = h.serveMux.Post
 	case "PUT":
-		f = h.ServeMux.Put
+		f = h.serveMux.Put
 	case "DELETE":
-		f = h.ServeMux.Delete
+		f = h.serveMux.Delete
 	case "TRACE":
-		f = h.ServeMux.Trace
+		f = h.serveMux.Trace
 	case "OPTIONS":
-		f = h.ServeMux.Options
+		f = h.serveMux.Options
 	case "CONNECT":
-		f = h.ServeMux.Connect
+		f = h.serveMux.Connect
 	case "PATCH":
-		f = h.ServeMux.Patch
+		f = h.serveMux.Patch
 	case "*":
-		f = h.ServeMux.Handle
+		f = h.serveMux.Handle
 	default:
 		panic("server: unsupported method " + method)
 	}
 	f(pattern, handler)
+
+	// log endpoint
+	endpoint := fmt.Sprintf("%-7s %s%s (%T)", method, h.pathPrefix, pattern, handler)
+	h.endpoints = append(h.endpoints, endpoint)
 }
 
 // PathPrefix returns server root context path.
 func (h *Handler) PathPrefix() string {
 	return h.pathPrefix
+}
+
+func (h *Handler) Endpoints() []string {
+	return h.endpoints
 }
 
 // ServeHTTP strips path prefix in the request and executes filter chain,
@@ -203,15 +210,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.pathPrefix != "" {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, h.pathPrefix)
 	}
-	h.FilterChain.ServeHTTP(w, r)
+	h.filterChain.ServeHTTP(w, r)
 }
 
 // Factory is an union of DefaultFactory and SimpleFactory.
 type Factory struct {
 	dynamic.Type
 }
-
-var _ core.ServerFactory = (*Factory)(nil)
 
 func (factory *Factory) Build(environment *core.Environment) (core.Server, error) {
 	if f, ok := factory.Value().(core.ServerFactory); ok {

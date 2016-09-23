@@ -28,7 +28,7 @@ func TestAssetsBundle(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Start server
-	server := httptest.NewServer(handler.ServeMux)
+	server := httptest.NewServer(handler)
 	defer server.Close()
 	// Get dir
 	res, err := http.Get(server.URL + "/static/")

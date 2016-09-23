@@ -22,7 +22,7 @@ func (factory *SimpleFactory) Build(env *core.Environment) (core.Server, error) 
 	appHandler := NewHandler()
 	appHandler.pathPrefix = factory.ApplicationContextPath
 	env.Server.ServerHandler = appHandler
-	env.Server.AddResourceHandler(newResourceHandler(appHandler, env.Server))
+	env.Server.AddResourceHandler(newResourceHandler(appHandler))
 
 	adminHandler := NewHandler()
 	adminHandler.pathPrefix = factory.AdminContextPath
@@ -35,14 +35,14 @@ func (factory *SimpleFactory) buildServer(env *core.Environment, handlers ...*Ha
 	handler := NewHandler()
 	// Sub routers (e.g. /application and /admin)
 	for _, h := range handlers {
-		handler.ServeMux.Handle(h.pathPrefix+"/*", h)
-		handler.ServeMux.Handle(h.pathPrefix, http.RedirectHandler(h.pathPrefix+"/", http.StatusMovedPermanently))
+		handler.serveMux.Handle(h.pathPrefix+"/*", h)
+		handler.serveMux.Handle(h.pathPrefix, http.RedirectHandler(h.pathPrefix+"/", http.StatusMovedPermanently))
 	}
 	// Default filters are only needed in the root handler.
 	if err := factory.commonFactory.AddFilters(env, handler); err != nil {
 		return nil, err
 	}
 	server := NewServer()
-	server.addConnectors(handler.ServeMux, []Connector{factory.Connector})
+	server.addConnectors(handler, []Connector{factory.Connector})
 	return server, nil
 }

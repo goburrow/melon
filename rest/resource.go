@@ -14,8 +14,7 @@ type ResourceHandler struct {
 	// providers contains all supported Provider.
 	providers *defaultProviders
 
-	serverHandler  core.ServerHandler
-	endpointLogger core.EndpointLogger
+	serverHandler core.ServerHandler
 
 	errorMapper ErrorMapper
 	validator   core.Validator
@@ -26,9 +25,8 @@ var _ core.ResourceHandler = (*ResourceHandler)(nil)
 
 func NewResourceHandler(env *core.Environment) *ResourceHandler {
 	return &ResourceHandler{
-		providers:      newProviders(),
-		serverHandler:  env.Server.ServerHandler,
-		endpointLogger: env.Server,
+		providers:     newProviders(),
+		serverHandler: env.Server.ServerHandler,
 
 		// TODO: configuable error mapper
 		errorMapper: newErrorMapper(),
@@ -73,7 +71,6 @@ func (h *ResourceHandler) handle(v interface{}, method, path string, f contextFu
 		context.setMetrics(method + "." + r.Metrics())
 	}
 	h.serverHandler.Handle(method, path, context)
-	h.endpointLogger.LogEndpoint(method, path, v)
 }
 
 func (h *ResourceHandler) getProviders(v interface{}) providerMap {

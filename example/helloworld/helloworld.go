@@ -12,12 +12,8 @@ import (
 type resource struct {
 }
 
-func (*resource) Method() string {
-	return "GET"
-}
-
-func (*resource) Path() string {
-	return "/"
+func (*resource) RequestLine() string {
+	return "GET /"
 }
 
 func (*resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {

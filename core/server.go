@@ -25,6 +25,8 @@ type ServerHandler interface {
 	Handle(method, pattern string, handler interface{})
 	// PathPrefix returns prefix path of this handler.
 	PathPrefix() string
+	// Endpoints returns registered HTTP endpoints.
+	Endpoints() []string
 }
 
 // ServerFactory builds Server with given configuration and environment.
@@ -40,8 +42,6 @@ type ServerEnvironment struct {
 
 	components       []interface{}
 	resourceHandlers []ResourceHandler
-
-	visibleEndpoints []string
 }
 
 // NewServerEnvironment creates a new ServerEnvironment.
@@ -59,14 +59,6 @@ func (env *ServerEnvironment) Register(component ...interface{}) {
 // This method is not concurrent-safe.
 func (env *ServerEnvironment) AddResourceHandler(handler ...ResourceHandler) {
 	env.resourceHandlers = append(env.resourceHandlers, handler...)
-}
-
-// LogEndpoint records all endpoints to display on application start.
-// FIXME: recording endpoints automatically in ServerHandler or ResourceHandler?
-func (env *ServerEnvironment) LogEndpoint(method, path string, component interface{}) {
-	endpoint := fmt.Sprintf("%-7s %s%s (%T)",
-		method, env.ServerHandler.PathPrefix(), path, component)
-	env.visibleEndpoints = append(env.visibleEndpoints, endpoint)
 }
 
 func (env *ServerEnvironment) onStarting() {
@@ -108,7 +100,7 @@ func (env *ServerEnvironment) logEndpoints() {
 		return
 	}
 	var buf bytes.Buffer
-	for _, e := range env.visibleEndpoints {
+	for _, e := range env.ServerHandler.Endpoints() {
 		fmt.Fprintf(&buf, "    %s\n", e)
 	}
 	logger.Infof("endpoints =\n\n%s", buf.String())

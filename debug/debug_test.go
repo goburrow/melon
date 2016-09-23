@@ -19,7 +19,7 @@ func TestBundle(t *testing.T) {
 	bundle := NewBundle()
 	bundle.Run(nil, env)
 
-	server := httptest.NewServer(handler.ServeMux)
+	server := httptest.NewServer(handler)
 	defer server.Close()
 
 	res, err := http.Get(server.URL + "/debug/pprof/")
