@@ -3,10 +3,10 @@ package server
 import (
 	"fmt"
 
+	"github.com/goburrow/dynamic"
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/server/filter"
 	"github.com/goburrow/melon/server/recovery"
-	"github.com/goburrow/dynamic"
 )
 
 // RequestLogConfiguration is the user defined type of RequestLogFactory.
@@ -29,8 +29,10 @@ func (f *commonFactory) AddFilters(env *core.Environment, handlers ...*Handler) 
 	}
 	recoveryFilter := recovery.NewFilter()
 	for _, h := range handlers {
-		h.FilterChain.Add(requestLogFilter)
-		h.FilterChain.Add(recoveryFilter)
+		if !h.FilterChain.Insert(requestLogFilter, h.FilterChain.Length()-1) ||
+			!h.FilterChain.Insert(recoveryFilter, h.FilterChain.Length()-1) {
+			return fmt.Errorf("server: could not add default filters")
+		}
 	}
 	return nil
 }

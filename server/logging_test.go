@@ -38,9 +38,6 @@ func TestNoRequestLogFactory(t *testing.T) {
 	}
 	switch filter.(type) {
 	case *noRequestLog:
-		if filter.Name() != "logging" {
-			t.Fatalf("unexpected filter name %#v", filter.Name())
-		}
 	default:
 		t.Fatalf("unexpected filter %#v", filter)
 	}

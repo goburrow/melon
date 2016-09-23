@@ -6,41 +6,38 @@ import (
 	"testing"
 )
 
-type test struct {
-	s string
-}
+type testFilter string
 
-func (f *test) Name() string {
-	return f.s
-}
-
-func (f *test) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []Filter) {
-	w.Write([]byte(f.s))
-	chain[0].ServeHTTP(w, r, chain[1:])
+func (s testFilter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []Filter) {
+	w.Write([]byte(s))
+	if len(chain) > 0 {
+		chain[0].ServeHTTP(w, r, chain[1:])
+	}
 }
 
 func end(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("END"))
 }
 
-func TestEmptyChain(t *testing.T) {
-	recorder := httptest.NewRecorder()
-	builder := NewChain()
+var endHandler = http.HandlerFunc(end)
 
-	chain := builder.Build(http.HandlerFunc(end))
+func TestEmptyChain(t *testing.T) {
+	chain := NewChain()
+
+	recorder := httptest.NewRecorder()
 	chain.ServeHTTP(recorder, nil)
 	recorder.Flush()
-	if "END" != recorder.Body.String() {
+	if "" != recorder.Body.String() {
 		t.Fatalf("unexpected body: %v", recorder.Body.String())
 	}
 }
 
 func TestChain(t *testing.T) {
-	builder := NewChain()
-	builder.Add(&test{"1"})
-	builder.Add(&test{"2"})
+	chain := NewChain()
+	chain.Add(testFilter("1"), testFilter("2"))
+	chain.Add(Last(endHandler))
+
 	recorder := httptest.NewRecorder()
-	chain := builder.Build(http.HandlerFunc(end))
 	chain.ServeHTTP(recorder, nil)
 	recorder.Flush()
 	if "12END" != recorder.Body.String() {
@@ -49,17 +46,15 @@ func TestChain(t *testing.T) {
 }
 
 func TestInsertFilter(t *testing.T) {
-	builder := NewChain()
-	builder.Add(&test{"1"})
-	builder.Add(&test{"2"})
-	builder.Add(&test{"3"})
+	chain := NewChain()
+	chain.Add(testFilter("1"), testFilter("2"), testFilter("3"))
+	chain.Add(Last(endHandler))
 
-	builder.Insert(&test{"a"}, "1")
-	builder.Insert(&test{"c"}, "3")
-	builder.Insert(&test{"b"}, "2")
+	chain.Insert(testFilter("a"), 0)
+	chain.Insert(testFilter("c"), 3)
+	chain.Insert(testFilter("b"), 2)
 
 	recorder := httptest.NewRecorder()
-	chain := builder.Build(http.HandlerFunc(end))
 	chain.ServeHTTP(recorder, nil)
 	recorder.Flush()
 	if "a1b2c3END" != recorder.Body.String() {

@@ -34,10 +34,8 @@ func testFilter(t *testing.T, h http.Handler) {
 
 	f := NewFilter()
 
-	builder := filter.NewChain()
-	builder.Add(f)
-
-	chain := builder.Build(h)
+	chain := filter.NewChain()
+	chain.Add(f, filter.Last(h))
 	chain.ServeHTTP(w, nil)
 	w.Flush()
 	if w.Code != 500 {

@@ -36,15 +36,13 @@ func NewFilter(writer io.Writer) *Filter {
 	return &Filter{writer: writer}
 }
 
-func (f *Filter) Name() string {
-	return "logging"
-}
-
 func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
 	responseWriter := &responseWriter{writer: w, status: 200}
 
 	start := now()
-	chain[0].ServeHTTP(responseWriter, r, chain[1:])
+	if len(chain) > 0 {
+		chain[0].ServeHTTP(responseWriter, r, chain[1:])
+	}
 	end := now()
 
 	remoteAddr := getRemoteAddr(r)

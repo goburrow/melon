@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	filterName = "recovery"
-	stackSkip  = 4
-	stackMax   = 50
+	stackSkip = 4
+	stackMax  = 50
 )
 
 var (
@@ -38,10 +37,6 @@ var _ filter.Filter = (*Filter)(nil)
 
 func NewFilter() *Filter {
 	return &Filter{}
-}
-
-func (f *Filter) Name() string {
-	return filterName
 }
 
 func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {

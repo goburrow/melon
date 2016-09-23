@@ -22,14 +22,14 @@ func init() {
 func TestResponseOK(t *testing.T) {
 	var buf bytes.Buffer
 
-	builder := filter.NewChain()
-	builder.Add(NewFilter(&buf))
+	chain := filter.NewChain()
+	chain.Add(NewFilter(&buf))
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	}
 
-	chain := builder.Build(http.HandlerFunc(handler))
+	chain.Add(filter.Last(http.HandlerFunc(handler)))
 
 	server := httptest.NewServer(chain)
 	defer server.Close()
@@ -59,15 +59,15 @@ func TestResponseOK(t *testing.T) {
 func TestResponseError(t *testing.T) {
 	var buf bytes.Buffer
 
-	builder := filter.NewChain()
-	builder.Add(NewFilter(&buf))
+	chain := filter.NewChain()
+	chain.Add(NewFilter(&buf))
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("bad request"))
 	}
 
-	chain := builder.Build(http.HandlerFunc(handler))
+	chain.Add(filter.Last(http.HandlerFunc(handler)))
 
 	server := httptest.NewServer(chain)
 	defer server.Close()

@@ -7,14 +7,8 @@ import (
 	"net/http"
 )
 
-const (
-	chainEndName = "handler"
-)
-
 // Filter performs filtering tasks on the request and response to a HTTP resource.
 type Filter interface {
-	// Name is used to identify filter for inserting.
-	Name() string
 	// ServeHTTP is named like http.Handler interface to avoid using
 	// one object as both Filter and http.Handler.
 	// To process the next filter, call ServeHTTP from the first element in
@@ -41,50 +35,34 @@ func (chain *Chain) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Add adds the given filter into the end of the chain.
-func (chain *Chain) Add(f Filter) {
-	chain.filters = append(chain.filters, f)
+func (chain *Chain) Add(f ...Filter) {
+	chain.filters = append(chain.filters, f...)
 }
 
-// Insert inserts the filter before the filter with the given name.
-func (chain *Chain) Insert(f Filter, name string) {
-	idx := -1
-	for i, filter := range chain.filters {
-		if filter.Name() == name {
-			idx = i
-			break
-		}
+// Insert inserts the filter at the idx position.
+func (chain *Chain) Insert(f Filter, idx int) bool {
+	if idx < 0 || idx >= len(chain.filters) {
+		return false
 	}
-	if idx < 0 {
-		panic("filter: name not found " + name)
-	}
-	chain.insert(f, idx)
-}
-
-func (chain *Chain) insert(f Filter, idx int) {
 	chain.filters = append(chain.filters, nil)
 	copy(chain.filters[idx+1:], chain.filters[idx:])
 	chain.filters[idx] = f
+	return true
 }
 
-// Build create a new chain based on current chain ending with the given http.Handler.
-func (chain *Chain) Build(handler http.Handler) *Chain {
-	filters := make([]Filter, len(chain.filters)+1)
-	copy(filters, chain.filters)
-	filters[len(filters)-1] = &chainEnd{handler}
-
-	return &Chain{
-		filters: filters,
-	}
+// Length returns length of the chain.
+func (chain *Chain) Length() int {
+	return len(chain.filters)
 }
 
-// chainEnd is a wrapper for http.Handler. It is used as the last element in
-// the chain.
+// Last return a Filter for given name and handler, which does not execute
+// any filters behind.
+func Last(handler http.Handler) Filter {
+	return &chainEnd{handler}
+}
+
 type chainEnd struct {
 	handler http.Handler
-}
-
-func (f *chainEnd) Name() string {
-	return chainEndName
 }
 
 func (f *chainEnd) ServeHTTP(w http.ResponseWriter, r *http.Request, _ []Filter) {

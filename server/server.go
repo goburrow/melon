@@ -142,7 +142,7 @@ type Handler struct {
 	// ServerMux is the HTTP request router.
 	ServeMux *web.Mux
 	// FilterChain is the builder for HTTP filters.
-	FilterChain filter.Chain
+	FilterChain *filter.Chain
 
 	pathPrefix string
 }
@@ -152,8 +152,12 @@ var _ core.ServerHandler = (*Handler)(nil)
 
 // NewHandler creates a new multiplexer if not provided.
 func NewHandler() *Handler {
+	mux := web.New()
+	chain := filter.NewChain()
+	chain.Add(filter.Last(mux))
 	return &Handler{
-		ServeMux: web.New(),
+		ServeMux:    mux,
+		FilterChain: chain,
 	}
 }
 
@@ -193,14 +197,13 @@ func (h *Handler) PathPrefix() string {
 	return h.pathPrefix
 }
 
-// ServeHTTP strips path prefix in the request URL path.
-// This method is actually only used when path prefix is set
-// (i.e. simple server - the handler acts as subrouter).
+// ServeHTTP strips path prefix in the request and executes filter chain,
+// which should include ServeMux as the last one.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.pathPrefix != "" {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, h.pathPrefix)
 	}
-	h.ServeMux.ServeHTTP(w, r)
+	h.FilterChain.ServeHTTP(w, r)
 }
 
 // Factory is an union of DefaultFactory and SimpleFactory.

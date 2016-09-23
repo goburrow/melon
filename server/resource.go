@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/server/filter"
 	"github.com/zenazn/goji/web"
 )
 
@@ -23,13 +24,13 @@ type webResource interface {
 
 // resourceHandler allows user to register basic HTTP resource.
 type resourceHandler struct {
-	serverHandler  core.ServerHandler
+	serverHandler  *Handler
 	endpointLogger core.EndpointLogger
 }
 
 var _ (core.ResourceHandler) = (*resourceHandler)(nil)
 
-func newResourceHandler(serverHandler core.ServerHandler, endpointLogger core.EndpointLogger) *resourceHandler {
+func newResourceHandler(serverHandler *Handler, endpointLogger core.EndpointLogger) *resourceHandler {
 	return &resourceHandler{
 		serverHandler:  serverHandler,
 		endpointLogger: endpointLogger,
@@ -45,5 +46,9 @@ func (h *resourceHandler) HandleResource(v interface{}) {
 	if r, ok := v.(webResource); ok {
 		h.serverHandler.Handle(r.Method(), r.Path(), r)
 		h.endpointLogger.LogEndpoint(r.Method(), r.Path(), v)
+	}
+
+	if r, ok := v.(filter.Filter); ok {
+		h.serverHandler.FilterChain.Insert(r, h.serverHandler.FilterChain.Length()-1)
 	}
 }
