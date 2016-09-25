@@ -17,10 +17,6 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-const (
-	loggerName = "melon/server"
-)
-
 func init() {
 	dynamic.Register("DefaultServer", func() interface{} {
 		return &DefaultFactory{}
@@ -82,7 +78,7 @@ func NewServer() *Server {
 
 // Start starts all connectors of the server.
 func (server *Server) Start() error {
-	logger := gol.GetLogger(loggerName)
+	logger := getLogger()
 
 	// Handle SIGINT
 	graceful.HandleSignals()
@@ -223,4 +219,8 @@ func (factory *Factory) Build(environment *core.Environment) (core.Server, error
 		return f.Build(environment)
 	}
 	return nil, fmt.Errorf("server: unsupported server %#v", factory.Value())
+}
+
+func getLogger() gol.Logger {
+	return gol.GetLogger("melon/server")
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/goburrow/melon/core"
 )
 
+var _ core.ConfigurationFactory = (*Factory)(nil)
+
 type configuration struct {
 	Server  serverConfiguration
 	Logging loggingConfiguration

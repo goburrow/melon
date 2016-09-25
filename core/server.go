@@ -3,12 +3,6 @@ package core
 import (
 	"bytes"
 	"fmt"
-
-	"github.com/goburrow/gol"
-)
-
-const (
-	serverLoggerName = "melon/server"
 )
 
 // Server is a managed HTTP server handling incoming connections to both application and admin.
@@ -80,7 +74,7 @@ func (env *ServerEnvironment) handle(component interface{}) {
 }
 
 func (env *ServerEnvironment) logResources() {
-	logger := gol.GetLogger(serverLoggerName)
+	logger := getLogger()
 	if !logger.DebugEnabled() {
 		return
 	}
@@ -95,7 +89,7 @@ func (env *ServerEnvironment) logResources() {
 }
 
 func (env *ServerEnvironment) logEndpoints() {
-	logger := gol.GetLogger(serverLoggerName)
+	logger := getLogger()
 	if !logger.InfoEnabled() {
 		return
 	}

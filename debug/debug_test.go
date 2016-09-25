@@ -11,6 +11,8 @@ import (
 	"github.com/goburrow/melon/server"
 )
 
+var _ core.Bundle = (*Bundle)(nil)
+
 func TestBundle(t *testing.T) {
 	env := core.NewEnvironment()
 	handler := server.NewHandler()

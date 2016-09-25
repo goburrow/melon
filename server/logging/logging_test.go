@@ -11,6 +11,8 @@ import (
 	"github.com/goburrow/melon/server/filter"
 )
 
+var _ filter.Filter = (*Filter)(nil)
+
 var today = time.Date(2015, time.January, 14, 1, 2, 3, 789000000, time.FixedZone("Asia/Ho_Chi_Minh", 7*60*60))
 
 func init() {

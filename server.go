@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	serverLoggerName = "melon/server"
-	maxBannerSize    = 50 * 1024 // 50KB
+	maxBannerSize = 50 * 1024 // 50KB
 )
 
 // ServerCommand implements Command.
@@ -37,7 +36,7 @@ func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 	}
 	// Always run Stop() method on managed objects.
 	defer command.Environment.SetStopped()
-	logger := gol.GetLogger(serverLoggerName)
+	logger := getLogger()
 	// Build server
 	if command.Server, err = command.configuration.ServerFactory().Build(command.Environment); err != nil {
 		logger.Errorf("could not create server: %v", err)

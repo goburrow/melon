@@ -30,8 +30,6 @@ type Filter struct {
 	writer io.Writer
 }
 
-var _ filter.Filter = (*Filter)(nil)
-
 func NewFilter(writer io.Writer) *Filter {
 	return &Filter{writer: writer}
 }

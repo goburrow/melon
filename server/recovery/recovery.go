@@ -19,31 +19,22 @@ const (
 	stackMax  = 50
 )
 
-var (
-	panics metrics.Counter
-	logger gol.Logger
-)
-
-func init() {
-	panics = metrics.Counter("HTTP.Panics")
-	logger = gol.GetLogger("melon/server/recovery")
-}
-
 // Filter handles panics.
 type Filter struct {
+	panics metrics.Counter
 }
 
-var _ filter.Filter = (*Filter)(nil)
-
 func NewFilter() *Filter {
-	return &Filter{}
+	return &Filter{
+		panics: metrics.Counter("HTTP.Panics"),
+	}
 }
 
 func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
 	defer func() {
 		if err := recover(); err != nil {
-			panics.Add()
-			logger.Errorf("%v\n%s", err, stack())
+			f.panics.Add()
+			getLogger().Errorf("%v\n%s", err, stack())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}()
@@ -62,4 +53,8 @@ func stack() []byte {
 		fmt.Fprintf(&buf, "! %s:%d %s()\n", file, line, f.Name())
 	}
 	return buf.Bytes()
+}
+
+func getLogger() gol.Logger {
+	return gol.GetLogger("melon/server")
 }

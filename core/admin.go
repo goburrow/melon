@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/goburrow/gol"
 	"github.com/goburrow/health"
 )
 
@@ -32,8 +31,6 @@ const (
 !    THIS APPLICATION HAS NO HEALTHCHECKS.    !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 `
-
-	adminLoggerName = "melon/admin"
 
 	gcTaskName = "gc"
 )
@@ -98,7 +95,7 @@ func (env *AdminEnvironment) onStopped() {
 
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logTasks() {
-	logger := gol.GetLogger(adminLoggerName)
+	logger := getLogger()
 	if !logger.InfoEnabled() {
 		return
 	}
@@ -112,7 +109,7 @@ func (env *AdminEnvironment) logTasks() {
 
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logHealthChecks() {
-	logger := gol.GetLogger(adminLoggerName)
+	logger := getLogger()
 	names := env.HealthChecks.Names()
 	if len(names) <= 0 {
 		logger.Warnf(noHealthChecksWarning)

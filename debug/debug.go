@@ -10,7 +10,6 @@ import (
 	"net/http/pprof"
 	"strings"
 
-	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 )
 
@@ -19,19 +18,9 @@ const (
 	expvarPath = "/debug/vars"
 )
 
-var (
-	logger gol.Logger
-)
-
-func init() {
-	logger = gol.GetLogger("melon/debug")
-}
-
 // Bundle adds pprof into admin environment.
 type Bundle struct {
 }
-
-var _ core.Bundle = (*Bundle)(nil)
 
 // NewBundle allocates and returns a new Bundle.
 func NewBundle() *Bundle {

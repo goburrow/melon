@@ -10,20 +10,14 @@ import (
 	"github.com/goburrow/melon/core"
 )
 
-const (
-	assetsLoggerName = "melon/assets"
-)
-
 // Bundle serves static asset files.
+// It implements core.Bundle interface
 type Bundle struct {
 	dir     string
 	urlPath string
 }
 
-// AssetsBundle implements Bundle interface
-var _ core.Bundle = (*Bundle)(nil)
-
-// NewAssetsBundle allocates and returns a new AssetsBundle.
+// NewBundle allocates and returns a new Bundle.
 // urlPath must always start with "/".
 func NewBundle(dir, urlPath string) *Bundle {
 	return &Bundle{
@@ -36,9 +30,9 @@ func (bundle *Bundle) Initialize(bootstrap *core.Bootstrap) {
 	// Do nothing
 }
 
-// Run registers current AssetsBundle to the server in the given environment.
+// Run registers current Bundle to the server in the given environment.
 func (bundle *Bundle) Run(_ interface{}, env *core.Environment) error {
-	gol.GetLogger(assetsLoggerName).Infof("registering AssetsBundle for path %s", bundle.urlPath)
+	getLogger().Infof("registering AssetsBundle for path %s", bundle.urlPath)
 
 	// Add slashes if necessary
 	p := addSlashes(bundle.urlPath)
@@ -63,4 +57,8 @@ func addSlashes(p string) string {
 		p = p + "/"
 	}
 	return p
+}
+
+func getLogger() gol.Logger {
+	return gol.GetLogger("melon/assets")
 }

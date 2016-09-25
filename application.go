@@ -1,6 +1,7 @@
 package melon
 
 import (
+	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 )
 
@@ -27,4 +28,8 @@ func (app *Application) Run(config interface{}, env *core.Environment) error {
 		return app.RunFunc(config, env)
 	}
 	return nil
+}
+
+func getLogger() gol.Logger {
+	return gol.GetLogger("melon")
 }

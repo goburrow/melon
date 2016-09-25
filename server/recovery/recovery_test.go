@@ -10,9 +10,11 @@ import (
 	"github.com/goburrow/melon/server/filter"
 )
 
+var _ filter.Filter = (*Filter)(nil)
+
 func init() {
-	// Disable logger
-	logger.(*gol.DefaultLogger).SetLevel(gol.Off)
+	// Disable logger to reduce spam
+	getLogger().(*gol.DefaultLogger).SetLevel(gol.Off)
 }
 
 func TestPanicHandler(t *testing.T) {

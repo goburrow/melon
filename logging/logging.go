@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/goburrow/dynamic"
 	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
-	"github.com/goburrow/dynamic"
 
 	golasync "github.com/goburrow/gol/async"
 	_ "github.com/goburrow/gol/log"
@@ -69,11 +69,11 @@ func (factory *Factory) Configure(env *core.Environment) error {
 	var err error
 
 	if err = factory.configureLevels(); err != nil {
-		gol.GetLogger(loggerName).Errorf("%v", err)
+		getLogger().Errorf("%v", err)
 		return err
 	}
 	if err = factory.configureAppenders(env); err != nil {
-		gol.GetLogger(loggerName).Errorf("%v", err)
+		getLogger().Errorf("%v", err)
 		return err
 	}
 	env.Admin.AddTask(&logTask{})
@@ -121,9 +121,12 @@ func (factory *Factory) configureAppenders(environment *core.Environment) error 
 		if !ok {
 			return fmt.Errorf("logging: logger is not gol.DefaultLogger %T", logger)
 		}
-		a := golasync.NewAppender(asyncBufferSize, appenders...)
-		logger.SetAppender(a)
-		environment.Lifecycle.Manage(a)
+		a := golasync.NewAppenderWithBufSize(asyncBufferSize, appenders...)
+		a.Start()
 	}
 	return nil
+}
+
+func getLogger() gol.Logger {
+	return gol.GetLogger("melon/logging")
 }

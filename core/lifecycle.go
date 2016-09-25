@@ -1,17 +1,5 @@
 package core
 
-import (
-	"github.com/goburrow/gol"
-)
-
-var (
-	lifecycleLogger gol.Logger
-)
-
-func init() {
-	lifecycleLogger = gol.GetLogger("melon/lifecycle")
-}
-
 // Managed is an interface for objects which need to be started and stopped as
 // the application is started or stopped.
 type Managed interface {
@@ -40,11 +28,12 @@ func (env *LifecycleEnvironment) Manage(obj Managed) {
 
 // onStarting indicates the application is going to start.
 func (env *LifecycleEnvironment) onStarting() {
+	logger := getLogger()
 	// Starting managed objects in order.
 	for _, m := range env.managedObjects {
 		// Panic from a managed object will stop the application.
 		if err := m.Start(); err != nil {
-			lifecycleLogger.Errorf("error starting managed object %#v: %v", m, err)
+			logger.Errorf("error starting managed object %#v: %v", m, err)
 		}
 	}
 }
@@ -61,10 +50,11 @@ func (env *LifecycleEnvironment) onStopped() {
 func stopManagedObject(m Managed) {
 	var err error
 	defer func() {
+		logger := getLogger()
 		if err != nil {
-			lifecycleLogger.Errorf("error stopping managed object %#v: %v", m, err)
+			logger.Errorf("error stopping managed object %#v: %v", m, err)
 		} else if r := recover(); r != nil {
-			lifecycleLogger.Errorf("panic stopping managed object %#v: %v", m, r)
+			logger.Errorf("panic stopping managed object %#v: %v", m, r)
 		}
 	}()
 	err = m.Stop()
