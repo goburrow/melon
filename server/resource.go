@@ -9,8 +9,8 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-// HTTPResource is a http.Handler associated with the given method and path.
-type HTTPResource interface {
+// Resource is a http.Handler associated with the given method and path.
+type Resource interface {
 	RequestLine() string
 	http.Handler
 }
@@ -35,7 +35,7 @@ func newResourceHandler(serverHandler *Handler) *resourceHandler {
 }
 
 func (h *resourceHandler) HandleResource(v interface{}) {
-	if r, ok := v.(HTTPResource); ok {
+	if r, ok := v.(Resource); ok {
 		method, path := parseRequestLine(r.RequestLine())
 		h.serverHandler.Handle(method, path, r)
 	}

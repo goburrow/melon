@@ -2,4 +2,4 @@ server:
   type: SimpleServer
   connector:
     type: http
-    addr: :8080
+    addr: localhost:8080

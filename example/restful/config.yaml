@@ -2,10 +2,10 @@ server:
   type: DefaultServer
   applicationConnectors:
   - type: http
-    addr: :8080
+    addr: localhost:8080
   adminConnectors:
   - type: http
-    addr: :8081
+    addr: localhost:8081
   requestLog:
     type: DefaultRequestLog
     appenders:
