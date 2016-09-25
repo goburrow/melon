@@ -7,6 +7,7 @@ import (
 
 	"github.com/goburrow/melon"
 	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/debug"
 	"github.com/goburrow/melon/views"
 )
 
@@ -98,11 +99,11 @@ func (s *resource) deleteUser(_ http.ResponseWriter, r *http.Request) (interface
 	return "Deleted.", nil
 }
 
-// Initialize adds support for RESTful API, serving static files at /static
-// and debug endpoint in admin page.
+// Initialize adds support for RESTful API and debug endpoint in admin page.
 func initialize(bs *core.Bootstrap) {
 	// Support RESTful API
 	bs.AddBundle(views.NewBundle())
+	bs.AddBundle(debug.NewBundle())
 }
 
 func run(conf interface{}, env *core.Environment) error {
@@ -124,12 +125,14 @@ func run(conf interface{}, env *core.Environment) error {
 }
 
 // To run the application:
-//  ./restful server config.yaml
+//  $ go run restful.go server config.json
+//
 // And try these commands to create, retrieve and delete an user:
 //  curl -XPOST -H'Content-Type: application/json' -d'{"name":"foo","age":20}' 'http://localhost:8080/users'
 //  curl -XGET 'http://localhost:8080/user/foo'
 //  curl -XDELETE 'http://localhost:8080/user/foo'
-// Admin page can be accessed at http://localhost:8081
+//
+// Check out new links in admin page at http://localhost:8081
 func main() {
 	app := &melon.Application{initialize, run}
 	if err := melon.Run(app, os.Args[1:]); err != nil {
