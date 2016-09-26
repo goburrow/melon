@@ -15,7 +15,7 @@ const (
 	staticPath  = "/static/"
 )
 
-func index(_ http.ResponseWriter, _ *http.Request) (interface{}, error) {
+func index(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title      string
 		Name       string
@@ -25,7 +25,7 @@ func index(_ http.ResponseWriter, _ *http.Request) (interface{}, error) {
 		"Gopher",
 		staticPath,
 	}
-	return &data, nil
+	views.Serve(w, r, &data)
 }
 
 type app struct{}
@@ -40,7 +40,7 @@ func (a *app) Run(conf interface{}, env *core.Environment) error {
 	if err != nil {
 		return err
 	}
-	indexPage := views.NewResource("GET /", index,
+	indexPage := views.NewResource("GET", "/", index,
 		views.WithHTMLTemplate("index.html"),                // HTML template name in ./html folder
 		views.WithProduces("text/html", "application/json"), // Override priority
 	)

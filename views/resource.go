@@ -14,39 +14,21 @@ import (
 )
 
 // Resource is a view resource.
-type Resource interface {
-	RequestLine() string
-	ServeHTTP(http.ResponseWriter, *http.Request) (interface{}, error)
-}
-
-type hasOptions interface {
-	ViewOptions() []Option
-}
-
-type HandlerFunc func(http.ResponseWriter, *http.Request) (interface{}, error)
-
-// NewResource creates a new Resource.
-func NewResource(reqLine string, handler HandlerFunc, options ...Option) Resource {
-	return &resource{reqLine, handler, options}
-}
-
-// resource implements Resource.
-type resource struct {
-	reqLine string
-	handler HandlerFunc
+type Resource struct {
+	method  string
+	path    string
+	handler http.HandlerFunc
 	options []Option
 }
 
-func (s *resource) RequestLine() string {
-	return s.reqLine
-}
-
-func (s *resource) ServeHTTP(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	return s.handler(w, r)
-}
-
-func (s *resource) ViewOptions() []Option {
-	return s.options
+// NewResource creates a new Resource.
+func NewResource(method, path string, handler http.HandlerFunc, options ...Option) *Resource {
+	return &Resource{
+		method:  method,
+		path:    path,
+		handler: handler,
+		options: options,
+	}
 }
 
 type Option func(h *httpHandler)
@@ -107,21 +89,18 @@ func (h *resourceHandler) HandleResource(v interface{}) {
 		// FIMXE: support multiple error mappers.
 		h.errorMapper = r
 	}
-	if r, ok := v.(Resource); ok {
-		method, path := parseRequestLine(r.RequestLine())
+	if r, ok := v.(*Resource); ok {
 		handler := &httpHandler{
-			handler:     r,
+			handler:     r.handler,
 			errorMapper: h.errorMapper,
 			validator:   h.validator,
 			logger:      getLogger(),
 			providers:   newExplicitProviderMap(h.providers),
 		}
-		if vo, ok := v.(hasOptions); ok {
-			for _, opt := range vo.ViewOptions() {
-				opt(handler)
-			}
+		for _, opt := range r.options {
+			opt(handler)
 		}
-		h.serverHandler.Handle(method, path, handler)
+		h.serverHandler.Handle(r.method, r.path, handler)
 	}
 }
 
@@ -169,7 +148,7 @@ var (
 
 // httpHandler implements melon server.webResource
 type httpHandler struct {
-	handler     Resource
+	handler     http.HandlerFunc
 	errorMapper ErrorMapper
 	logger      gol.Logger
 	validator   core.Validator
@@ -205,32 +184,11 @@ func (h *httpHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request
 	handlerCtx := &handlerContext{
 		handler: h,
 		readers: requestReaders,
+		writers: responseWriters,
 		params:  c.URLParams,
 	}
 	ctx := newContext(r.Context(), handlerCtx)
-	r = r.WithContext(ctx)
-	response, err := h.handler.ServeHTTP(w, r)
-	if err != nil {
-		h.errorMapper.MapError(w, r, err)
-		return
-	}
-	// No response, maybe body is already writen by the handler.
-	if response == nil {
-		return
-	}
-	// Use first writer which supports this response
-	for i := len(responseWriters) - 1; i >= 0; i-- {
-		if responseWriters[i].IsWriteable(w, r, response) {
-			err = responseWriters[i].WriteResponse(w, r, response)
-			if err != nil {
-				h.logger.Warnf("response writer: %v", err)
-				h.errorMapper.MapError(w, r, errInternalServerError)
-			}
-			return
-		}
-	}
-	// FIXME: Unknown type
-	h.errorMapper.MapError(w, r, errNotAcceptable)
+	h.handler(w, r.WithContext(ctx))
 }
 
 // getResponseWriters returns a list of responseWriter according Accept in the request header.
@@ -279,6 +237,7 @@ func (h *httpHandler) recordLatency(start time.Time) {
 type handlerContext struct {
 	handler *httpHandler
 	readers []requestReader
+	writers []responseWriter
 	params  map[string]string
 }
 
@@ -295,6 +254,38 @@ func fromContext(ctx context.Context) *handlerContext {
 	return nil
 }
 
+// Serve uses provider assigned to the request context to render data
+// and writes to HTTP response.
+func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
+	ctx := fromContext(r.Context())
+	if ctx == nil {
+		return
+	}
+	// Use first writer which supports this response
+	for _, writer := range ctx.writers {
+		if writer.IsWriteable(w, r, data) {
+			err := writer.WriteResponse(w, r, data)
+			if err != nil {
+				ctx.handler.logger.Warnf("response writer: %v", err)
+				ctx.handler.errorMapper.MapError(w, r, errInternalServerError)
+			}
+			return
+		}
+	}
+	// FIXME: Unknown type
+	ctx.handler.logger.Warnf("no response writer for %T", data)
+	ctx.handler.errorMapper.MapError(w, r, errInternalServerError)
+}
+
+// Error writes error to HTTP response given the request context.
+func Error(w http.ResponseWriter, r *http.Request, err error) {
+	ctx := fromContext(r.Context())
+	if ctx == nil {
+		return
+	}
+	ctx.handler.errorMapper.MapError(w, r, err)
+}
+
 // Params returns path parameters from request.
 func Params(r *http.Request) map[string]string {
 	ctx := fromContext(r.Context())
@@ -308,8 +299,7 @@ func Params(r *http.Request) map[string]string {
 func Entity(r *http.Request, v interface{}) error {
 	ctx := fromContext(r.Context())
 	if ctx != nil && len(ctx.readers) > 0 {
-		for i := len(ctx.readers) - 1; i >= 0; i-- {
-			reader := ctx.readers[i]
+		for _, reader := range ctx.readers {
 			if reader.IsReadable(r, v) {
 				err := reader.ReadRequest(r, v)
 				if err != nil {

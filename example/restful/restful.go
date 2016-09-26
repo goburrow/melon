@@ -28,75 +28,89 @@ type resource struct {
 	users map[string]*User
 }
 
-func (s *resource) listUsers(_ http.ResponseWriter, _ *http.Request) (interface{}, error) {
+func (s *resource) listUsers(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
-	defer s.mu.RUnlock()
 	list := make([]*User, len(s.users))
 	i := 0
 	for _, u := range s.users {
 		list[i] = u
 		i++
 	}
-	return list, nil
+	s.mu.RUnlock()
+	views.Serve(w, r, list)
 }
 
-func (s *resource) createUser(_ http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (s *resource) createUser(w http.ResponseWriter, r *http.Request) {
 	user := &User{}
 	if err := views.Entity(r, user); err != nil {
-		return nil, err
+		views.Error(w, r, err)
+		return
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	_, ok := s.users[user.Name]
-	if ok {
-		return nil, errUserExisted
+	if !ok {
+		s.users[user.Name] = user
 	}
-	s.users[user.Name] = user
-	return "Created.", nil
+	s.mu.Unlock()
+	if ok {
+		views.Error(w, r, errUserExisted)
+	} else {
+		views.Serve(w, r, "Created.")
+	}
 }
 
-func (s *resource) getUser(_ http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (s *resource) getUser(w http.ResponseWriter, r *http.Request) {
 	params := views.Params(r)
 
 	s.mu.RLock()
-	defer s.mu.RUnlock()
 	user, ok := s.users[params["name"]]
-	if !ok {
-		return nil, errUserNotFound
+	s.mu.RUnlock()
+	if ok {
+		views.Serve(w, r, user)
+	} else {
+		views.Error(w, r, errUserNotFound)
 	}
-	return user, nil
 }
 
-func (s *resource) editUser(_ http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (s *resource) editUser(w http.ResponseWriter, r *http.Request) {
 	params := views.Params(r)
 	name := params["name"]
 	user := &User{}
 	if err := views.Entity(r, user); err != nil {
-		return nil, err
+		views.Error(w, r, err)
+		return
 	}
 	// Name must be consistent
 	user.Name = name
 
 	s.mu.Lock()
-	defer s.mu.Unlock()
-	if _, ok := s.users[name]; !ok {
-		return nil, errUserNotFound
+	_, ok := s.users[name]
+	if ok {
+		s.users[name] = user
 	}
-	s.users[name] = user
-	return "Updated.", nil
+	s.mu.Unlock()
+	if ok {
+		views.Serve(w, r, "Updated.")
+	} else {
+		views.Error(w, r, errUserNotFound)
+	}
 }
 
-func (s *resource) deleteUser(_ http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (s *resource) deleteUser(w http.ResponseWriter, r *http.Request) {
 	params := views.Params(r)
 	name := params["name"]
 
 	s.mu.Lock()
-	defer s.mu.Unlock()
-	if _, ok := s.users[name]; !ok {
-		return nil, errUserNotFound
+	_, ok := s.users[name]
+	if ok {
+		delete(s.users, name)
 	}
-	delete(s.users, name)
-	return "Deleted.", nil
+	s.mu.Unlock()
+	if ok {
+		views.Serve(w, r, "Deleted.")
+	} else {
+		views.Error(w, r, errUserNotFound)
+	}
 }
 
 // Initialize adds support for RESTful API and debug endpoint in admin page.
@@ -112,14 +126,14 @@ func run(conf interface{}, env *core.Environment) error {
 	}
 	// /users
 	env.Server.Register(
-		views.NewResource("GET /users", res.listUsers),
-		views.NewResource("POST /users", res.createUser),
+		views.NewResource("GET", "/users", res.listUsers),
+		views.NewResource("POST", "/users", res.createUser),
 	)
 	// /user/:name
 	env.Server.Register(
-		views.NewResource("GET /user/:name", res.getUser),
-		views.NewResource("PUT /user/:name", res.editUser),
-		views.NewResource("DELETE /user/:name", res.deleteUser),
+		views.NewResource("GET", "/user/:name", res.getUser),
+		views.NewResource("PUT", "/user/:name", res.editUser),
+		views.NewResource("DELETE", "/user/:name", res.deleteUser),
 	)
 	return nil
 }
