@@ -57,10 +57,10 @@ type Bundle struct {
 	providers []Provider
 }
 
-// NewBundle allocates and returns a new Bundle which has JSONProvider as the default provider.
-func NewBundle() *Bundle {
+// NewBundle allocates and returns a new Bundle which will register provided providers.
+func NewBundle(providers ...Provider) *Bundle {
 	return &Bundle{
-		providers: []Provider{NewJSONProvider()},
+		providers: providers,
 	}
 }
 

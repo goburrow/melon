@@ -102,7 +102,7 @@ func (s *resource) deleteUser(_ http.ResponseWriter, r *http.Request) (interface
 // Initialize adds support for RESTful API and debug endpoint in admin page.
 func initialize(bs *core.Bootstrap) {
 	// Support RESTful API
-	bs.AddBundle(views.NewBundle())
+	bs.AddBundle(views.NewBundle(views.NewJSONProvider(), views.NewXMLProvider()))
 	bs.AddBundle(debug.NewBundle())
 }
 
