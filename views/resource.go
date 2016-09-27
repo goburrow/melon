@@ -53,7 +53,7 @@ func (u *Bundle) Initialize(b *core.Bootstrap) {
 func (u *Bundle) Run(conf interface{}, env *core.Environment) error {
 	handler := newResourceHandler(env)
 	for _, p := range u.providers {
-		handler.providers.AddProvider(p)
+		env.Server.Register(p)
 	}
 	env.Server.AddResourceHandler(handler)
 	return nil
@@ -298,19 +298,24 @@ func Params(r *http.Request) map[string]string {
 // Entity reads and validates entity v from request r.
 func Entity(r *http.Request, v interface{}) error {
 	ctx := fromContext(r.Context())
-	if ctx != nil && len(ctx.readers) > 0 {
-		for _, reader := range ctx.readers {
-			if reader.IsReadable(r, v) {
-				err := reader.ReadRequest(r, v)
-				if err != nil {
-					return &HTTPError{statusUnprocessableEntity, err.Error()}
-				}
-				validator := ctx.handler.validator
-				if validator != nil {
-					return validator.Validate(v)
-				}
-				return nil
+	if ctx == nil {
+		// Invalid state
+		return errInternalServerError
+	}
+	for _, reader := range ctx.readers {
+		if reader.IsReadable(r, v) {
+			err := reader.ReadRequest(r, v)
+			if err != nil {
+				return &HTTPError{statusUnprocessableEntity, err.Error()}
 			}
+			validator := ctx.handler.validator
+			if validator != nil {
+				err = validator.Validate(v)
+				if err != nil {
+					return &HTTPError{http.StatusBadRequest, err.Error()}
+				}
+			}
+			return nil
 		}
 	}
 	return errUnsupportedMediaType
