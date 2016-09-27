@@ -14,6 +14,22 @@ func (e *ErrorMessage) Error() string {
 	return e.Message
 }
 
+// NewBadRequest creates a new ErrorMessage with status code http.StatusBadRequest.
+func NewBadRequest(message string) *ErrorMessage {
+	return &ErrorMessage{
+		Code:    http.StatusBadRequest,
+		Message: message,
+	}
+}
+
+// NewServerError creates a new ErrorMessage with status code http.StatusInternalServerError.
+func NewServerError(message string) *ErrorMessage {
+	return &ErrorMessage{
+		Code:    http.StatusInternalServerError,
+		Message: message,
+	}
+}
+
 // ErrorMapper maps error to http error.
 type ErrorMapper interface {
 	MapError(http.ResponseWriter, *http.Request, error)
