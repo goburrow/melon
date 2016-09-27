@@ -234,6 +234,8 @@ func (h *httpHandler) recordLatency(start time.Time) {
 	_ = h.metricLatency.RecordValue(elapsedMS)
 }
 
+// handlerContext is created for each request.
+// TODO: May be it needs an allocation pool.
 type handlerContext struct {
 	handler *httpHandler
 	readers []requestReader
@@ -259,6 +261,7 @@ func fromContext(ctx context.Context) *handlerContext {
 func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
 	ctx := fromContext(r.Context())
 	if ctx == nil {
+		getLogger().Errorf("no handler in request context: %v", r.Context())
 		return
 	}
 	// Use first writer which supports this response
@@ -281,6 +284,7 @@ func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
 func Error(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := fromContext(r.Context())
 	if ctx == nil {
+		getLogger().Errorf("no handler in request context: %v", r.Context())
 		return
 	}
 	ctx.handler.errorMapper.MapError(w, r, err)
@@ -289,10 +293,11 @@ func Error(w http.ResponseWriter, r *http.Request, err error) {
 // Params returns path parameters from request.
 func Params(r *http.Request) map[string]string {
 	ctx := fromContext(r.Context())
-	if ctx != nil {
-		return ctx.params
+	if ctx == nil {
+		getLogger().Errorf("no handler in request context: %v", r.Context())
+		return nil
 	}
-	return nil
+	return ctx.params
 }
 
 // Entity reads and validates entity v from request r.
@@ -300,6 +305,7 @@ func Entity(r *http.Request, v interface{}) error {
 	ctx := fromContext(r.Context())
 	if ctx == nil {
 		// Invalid state
+		getLogger().Errorf("no handler in request context: %v", r.Context())
 		return errInternalServerError
 	}
 	for _, reader := range ctx.readers {
