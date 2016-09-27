@@ -141,9 +141,9 @@ const (
 )
 
 var (
-	errInternalServerError  = &HTTPError{http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)}
-	errNotAcceptable        = &HTTPError{http.StatusNotAcceptable, http.StatusText(http.StatusNotAcceptable)}
-	errUnsupportedMediaType = &HTTPError{http.StatusUnsupportedMediaType, http.StatusText(http.StatusUnsupportedMediaType)}
+	errInternalServerError  = &ErrorMessage{http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)}
+	errNotAcceptable        = &ErrorMessage{http.StatusNotAcceptable, http.StatusText(http.StatusNotAcceptable)}
+	errUnsupportedMediaType = &ErrorMessage{http.StatusUnsupportedMediaType, http.StatusText(http.StatusUnsupportedMediaType)}
 )
 
 // httpHandler implements melon server.webResource
@@ -306,13 +306,13 @@ func Entity(r *http.Request, v interface{}) error {
 		if reader.IsReadable(r, v) {
 			err := reader.ReadRequest(r, v)
 			if err != nil {
-				return &HTTPError{statusUnprocessableEntity, err.Error()}
+				return &ErrorMessage{statusUnprocessableEntity, err.Error()}
 			}
 			validator := ctx.handler.validator
 			if validator != nil {
 				err = validator.Validate(v)
 				if err != nil {
-					return &HTTPError{http.StatusBadRequest, err.Error()}
+					return &ErrorMessage{http.StatusBadRequest, err.Error()}
 				}
 			}
 			return nil

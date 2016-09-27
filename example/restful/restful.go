@@ -18,8 +18,8 @@ type User struct {
 }
 
 var (
-	errUserNotFound = &views.HTTPError{http.StatusNotFound, "User not found."}
-	errUserExisted  = &views.HTTPError{http.StatusConflict, "User existed."}
+	errUserNotFound = &views.ErrorMessage{http.StatusNotFound, "User not found."}
+	errUserExisted  = &views.ErrorMessage{http.StatusConflict, "User existed."}
 )
 
 // resource manages users.
