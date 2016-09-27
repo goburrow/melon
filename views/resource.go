@@ -129,8 +129,8 @@ func WithProduces(produces ...string) Option {
 	}
 }
 
-// WithTimedMetric adds metric record to the resource.
-func WithTimedMetric(name string) Option {
+// WithTimerMetric adds metric record to the resource.
+func WithTimerMetric(name string) Option {
 	return func(h *httpHandler) {
 		h.setMetrics(name)
 	}

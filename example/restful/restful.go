@@ -127,7 +127,8 @@ func run(conf interface{}, env *core.Environment) error {
 	// /users
 	env.Server.Register(
 		views.NewResource("GET", "/users", res.listUsers),
-		views.NewResource("POST", "/users", res.createUser),
+		views.NewResource("POST", "/users", res.createUser,
+			views.WithTimerMetric("UsersCreate")),
 	)
 	// /user/:name
 	env.Server.Register(
