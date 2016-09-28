@@ -43,8 +43,8 @@ type AdminHandler interface {
 }
 
 type AdminEnvironment struct {
-	ServerHandler ServerHandler
-	HealthChecks  health.Registry
+	Router       Router
+	HealthChecks health.Registry
 
 	handlers []AdminHandler
 	tasks    []Task
@@ -73,18 +73,18 @@ func (env *AdminEnvironment) AddHandler(handler ...AdminHandler) {
 
 // onStarting registers all required HTTP handlers
 func (env *AdminEnvironment) onStarting() {
-	env.ServerHandler.Handle("GET", "/", &adminIndex{
+	env.Router.Handle("GET", "/", &adminIndex{
 		handlers:    env.handlers,
-		contextPath: env.ServerHandler.PathPrefix(),
+		contextPath: env.Router.PathPrefix(),
 	})
 	// Registered handlers
 	for _, h := range env.handlers {
-		env.ServerHandler.Handle("*", h.Path(), h)
+		env.Router.Handle("*", h.Path(), h)
 	}
 	// Registered tasks
 	for _, task := range env.tasks {
 		path := tasksURI + "/" + task.Name()
-		env.ServerHandler.Handle("POST", path, task)
+		env.Router.Handle("POST", path, task)
 	}
 	env.logTasks()
 	env.logHealthChecks()
@@ -102,7 +102,7 @@ func (env *AdminEnvironment) logTasks() {
 	var buf bytes.Buffer
 	for _, task := range env.tasks {
 		fmt.Fprintf(&buf, "    %-7s %s%s/%s (%T)\n", "POST",
-			env.ServerHandler.PathPrefix(), tasksURI, task.Name(), task)
+			env.Router.PathPrefix(), tasksURI, task.Name(), task)
 	}
 	logger.Infof("tasks =\n\n%s", buf.String())
 }

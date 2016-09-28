@@ -12,8 +12,8 @@ type Server interface {
 	Managed
 }
 
-// ServerHandler allows users to register a http.Handler.
-type ServerHandler interface {
+// Router allows users to register a http.Handler.
+type Router interface {
 	// Handle registers the handler for the given pattern.
 	// An implementation of ServerHandler must at least support http.Handler.
 	Handle(method, pattern string, handler interface{})
@@ -30,9 +30,9 @@ type ServerFactory interface {
 
 // ServerEnvironment contains handlers for server and resources.
 type ServerEnvironment struct {
-	// ServerHandler belongs to the Server created by ServerFactory.
+	// Router belongs to the Server created by ServerFactory.
 	// The default implementation is DefaultServerHandler.
-	ServerHandler ServerHandler
+	Router Router
 
 	components       []interface{}
 	resourceHandlers []ResourceHandler
@@ -94,7 +94,7 @@ func (env *ServerEnvironment) logEndpoints() {
 		return
 	}
 	var buf bytes.Buffer
-	for _, e := range env.ServerHandler.Endpoints() {
+	for _, e := range env.Router.Endpoints() {
 		fmt.Fprintf(&buf, "    %s\n", e)
 	}
 	logger.Infof("endpoints =\n\n%s", buf.String())

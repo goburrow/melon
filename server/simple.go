@@ -21,12 +21,12 @@ func (factory *SimpleFactory) Build(env *core.Environment) (core.Server, error) 
 	// Both application and admin share same handler
 	appHandler := NewHandler()
 	appHandler.pathPrefix = factory.ApplicationContextPath
-	env.Server.ServerHandler = appHandler
+	env.Server.Router = appHandler
 	env.Server.AddResourceHandler(newResourceHandler(appHandler))
 
 	adminHandler := NewHandler()
 	adminHandler.pathPrefix = factory.AdminContextPath
-	env.Admin.ServerHandler = adminHandler
+	env.Admin.Router = adminHandler
 
 	return factory.buildServer(env, appHandler, adminHandler)
 }

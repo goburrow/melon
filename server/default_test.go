@@ -17,10 +17,10 @@ func TestDefaultFactory(t *testing.T) {
 	if s == nil {
 		t.Fatal("server is nil")
 	}
-	if env.Server.ServerHandler == nil {
+	if env.Server.Router == nil {
 		t.Fatal("Server.ServerHandler is nil")
 	}
-	if env.Admin.ServerHandler == nil {
+	if env.Admin.Router == nil {
 		t.Fatal("Admin.ServerHandler is nil")
 	}
 }

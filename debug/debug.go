@@ -36,7 +36,7 @@ func (b *Bundle) Run(conf interface{}, env *core.Environment) error {
 
 	pprofIndexHandler := &pprofHandler{}
 	env.Admin.AddHandler(pprofIndexHandler)
-	env.Admin.ServerHandler.Handle("*", pprofPath+"*", pprofIndexHandler)
+	env.Admin.Router.Handle("*", pprofPath+"*", pprofIndexHandler)
 	return nil
 }
 

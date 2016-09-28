@@ -41,7 +41,7 @@ func (bundle *Bundle) Run(_ interface{}, env *core.Environment) error {
 	if p != "/" {
 		handler = http.StripPrefix(p, handler)
 	}
-	env.Server.ServerHandler.Handle("GET", p+"*", handler)
+	env.Server.Router.Handle("GET", p+"*", handler)
 	return nil
 }
 

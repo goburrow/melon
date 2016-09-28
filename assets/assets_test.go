@@ -23,7 +23,7 @@ func TestAssetsBundle(t *testing.T) {
 	// Setup environment
 	env := core.NewEnvironment()
 	handler := server.NewHandler()
-	env.Server.ServerHandler = handler
+	env.Server.Router = handler
 	bundle := NewBundle(dir, "/static/")
 	err = bundle.Run(nil, env)
 	if err != nil {

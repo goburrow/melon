@@ -61,8 +61,8 @@ func (u *Bundle) Run(conf interface{}, env *core.Environment) error {
 
 // resourceHandler implements core.ResourceHandler
 type resourceHandler struct {
-	serverHandler core.ServerHandler
-	validator     core.Validator
+	router    core.Router
+	validator core.Validator
 
 	// providers contains all supported Provider.
 	providers   *providerMap
@@ -71,8 +71,8 @@ type resourceHandler struct {
 
 func newResourceHandler(env *core.Environment) *resourceHandler {
 	return &resourceHandler{
-		serverHandler: env.Server.ServerHandler,
-		validator:     env.Validator,
+		router:    env.Server.Router,
+		validator: env.Validator,
 
 		providers:   newProviderMap(),
 		errorMapper: newErrorMapper(),
@@ -100,7 +100,7 @@ func (h *resourceHandler) HandleResource(v interface{}) {
 		for _, opt := range r.options {
 			opt(handler)
 		}
-		h.serverHandler.Handle(r.method, r.path, handler)
+		h.router.Handle(r.method, r.path, handler)
 	}
 }
 
