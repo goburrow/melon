@@ -10,7 +10,7 @@ func TestCommonFactory(t *testing.T) {
 	env := core.NewEnvironment()
 	factory := commonFactory{}
 
-	handler := NewHandler()
+	handler := NewRouter()
 	err := factory.AddFilters(env, handler)
 	if err != nil {
 		t.Fatal(err)

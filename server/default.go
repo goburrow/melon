@@ -17,12 +17,12 @@ var _ core.ServerFactory = (*DefaultFactory)(nil)
 
 func (factory *DefaultFactory) Build(env *core.Environment) (core.Server, error) {
 	// Application
-	appHandler := NewHandler()
+	appHandler := NewRouter()
 	env.Server.Router = appHandler
 	env.Server.AddResourceHandler(newResourceHandler(appHandler))
 
 	// Admin
-	adminHandler := NewHandler()
+	adminHandler := NewRouter()
 	env.Admin.Router = adminHandler
 
 	err := factory.commonFactory.AddFilters(env, appHandler, adminHandler)

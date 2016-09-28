@@ -23,29 +23,29 @@ type webResource interface {
 
 // resourceHandler allows user to register basic HTTP resource.
 type resourceHandler struct {
-	serverHandler *Handler
+	router *Router
 }
 
 var _ (core.ResourceHandler) = (*resourceHandler)(nil)
 
-func newResourceHandler(serverHandler *Handler) *resourceHandler {
+func newResourceHandler(router *Router) *resourceHandler {
 	return &resourceHandler{
-		serverHandler: serverHandler,
+		router: router,
 	}
 }
 
 func (h *resourceHandler) HandleResource(v interface{}) {
 	if r, ok := v.(Resource); ok {
 		method, path := parseRequestLine(r.RequestLine())
-		h.serverHandler.Handle(method, path, r)
+		h.router.Handle(method, path, r)
 	}
 	if r, ok := v.(webResource); ok {
 		method, path := parseRequestLine(r.RequestLine())
-		h.serverHandler.Handle(method, path, r)
+		h.router.Handle(method, path, r)
 	}
 
 	if r, ok := v.(filter.Filter); ok {
-		h.serverHandler.filterChain.Insert(r, h.serverHandler.filterChain.Length()-1)
+		h.router.filterChain.Insert(r, h.router.filterChain.Length()-1)
 	}
 }
 

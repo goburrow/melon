@@ -22,7 +22,7 @@ type commonFactory struct {
 
 // AddFilters adds request log and panic recovery to the filter chain
 // of the given handlers.
-func (f *commonFactory) AddFilters(env *core.Environment, handlers ...*Handler) error {
+func (f *commonFactory) AddFilters(env *core.Environment, handlers ...*Router) error {
 	requestLogFilter, err := f.getRequestLog(env)
 	if err != nil {
 		return err

@@ -19,20 +19,20 @@ var _ core.ServerFactory = (*SimpleFactory)(nil)
 
 func (factory *SimpleFactory) Build(env *core.Environment) (core.Server, error) {
 	// Both application and admin share same handler
-	appHandler := NewHandler()
+	appHandler := NewRouter()
 	appHandler.pathPrefix = factory.ApplicationContextPath
 	env.Server.Router = appHandler
 	env.Server.AddResourceHandler(newResourceHandler(appHandler))
 
-	adminHandler := NewHandler()
+	adminHandler := NewRouter()
 	adminHandler.pathPrefix = factory.AdminContextPath
 	env.Admin.Router = adminHandler
 
 	return factory.buildServer(env, appHandler, adminHandler)
 }
 
-func (factory *SimpleFactory) buildServer(env *core.Environment, handlers ...*Handler) (core.Server, error) {
-	handler := NewHandler()
+func (factory *SimpleFactory) buildServer(env *core.Environment, handlers ...*Router) (core.Server, error) {
+	handler := NewRouter()
 	// Sub routers (e.g. /application and /admin)
 	for _, h := range handlers {
 		handler.serveMux.Handle(h.pathPrefix+"/*", h)

@@ -15,7 +15,7 @@ var _ core.Bundle = (*Bundle)(nil)
 
 func TestBundle(t *testing.T) {
 	env := core.NewEnvironment()
-	handler := server.NewHandler()
+	handler := server.NewRouter()
 	env.Admin.Router = handler
 
 	bundle := NewBundle()

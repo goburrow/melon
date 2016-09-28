@@ -133,9 +133,9 @@ func (server *Server) addConnectors(handler http.Handler, connectors []Connector
 	}
 }
 
-// Handler handles HTTP requests.
-// It implements melon.ServerHandler
-type Handler struct {
+// Router handles HTTP requests.
+// It implements core.Router
+type Router struct {
 	// serverMux is the HTTP request router.
 	serveMux *web.Mux
 	// filterChain is the builder for HTTP filters.
@@ -145,19 +145,19 @@ type Handler struct {
 	endpoints  []string
 }
 
-// NewHandler creates a new Handler.
-func NewHandler() *Handler {
+// NewRouter creates a new Router.
+func NewRouter() *Router {
 	mux := web.New()
 	chain := filter.NewChain()
 	chain.Add(filter.Last(mux))
-	return &Handler{
+	return &Router{
 		serveMux:    mux,
 		filterChain: chain,
 	}
 }
 
 // Handle registers the handler for the given pattern.
-func (h *Handler) Handle(method, pattern string, handler interface{}) {
+func (h *Router) Handle(method, pattern string, handler interface{}) {
 	var f func(web.PatternType, web.HandlerType)
 
 	switch method {
@@ -192,17 +192,17 @@ func (h *Handler) Handle(method, pattern string, handler interface{}) {
 }
 
 // PathPrefix returns server root context path.
-func (h *Handler) PathPrefix() string {
+func (h *Router) PathPrefix() string {
 	return h.pathPrefix
 }
 
-func (h *Handler) Endpoints() []string {
+func (h *Router) Endpoints() []string {
 	return h.endpoints
 }
 
 // ServeHTTP strips path prefix in the request and executes filter chain,
 // which should include ServeMux as the last one.
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.pathPrefix != "" {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, h.pathPrefix)
 	}
