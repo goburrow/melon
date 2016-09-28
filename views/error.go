@@ -43,11 +43,28 @@ func newErrorMapper() *errorMapper {
 	return &errorMapper{}
 }
 
-func (h *errorMapper) MapError(w http.ResponseWriter, _ *http.Request, err error) {
+func (h *errorMapper) MapError(w http.ResponseWriter, r *http.Request, err error) {
+	var errMsg *ErrorMessage
 	switch v := err.(type) {
 	case *ErrorMessage:
-		http.Error(w, v.Message, v.Code)
+		errMsg = v
 	default:
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errMsg = NewServerError(err.Error())
 	}
+	// Use provider to writes error when possible
+	if ctx := fromContext(r.Context()); ctx != nil {
+		writer, contentType := ctx.findWriter(w, r, errMsg)
+		if writer != nil {
+			if contentType != "" {
+				w.Header().Set("Content-Type", contentType)
+			}
+			w.WriteHeader(errMsg.Code)
+			err = writer.WriteResponse(w, r, errMsg)
+			if err != nil {
+				ctx.handler.logger.Errorf("response writer: %v", err)
+			}
+			return
+		}
+	}
+	http.Error(w, errMsg.Message, errMsg.Code)
 }

@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-var jsonMIMETypes = []string{
+var jsonMediaTypes = []string{
 	"application/json",
 	"text/json",
 	"text/javascript",
@@ -13,17 +13,13 @@ var jsonMIMETypes = []string{
 
 // NewJSONProvider returns a Provider which reads JSON request and responds JSON.
 func NewJSONProvider() *JSONProvider {
-	return &JSONProvider{
-		mime: jsonMIMETypes,
-	}
+	return &JSONProvider{}
 }
 
-type JSONProvider struct {
-	mime []string
-}
+type JSONProvider struct{}
 
-func (p *JSONProvider) ContentTypes() []string {
-	return p.mime
+func (p *JSONProvider) Consumes() []string {
+	return jsonMediaTypes
 }
 
 func (p *JSONProvider) IsReadable(r *http.Request, v interface{}) bool {
@@ -35,12 +31,15 @@ func (p *JSONProvider) ReadRequest(r *http.Request, v interface{}) error {
 	return decoder.Decode(v)
 }
 
+func (p *JSONProvider) Produces() []string {
+	return jsonMediaTypes
+}
+
 func (p *JSONProvider) IsWriteable(w http.ResponseWriter, r *http.Request, v interface{}) bool {
 	return true
 }
 
 func (p *JSONProvider) WriteResponse(w http.ResponseWriter, r *http.Request, v interface{}) error {
-	w.Header().Set("Content-Type", p.mime[0])
 	encoder := json.NewEncoder(w)
 	return encoder.Encode(v)
 }

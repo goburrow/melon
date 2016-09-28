@@ -169,37 +169,46 @@ func (h *httpHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request
 	if h.metricLatency != nil {
 		defer h.recordLatency(time.Now())
 	}
-	// Check if readable
+
 	requestReaders := h.getRequestReaders(r)
+	responseWriters, contentType := h.getResponseWriters(r)
+	handlerCtx := &handlerContext{
+		handler:     h,
+		readers:     requestReaders,
+		writers:     responseWriters,
+		params:      c.URLParams,
+		contentType: contentType,
+	}
+	ctx := newContext(r.Context(), handlerCtx)
+	r = r.WithContext(ctx)
+	// Check if readable
 	if len(requestReaders) == 0 {
 		h.errorMapper.MapError(w, r, errUnsupportedMediaType)
 		return
 	}
 	// Check if acceptable
-	responseWriters := h.getResponseWriters(r)
 	if len(responseWriters) == 0 {
 		h.errorMapper.MapError(w, r, errNotAcceptable)
 		return
 	}
-	handlerCtx := &handlerContext{
-		handler: h,
-		readers: requestReaders,
-		writers: responseWriters,
-		params:  c.URLParams,
-	}
-	ctx := newContext(r.Context(), handlerCtx)
-	h.handler(w, r.WithContext(ctx))
+	h.handler(w, r)
+}
+
+// getRequestReaders returns a list of requestReader according Content-Type in the request header.
+func (h *httpHandler) getRequestReaders(r *http.Request) []requestReader {
+	mime := r.Header.Get("Content-Type")
+	return h.providers.GetRequestReaders(mime)
 }
 
 // getResponseWriters returns a list of responseWriter according Accept in the request header.
-func (h *httpHandler) getResponseWriters(r *http.Request) []responseWriter {
-	accept := r.Header.Get("Accept")
-	if accept == "" || accept == "*/*" {
-		return h.providers.GetResponseWriters("*/*")
+func (h *httpHandler) getResponseWriters(r *http.Request) ([]responseWriter, string) {
+	mime := r.Header.Get("Accept")
+	if isWildcard(mime) {
+		return h.providers.GetResponseWriters(mime), ""
 	}
-	acceptMIMETypes := strings.Split(accept, ",")
+	mediaTypes := strings.Split(mime, ",")
 	// Return providers that support the first mime type
-	for _, mime := range acceptMIMETypes {
+	for _, mime = range mediaTypes {
 		// TODO: support priority
 		idx := strings.Index(mime, ";")
 		if idx >= 0 {
@@ -207,16 +216,10 @@ func (h *httpHandler) getResponseWriters(r *http.Request) []responseWriter {
 		}
 		writers := h.providers.GetResponseWriters(mime)
 		if len(writers) > 0 {
-			return writers
+			return writers, mime
 		}
 	}
-	return nil
-}
-
-// getRequestReaders returns a list of requestReader according Content-Type in the request header.
-func (h *httpHandler) getRequestReaders(r *http.Request) []requestReader {
-	mime := r.Header.Get("Content-Type")
-	return h.providers.GetRequestReaders(mime)
+	return nil, ""
 }
 
 func (h *httpHandler) setMetrics(name string) {
@@ -241,6 +244,9 @@ type handlerContext struct {
 	readers []requestReader
 	writers []responseWriter
 	params  map[string]string
+
+	// contentType is expected response content type
+	contentType string
 }
 
 type handlerContextKey struct{}
@@ -256,6 +262,35 @@ func fromContext(ctx context.Context) *handlerContext {
 	return nil
 }
 
+// findReader finds first reader which can read request body to data.
+func (c *handlerContext) findReader(r *http.Request, v interface{}) requestReader {
+	for _, reader := range c.readers {
+		if reader.IsReadable(r, v) {
+			return reader
+		}
+	}
+	return nil
+}
+
+// findWriter finds first writer which can write data and response content type.
+func (c *handlerContext) findWriter(w http.ResponseWriter, r *http.Request, data interface{}) (responseWriter, string) {
+	for _, writer := range c.writers {
+		if writer.IsWriteable(w, r, data) {
+			contentType := c.contentType
+			if isWildcard(contentType) {
+				contentTypes := writer.Produces()
+				if len(contentTypes) > 0 {
+					contentType = contentTypes[0]
+				} else {
+					contentType = ""
+				}
+			}
+			return writer, contentType
+		}
+	}
+	return nil, c.contentType
+}
+
 // Serve uses provider assigned to the request context to render data
 // and writes to HTTP response.
 func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
@@ -264,20 +299,24 @@ func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
 		getLogger().Errorf("no handler in request context: %v", r.Context())
 		return
 	}
-	// Use first writer which supports this response
-	for _, writer := range ctx.writers {
-		if writer.IsWriteable(w, r, data) {
-			err := writer.WriteResponse(w, r, data)
-			if err != nil {
-				ctx.handler.logger.Warnf("response writer: %v", err)
-				ctx.handler.errorMapper.MapError(w, r, errInternalServerError)
-			}
-			return
-		}
+	writer, contentType := ctx.findWriter(w, r, data)
+	if writer == nil {
+		// FIXME: Hanlde unknown type
+		ctx.handler.logger.Warnf("no response writer for %T", data)
+		ctx.handler.errorMapper.MapError(w, r, errInternalServerError)
+		return
 	}
-	// FIXME: Unknown type
-	ctx.handler.logger.Warnf("no response writer for %T", data)
-	ctx.handler.errorMapper.MapError(w, r, errInternalServerError)
+	// write header
+	if contentType != "" {
+		w.Header().Set("Content-Type", contentType)
+	}
+	// write data
+	err := writer.WriteResponse(w, r, data)
+	if err != nil {
+		ctx.handler.logger.Errorf("response writer: %v", err)
+		// FIXME: response might have been written
+		ctx.handler.errorMapper.MapError(w, r, errInternalServerError)
+	}
 }
 
 // Error writes error to HTTP response given the request context.
@@ -308,23 +347,22 @@ func Entity(r *http.Request, v interface{}) error {
 		getLogger().Errorf("no handler in request context: %v", r.Context())
 		return errInternalServerError
 	}
-	for _, reader := range ctx.readers {
-		if reader.IsReadable(r, v) {
-			err := reader.ReadRequest(r, v)
-			if err != nil {
-				return &ErrorMessage{statusUnprocessableEntity, err.Error()}
-			}
-			validator := ctx.handler.validator
-			if validator != nil {
-				err = validator.Validate(v)
-				if err != nil {
-					return &ErrorMessage{http.StatusBadRequest, err.Error()}
-				}
-			}
-			return nil
+	reader := ctx.findReader(r, v)
+	if reader == nil {
+		return errUnsupportedMediaType
+	}
+	err := reader.ReadRequest(r, v)
+	if err != nil {
+		return &ErrorMessage{statusUnprocessableEntity, err.Error()}
+	}
+	validator := ctx.handler.validator
+	if validator != nil {
+		err = validator.Validate(v)
+		if err != nil {
+			return &ErrorMessage{http.StatusBadRequest, err.Error()}
 		}
 	}
-	return errUnsupportedMediaType
+	return nil
 }
 
 func getLogger() gol.Logger {

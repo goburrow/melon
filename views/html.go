@@ -8,26 +8,26 @@ import (
 	"path/filepath"
 )
 
-var htmlMIMETypes = []string{
+var htmlMediaTypes = []string{
 	"text/html",
+	"application/x-www-form-urlencoded",
+	"multipart/form-data",
 }
 
 // NewHTMLProvider returns a Provider which writes HTML.
 func NewHTMLProvider(renderer HTMLRenderer) *HTMLProvider {
 	return &HTMLProvider{
 		renderer: renderer,
-		mime:     htmlMIMETypes,
 	}
 }
 
 // HTMLProvider writes HTML to HTTP response.
 type HTMLProvider struct {
 	renderer HTMLRenderer
-	mime     []string
 }
 
-func (p *HTMLProvider) ContentTypes() []string {
-	return p.mime
+func (p *HTMLProvider) Consumes() []string {
+	return htmlMediaTypes
 }
 
 func (p *HTMLProvider) IsReadable(*http.Request, interface{}) bool {
@@ -37,6 +37,10 @@ func (p *HTMLProvider) IsReadable(*http.Request, interface{}) bool {
 func (p *HTMLProvider) ReadRequest(*http.Request, interface{}) error {
 	// Do nothing
 	return nil
+}
+
+func (p *HTMLProvider) Produces() []string {
+	return htmlMediaTypes
 }
 
 func (p *HTMLProvider) IsWriteable(w http.ResponseWriter, r *http.Request, v interface{}) bool {
