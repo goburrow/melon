@@ -14,19 +14,42 @@ import (
 )
 
 // Resource is a view resource.
-type Resource struct {
+type Resource interface {
+	http.Handler
+
+	Method() string
+	Path() string
+	Options() []Option
+}
+
+// resource implements Resource.
+type resource struct {
+	http.Handler
+
 	method  string
 	path    string
-	handler http.HandlerFunc
 	options []Option
 }
 
+func (r *resource) Method() string {
+	return r.method
+}
+
+func (r *resource) Path() string {
+	return r.path
+}
+
+func (r *resource) Options() []Option {
+	return r.options
+}
+
 // NewResource creates a new Resource.
-func NewResource(method, path string, handler http.HandlerFunc, options ...Option) *Resource {
-	return &Resource{
+func NewResource(method, path string, handler http.Handler, options ...Option) Resource {
+	return &resource{
+		Handler: handler,
+
 		method:  method,
 		path:    path,
-		handler: handler,
 		options: options,
 	}
 }
@@ -89,18 +112,18 @@ func (h *resourceHandler) HandleResource(v interface{}) {
 		// FIMXE: support multiple error mappers.
 		h.errorMapper = r
 	}
-	if r, ok := v.(*Resource); ok {
+	if r, ok := v.(Resource); ok {
 		handler := &httpHandler{
-			handler:     r.handler,
+			handler:     r,
 			errorMapper: h.errorMapper,
 			validator:   h.validator,
 			logger:      getLogger(),
 			providers:   newExplicitProviderMap(h.providers),
 		}
-		for _, opt := range r.options {
+		for _, opt := range r.Options() {
 			opt(handler)
 		}
-		h.router.Handle(r.method, r.path, handler)
+		h.router.Handle(r.Method(), r.Path(), handler)
 	}
 }
 
@@ -148,7 +171,7 @@ var (
 
 // httpHandler implements melon server.webResource
 type httpHandler struct {
-	handler     http.HandlerFunc
+	handler     http.Handler
 	errorMapper ErrorMapper
 	logger      gol.Logger
 	validator   core.Validator
@@ -191,7 +214,7 @@ func (h *httpHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request
 		h.errorMapper.MapError(w, r, errNotAcceptable)
 		return
 	}
-	h.handler(w, r)
+	h.handler.ServeHTTP(w, r)
 }
 
 // getRequestReaders returns a list of requestReader according Content-Type in the request header.

@@ -40,7 +40,7 @@ func (a *app) Run(conf interface{}, env *core.Environment) error {
 	if err != nil {
 		return err
 	}
-	indexPage := views.NewResource("GET", "/", index,
+	indexPage := views.NewResource("GET", "/", http.HandlerFunc(index),
 		views.WithHTMLTemplate("index.html"),                // HTML template name in ./html folder
 		views.WithProduces("text/html", "application/json"), // Override priority
 	)

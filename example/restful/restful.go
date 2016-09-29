@@ -126,15 +126,15 @@ func run(conf interface{}, env *core.Environment) error {
 	}
 	// /users
 	env.Server.Register(
-		views.NewResource("GET", "/users", res.listUsers),
-		views.NewResource("POST", "/users", res.createUser,
+		views.NewResource("GET", "/users", http.HandlerFunc(res.listUsers)),
+		views.NewResource("POST", "/users", http.HandlerFunc(res.createUser),
 			views.WithTimerMetric("UsersCreate")),
 	)
 	// /user/:name
 	env.Server.Register(
-		views.NewResource("GET", "/user/:name", res.getUser),
-		views.NewResource("PUT", "/user/:name", res.editUser),
-		views.NewResource("DELETE", "/user/:name", res.deleteUser),
+		views.NewResource("GET", "/user/:name", http.HandlerFunc(res.getUser)),
+		views.NewResource("PUT", "/user/:name", http.HandlerFunc(res.editUser)),
+		views.NewResource("DELETE", "/user/:name", http.HandlerFunc(res.deleteUser)),
 	)
 	return nil
 }
