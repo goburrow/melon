@@ -28,15 +28,15 @@ func (factory *Factory) Build(bootstrap *core.Bootstrap) (interface{}, error) {
 		getLogger().Errorf("configuration file is not specified in command arguments: %v", bootstrap.Arguments)
 		return nil, errors.New("configuration: no file specified")
 	}
-	if err := Unmarshal(bootstrap.Arguments[1], factory.Configuration); err != nil {
+	if err := unmarshal(bootstrap.Arguments[1], factory.Configuration); err != nil {
 		getLogger().Errorf("%v", err)
 		return nil, err
 	}
 	return factory.Configuration, nil
 }
 
-// Unmarshal decodes the given file to output type.
-func Unmarshal(path string, output interface{}) error {
+// unmarshal decodes the given file to output type.
+func unmarshal(path string, output interface{}) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err

@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	metricsURI = "/metrics"
-	metricsVar = "metrics"
+	metricsPath = "/metrics"
+	metricsVar  = "metrics"
 )
 
 // metricsHandler displays expvars.
@@ -28,7 +28,7 @@ func (handler *metricsHandler) Name() string {
 }
 
 func (handler *metricsHandler) Path() string {
-	return metricsURI
+	return metricsPath
 }
 
 func (*metricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
