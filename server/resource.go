@@ -20,6 +20,6 @@ func newResourceHandler(router *Router) *resourceHandler {
 
 func (h *resourceHandler) HandleResource(v interface{}) {
 	if r, ok := v.(filter.Filter); ok {
-		h.router.filterChain.Insert(r, h.router.filterChain.Length()-1)
+		h.router.AddFilter(r)
 	}
 }

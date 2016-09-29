@@ -209,6 +209,11 @@ func (h *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.filterChain.ServeHTTP(w, r)
 }
 
+// AddFilter adds a filter middleware.
+func (h *Router) AddFilter(f filter.Filter) {
+	h.filterChain.Insert(f, h.filterChain.Length()-1)
+}
+
 // Factory is an union of DefaultFactory and SimpleFactory.
 type Factory struct {
 	dynamic.Type
