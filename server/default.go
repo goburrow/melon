@@ -13,6 +13,23 @@ type DefaultFactory struct {
 	AdminConnectors       []Connector `valid:"nonzero"`
 }
 
+func newDefaultFactory() *DefaultFactory {
+	return &DefaultFactory{
+		ApplicationConnectors: []Connector{
+			Connector{
+				Type: "http",
+				Addr: "localhost:8080",
+			},
+		},
+		AdminConnectors: []Connector{
+			Connector{
+				Type: "http",
+				Addr: "localhost:8081",
+			},
+		},
+	}
+}
+
 var _ core.ServerFactory = (*DefaultFactory)(nil)
 
 func (factory *DefaultFactory) Build(env *core.Environment) (core.Server, error) {

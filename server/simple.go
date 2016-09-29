@@ -15,6 +15,17 @@ type SimpleFactory struct {
 	Connector              Connector
 }
 
+func newSimpleFactory() *SimpleFactory {
+	return &SimpleFactory{
+		ApplicationContextPath: "/application",
+		AdminContextPath:       "/admin",
+		Connector: Connector{
+			Type: "http",
+			Addr: "localhost:8080",
+		},
+	}
+}
+
 var _ core.ServerFactory = (*SimpleFactory)(nil)
 
 func (factory *SimpleFactory) Build(env *core.Environment) (core.Server, error) {

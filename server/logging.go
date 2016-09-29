@@ -30,6 +30,10 @@ type DefaultRequestLogFactory struct {
 	Appenders []logging.AppenderConfiguration
 }
 
+func newDefaultRequestLogFactory() *DefaultRequestLogFactory {
+	return &DefaultRequestLogFactory{}
+}
+
 var _ RequestLogFactory = (*DefaultRequestLogFactory)(nil)
 
 func (f *DefaultRequestLogFactory) Build(env *core.Environment) (filter.Filter, error) {

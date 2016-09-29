@@ -19,16 +19,13 @@ import (
 
 func init() {
 	dynamic.Register("DefaultServer", func() interface{} {
-		return &DefaultFactory{}
+		return newDefaultFactory()
 	})
 	dynamic.Register("SimpleServer", func() interface{} {
-		return &SimpleFactory{
-			ApplicationContextPath: "/application",
-			AdminContextPath:       "/admin",
-		}
+		return newSimpleFactory()
 	})
 	dynamic.Register("DefaultRequestLog", func() interface{} {
-		return &DefaultRequestLogFactory{}
+		return newDefaultRequestLogFactory()
 	})
 }
 

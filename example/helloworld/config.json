@@ -1,17 +1,5 @@
 {
   "server": {
-    "type": "DefaultServer",
-    "applicationConnectors": [
-      {
-        "type": "http",
-        "addr": "localhost:8080"
-      }
-    ],
-    "adminConnectors": [
-      {
-        "type": "http",
-        "addr": "localhost:8081"
-      }
-    ]
+    "type": "DefaultServer"
   }
 }
