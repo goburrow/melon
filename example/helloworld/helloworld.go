@@ -8,27 +8,24 @@ import (
 	"github.com/goburrow/melon/core"
 )
 
-// resource is the HTTP handler of the application homepage.
-type resource struct {
-}
-
-func (*resource) RequestLine() string {
-	return "GET /"
-}
-
-func (*resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func serveHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello world"))
 }
 
 // Build application and run with command:
-//   ./helloworld server path/to/config.yaml
+//  go run helloworld.go server config.json
+//
 // Then open these links in browser for application and admin page respectively:
-//   http://localhost:8080/application/
-//   http://localhost:8080/admin/
+//   http://localhost:8080/
+//   http://localhost:8081/
+//
+// If config-simple.json is used, use these URLs instead:
+//   http://localhost:8080/application
+//   http://localhost:8080/admin
 func main() {
 	app := &melon.Application{
 		RunFunc: func(conf interface{}, env *core.Environment) error {
-			env.Server.Register(&resource{})
+			env.Server.Router.Handle("GET", "/", http.HandlerFunc(serveHTTP))
 			return nil
 		},
 	}

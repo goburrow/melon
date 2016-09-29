@@ -1,0 +1,9 @@
+{
+  "server": {
+    "type": "SimpleServer",
+    "connector": {
+      "type": "http",
+      "addr": "localhost:8080"
+    }
+  }
+}
