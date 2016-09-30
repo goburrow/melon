@@ -10,9 +10,9 @@ import (
 	"github.com/goburrow/gol/file/rotation"
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/logging"
+	"github.com/goburrow/melon/server/async"
 	"github.com/goburrow/melon/server/filter"
 	slogging "github.com/goburrow/melon/server/logging"
-	"github.com/goburrow/melon/util"
 )
 
 const (
@@ -62,7 +62,7 @@ func (f *DefaultRequestLogFactory) Build(env *core.Environment) (filter.Filter, 
 		// No request log
 		return &noRequestLog{}, nil
 	}
-	asyncWriter := util.NewAsyncWriter(requestLogBufferSize, writers...)
+	asyncWriter := async.NewWriter(requestLogBufferSize, writers...)
 	env.Lifecycle.Manage(asyncWriter)
 	return slogging.NewFilter(asyncWriter), nil
 }

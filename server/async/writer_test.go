@@ -1,4 +1,4 @@
-package util
+package async
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 
 func init() {
 	// Mute logger
-	writerLogger.(*gol.DefaultLogger).SetLevel(gol.Off)
+	gol.GetLogger("melon/server").(*gol.DefaultLogger).SetLevel(gol.Off)
 }
 
 // chanWriter is used for testing async writer,
@@ -37,14 +37,14 @@ func (w *errorWriter) Write(b []byte) (int, error) {
 	return 0, errors.New("error")
 }
 
-func TestAsyncWriter(t *testing.T) {
+func TestWriter(t *testing.T) {
 	buffers := [...]chanWriter{
 		make(chanWriter),
 		make(chanWriter),
 		make(chanWriter),
 	}
 
-	writer := NewAsyncWriter(1, buffers[0], buffers[1], buffers[2])
+	writer := NewWriter(1, buffers[0], buffers[1], buffers[2])
 	err := writer.Start()
 	if err != nil {
 		t.Fatal(err)
@@ -65,14 +65,14 @@ func TestAsyncWriter(t *testing.T) {
 	}
 }
 
-func TestAsyncWriterFlush(t *testing.T) {
+func TestWriterFlush(t *testing.T) {
 	buffers := [...]*bytes.Buffer{
 		&bytes.Buffer{},
 		&bytes.Buffer{},
 	}
 
 	count := 5
-	writer := NewAsyncWriter(count, buffers[0], buffers[1])
+	writer := NewWriter(count, buffers[0], buffers[1])
 	err := writer.Start()
 	if err != nil {
 		t.Fatal(err)
@@ -95,11 +95,11 @@ func TestAsyncWriterFlush(t *testing.T) {
 	}
 }
 
-func TestAsyncWriterFull(t *testing.T) {
+func TestWriterFull(t *testing.T) {
 	sw := &slowWriter{10 * time.Millisecond}
 
 	count := 3
-	writer := NewAsyncWriter(count, sw)
+	writer := NewWriter(count, sw)
 	writer.DrainTimeout = 1 * time.Millisecond
 
 	err := writer.Start()

@@ -1,21 +1,16 @@
-package util
+/*
+Package async provides generic asynchronous IO for Melon applications.
+*/
+package async
 
 import (
 	"io"
 	"sync"
 	"time"
-
-	"github.com/goburrow/gol"
 )
 
-var writerLogger gol.Logger
-
-func init() {
-	writerLogger = gol.GetLogger("melon/util/writer")
-}
-
-// AsyncWriter writes asynchronously to the given writers.
-type AsyncWriter struct {
+// Writer writes asynchronously to the given writers.
+type Writer struct {
 	// DrainTimeout is maximum duration before timing out flush a channel.
 	DrainTimeout time.Duration
 
@@ -26,15 +21,15 @@ type AsyncWriter struct {
 	finish chan struct{}
 }
 
-var _ io.WriteCloser = (*AsyncWriter)(nil)
+var _ io.WriteCloser = (*Writer)(nil)
 
-// NewAsyncWriter allocates and returns a new AsyncWriter.
+// NewWriter allocates and returns a new Writer.
 // Start() must be called before writing data.
 // IMPORTANT: don't use fmt.Fprintf() directly on this writer since the printf
 // buffer might be freed/reused and the data is contaminated before the
 // underline writers receive it. Use fmt.Sprintf() then Write() instead.
-func NewAsyncWriter(bufferSize int, writers ...io.Writer) *AsyncWriter {
-	a := &AsyncWriter{
+func NewWriter(bufferSize int, writers ...io.Writer) *Writer {
+	a := &Writer{
 		writers: writers,
 		chans:   make([]chan []byte, len(writers)),
 		finish:  make(chan struct{}),
@@ -48,7 +43,7 @@ func NewAsyncWriter(bufferSize int, writers ...io.Writer) *AsyncWriter {
 }
 
 // Start starts gorotines for each writer.
-func (a *AsyncWriter) Start() error {
+func (a *Writer) Start() error {
 	a.wg.Add(len(a.chans))
 	for i, c := range a.chans {
 		go a.listen(c, a.writers[i])
@@ -57,7 +52,7 @@ func (a *AsyncWriter) Start() error {
 }
 
 // Stop stops and wait until all goroutines exit.
-func (a *AsyncWriter) Stop() error {
+func (a *Writer) Stop() error {
 	close(a.finish)
 	// TODO: close all channels.
 	a.wg.Wait()
@@ -65,7 +60,7 @@ func (a *AsyncWriter) Stop() error {
 }
 
 // Write sends data to all writers and returns error if a channel if full.
-func (a *AsyncWriter) Write(b []byte) (int, error) {
+func (a *Writer) Write(b []byte) (int, error) {
 	for _, c := range a.chans {
 		// FIXME: still blocked if channel buffer is full.
 		c <- b
@@ -73,12 +68,12 @@ func (a *AsyncWriter) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
-func (a *AsyncWriter) Close() error {
+func (a *Writer) Close() error {
 	return a.Stop()
 }
 
 // Listen retrieves data from the channel and write to the writer.
-func (a *AsyncWriter) listen(c chan []byte, w io.Writer) {
+func (a *Writer) listen(c chan []byte, w io.Writer) {
 	defer a.wg.Done()
 
 	for {
@@ -88,7 +83,7 @@ func (a *AsyncWriter) listen(c chan []byte, w io.Writer) {
 			return
 		case b := <-c:
 			if _, err := w.Write(b); err != nil {
-				writerLogger.Errorf("error writing %T: %v", w, err)
+				logger.Errorf("error writing %T: %v", w, err)
 			}
 		}
 	}
@@ -96,14 +91,14 @@ func (a *AsyncWriter) listen(c chan []byte, w io.Writer) {
 
 // Flush sends all pending data in the channel to writer or timeout after
 // maximum of a.Timeout and the writer timeout.
-func (a *AsyncWriter) flush(c chan []byte, w io.Writer) {
+func (a *Writer) flush(c chan []byte, w io.Writer) {
 	timeout := time.After(a.DrainTimeout)
 	for {
 		// Timeout channel has higher priority.
 		select {
 		case <-timeout:
 			// Timed out.
-			writerLogger.Warnf("timeout flushing %T", w)
+			logger.Warnf("timeout flushing %T", w)
 			return
 		default:
 		}
@@ -111,7 +106,7 @@ func (a *AsyncWriter) flush(c chan []byte, w io.Writer) {
 		case b := <-c:
 			// Succeed.
 			if _, err := w.Write(b); err != nil {
-				writerLogger.Errorf("error writing %T: %v", w, err)
+				logger.Errorf("error writing %T: %v", w, err)
 				return
 			}
 		default:
