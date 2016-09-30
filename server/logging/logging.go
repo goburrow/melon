@@ -38,9 +38,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 	responseWriter := &responseWriter{writer: w, status: 200}
 
 	start := now()
-	if len(chain) > 0 {
-		chain[0].ServeHTTP(responseWriter, r, chain[1:])
-	}
+	filter.Continue(responseWriter, r, chain)
 	end := now()
 
 	remoteAddr := getRemoteAddr(r)

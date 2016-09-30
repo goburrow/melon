@@ -29,9 +29,7 @@ func NewChain() *Chain {
 
 // ServeHTTP starts the filter chain.
 func (chain *Chain) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if len(chain.filters) > 0 {
-		chain.filters[0].ServeHTTP(w, r, chain.filters[1:])
-	}
+	Continue(w, r, chain.filters)
 }
 
 // Add adds the given filter into the end of the chain.
@@ -67,4 +65,11 @@ type chainEnd struct {
 
 func (f *chainEnd) ServeHTTP(w http.ResponseWriter, r *http.Request, _ []Filter) {
 	f.handler.ServeHTTP(w, r)
+}
+
+// Continue runs next filter in the chain c.
+func Continue(w http.ResponseWriter, r *http.Request, c []Filter) {
+	if len(c) > 0 {
+		c[0].ServeHTTP(w, r, c[1:])
+	}
 }

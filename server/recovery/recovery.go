@@ -37,7 +37,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}()
-	chain[0].ServeHTTP(w, r, chain[1:])
+	filter.Continue(w, r, chain)
 }
 
 func stack() []byte {

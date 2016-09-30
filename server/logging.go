@@ -105,7 +105,7 @@ type noRequestLog struct{}
 var _ (filter.Filter) = (*noRequestLog)(nil)
 
 func (*noRequestLog) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
-	chain[0].ServeHTTP(w, r, chain[1:])
+	filter.Continue(w, r, chain)
 }
 
 var logger gol.Logger

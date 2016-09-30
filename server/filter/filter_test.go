@@ -10,9 +10,7 @@ type testFilter string
 
 func (s testFilter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []Filter) {
 	w.Write([]byte(s))
-	if len(chain) > 0 {
-		chain[0].ServeHTTP(w, r, chain[1:])
-	}
+	Continue(w, r, chain)
 }
 
 func end(w http.ResponseWriter, r *http.Request) {

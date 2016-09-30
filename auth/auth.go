@@ -89,10 +89,8 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 		f.unauthorizedHandler.ServeHTTP(w, r)
 		return
 	}
-	if len(chain) > 0 {
-		ctx := newContext(r.Context(), p)
-		chain[0].ServeHTTP(w, r.WithContext(ctx), chain[1:])
-	}
+	ctx := newContext(r.Context(), p)
+	filter.Continue(w, r.WithContext(ctx), chain)
 }
 
 // Option is a Filter option.
