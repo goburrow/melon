@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/goburrow/dynamic"
-	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/server/filter"
 	"github.com/zenazn/goji/graceful"
@@ -75,8 +74,6 @@ func NewServer() *Server {
 
 // Start starts all connectors of the server.
 func (server *Server) Start() error {
-	logger := getLogger()
-
 	// Handle SIGINT
 	graceful.HandleSignals()
 	graceful.PreHook(func() {
@@ -221,8 +218,4 @@ func (factory *Factory) Build(environment *core.Environment) (core.Server, error
 		return f.Build(environment)
 	}
 	return nil, fmt.Errorf("server: unsupported server %#v", factory.Value())
-}
-
-func getLogger() gol.Logger {
-	return gol.GetLogger("melon/server")
 }

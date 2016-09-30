@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
-	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 )
 
@@ -25,11 +24,11 @@ type Factory struct {
 // BuildConfiguration parse config file and returns the factory configuration.
 func (factory *Factory) Build(bootstrap *core.Bootstrap) (interface{}, error) {
 	if len(bootstrap.Arguments) < 2 {
-		getLogger().Errorf("configuration file is not specified in command arguments: %v", bootstrap.Arguments)
+		logger.Errorf("configuration file is not specified in command arguments: %v", bootstrap.Arguments)
 		return nil, errors.New("configuration: no file specified")
 	}
 	if err := unmarshal(bootstrap.Arguments[1], factory.Configuration); err != nil {
-		getLogger().Errorf("%v", err)
+		logger.Errorf("%v", err)
 		return nil, err
 	}
 	return factory.Configuration, nil
@@ -65,8 +64,4 @@ func unmarshalYAML(f *os.File, output interface{}) error {
 		return err
 	}
 	return yaml.Unmarshal(content, output)
-}
-
-func getLogger() gol.Logger {
-	return gol.GetLogger("melon/configuration")
 }

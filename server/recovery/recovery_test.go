@@ -14,7 +14,7 @@ var _ filter.Filter = (*Filter)(nil)
 
 func init() {
 	// Disable logger to reduce spam
-	getLogger().(*gol.DefaultLogger).SetLevel(gol.Off)
+	gol.GetLogger("melon/server").(*gol.DefaultLogger).SetLevel(gol.Off)
 }
 
 func TestPanicHandler(t *testing.T) {

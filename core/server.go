@@ -74,7 +74,6 @@ func (env *ServerEnvironment) handle(component interface{}) {
 }
 
 func (env *ServerEnvironment) logResources() {
-	logger := getLogger()
 	if !logger.DebugEnabled() {
 		return
 	}
@@ -89,7 +88,6 @@ func (env *ServerEnvironment) logResources() {
 }
 
 func (env *ServerEnvironment) logEndpoints() {
-	logger := getLogger()
 	if !logger.InfoEnabled() {
 		return
 	}

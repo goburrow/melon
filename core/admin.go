@@ -95,7 +95,6 @@ func (env *AdminEnvironment) onStopped() {
 
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logTasks() {
-	logger := getLogger()
 	if !logger.InfoEnabled() {
 		return
 	}
@@ -109,7 +108,6 @@ func (env *AdminEnvironment) logTasks() {
 
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logHealthChecks() {
-	logger := getLogger()
 	names := env.HealthChecks.Names()
 	if len(names) <= 0 {
 		logger.Warnf(noHealthChecksWarning)

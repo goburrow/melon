@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/server/filter"
 )
 
@@ -62,15 +61,12 @@ func (h *unauthorizedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 type Filter struct {
 	authenticator       Authenticator
 	unauthorizedHandler http.Handler
-
-	logger gol.Logger
 }
 
 // NewFilter creates a new Filter with given authenticator.
 func NewFilter(authenticator Authenticator, options ...Option) *Filter {
 	f := &Filter{
 		authenticator: authenticator,
-		logger:        getLogger(),
 	}
 	for _, opt := range options {
 		opt(f)
@@ -84,7 +80,7 @@ func NewFilter(authenticator Authenticator, options ...Option) *Filter {
 func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
 	p, err := f.authenticator.Authenticate(r)
 	if err != nil {
-		f.logger.Errorf("authenticate error: %v", err)
+		logger.Errorf("authenticate error: %v", err)
 		// TODO: error handler
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -131,8 +127,4 @@ func Auth(r *http.Request) Principal {
 		panic("melon/auth: no principal")
 	}
 	return p
-}
-
-func getLogger() gol.Logger {
-	return gol.GetLogger("melon/auth")
 }

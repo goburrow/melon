@@ -10,7 +10,6 @@ import (
 	"runtime"
 
 	"github.com/codahale/metrics"
-	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/server/filter"
 )
 
@@ -34,7 +33,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 	defer func() {
 		if err := recover(); err != nil {
 			f.panics.Add()
-			getLogger().Errorf("%v\n%s", err, stack())
+			logger.Errorf("%v\n%s", err, stack())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}()
@@ -53,8 +52,4 @@ func stack() []byte {
 		fmt.Fprintf(&buf, "! %s:%d %s()\n", file, line, f.Name())
 	}
 	return buf.Bytes()
-}
-
-func getLogger() gol.Logger {
-	return gol.GetLogger("melon/server")
 }

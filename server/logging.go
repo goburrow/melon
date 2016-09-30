@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/goburrow/gol"
 	"github.com/goburrow/gol/file/rotation"
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/logging"
@@ -105,4 +106,10 @@ var _ (filter.Filter) = (*noRequestLog)(nil)
 
 func (*noRequestLog) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
 	chain[0].ServeHTTP(w, r, chain[1:])
+}
+
+var logger gol.Logger
+
+func init() {
+	logger = gol.GetLogger("melon/server")
 }

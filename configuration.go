@@ -47,13 +47,13 @@ func (command *ConfigurationCommand) Run(bootstrap *core.Bootstrap) error {
 		return err
 	}
 	if err = bootstrap.ValidatorFactory.Validator().Validate(command.Configuration); err != nil {
-		getLogger().Errorf("configuration is invalid: %v", err)
+		logger.Errorf("configuration is invalid: %v", err)
 		return err
 	}
 	// Configuration provided must implement core.Configuration interface.
 	var ok bool
 	if command.configuration, ok = command.Configuration.(core.Configuration); !ok {
-		getLogger().Errorf(
+		logger.Errorf(
 			"configuration does not implement core.Configuration interface %[1]v %[1]T",
 			command.Configuration)
 		return fmt.Errorf("configuration: unsupported type %T", command.Configuration)
@@ -80,7 +80,7 @@ func (c *CheckCommand) Run(bootstrap *core.Bootstrap) error {
 		return err
 	}
 
-	getLogger().Debugf("configuration: %+v", c.ConfigurationCommand.Configuration)
+	logger.Debugf("configuration: %+v", c.ConfigurationCommand.Configuration)
 	fmt.Println("Configuration is OK")
 	return nil
 }

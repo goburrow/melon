@@ -12,6 +12,8 @@ type EndpointLogger interface {
 	LogEndpoint(method, path string, component interface{})
 }
 
-func getLogger() gol.Logger {
-	return gol.GetLogger("melon")
+var logger gol.Logger
+
+func init() {
+	logger = gol.GetLogger("melon")
 }

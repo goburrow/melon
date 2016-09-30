@@ -28,7 +28,6 @@ func (env *LifecycleEnvironment) Manage(obj Managed) {
 
 // onStarting indicates the application is going to start.
 func (env *LifecycleEnvironment) onStarting() {
-	logger := getLogger()
 	// Starting managed objects in order.
 	for _, m := range env.managedObjects {
 		// Panic from a managed object will stop the application.
@@ -50,7 +49,6 @@ func (env *LifecycleEnvironment) onStopped() {
 func stopManagedObject(m Managed) {
 	var err error
 	defer func() {
-		logger := getLogger()
 		if err != nil {
 			logger.Errorf("error stopping managed object %#v: %v", m, err)
 		} else if r := recover(); r != nil {

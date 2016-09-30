@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/codahale/metrics"
-	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 	"github.com/zenazn/goji/web"
 )
@@ -117,7 +116,6 @@ func (h *resourceHandler) HandleResource(v interface{}) {
 			handler:     r,
 			errorMapper: h.errorMapper,
 			validator:   h.validator,
-			logger:      getLogger(),
 			providers:   newExplicitProviderMap(h.providers),
 		}
 		for _, opt := range r.Options() {
@@ -173,7 +171,6 @@ var (
 type httpHandler struct {
 	handler     http.Handler
 	errorMapper ErrorMapper
-	logger      gol.Logger
 	validator   core.Validator
 
 	providers *explicitProviderMap
@@ -319,13 +316,13 @@ func (c *handlerContext) findWriter(w http.ResponseWriter, r *http.Request, data
 func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
 	ctx := fromContext(r.Context())
 	if ctx == nil {
-		getLogger().Errorf("no handler in request context: %v", r.Context())
+		logger.Errorf("no handler in request context: %v", r.Context())
 		return
 	}
 	writer, contentType := ctx.findWriter(w, r, data)
 	if writer == nil {
 		// FIXME: Hanlde unknown type
-		ctx.handler.logger.Warnf("no response writer for %T", data)
+		logger.Warnf("no response writer for %T", data)
 		ctx.handler.errorMapper.MapError(w, r, errInternalServerError)
 		return
 	}
@@ -336,7 +333,7 @@ func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
 	// write data
 	err := writer.WriteResponse(w, r, data)
 	if err != nil {
-		ctx.handler.logger.Errorf("response writer: %v", err)
+		logger.Errorf("response writer: %v", err)
 		// FIXME: response might have been written
 		ctx.handler.errorMapper.MapError(w, r, errInternalServerError)
 	}
@@ -346,7 +343,7 @@ func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
 func Error(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := fromContext(r.Context())
 	if ctx == nil {
-		getLogger().Errorf("no handler in request context: %v", r.Context())
+		logger.Errorf("no handler in request context: %v", r.Context())
 		return
 	}
 	ctx.handler.errorMapper.MapError(w, r, err)
@@ -356,7 +353,7 @@ func Error(w http.ResponseWriter, r *http.Request, err error) {
 func Params(r *http.Request) map[string]string {
 	ctx := fromContext(r.Context())
 	if ctx == nil {
-		getLogger().Errorf("no handler in request context: %v", r.Context())
+		logger.Errorf("no handler in request context: %v", r.Context())
 		return nil
 	}
 	return ctx.params
@@ -367,7 +364,7 @@ func Entity(r *http.Request, v interface{}) error {
 	ctx := fromContext(r.Context())
 	if ctx == nil {
 		// Invalid state
-		getLogger().Errorf("no handler in request context: %v", r.Context())
+		logger.Errorf("no handler in request context: %v", r.Context())
 		return errInternalServerError
 	}
 	reader := ctx.findReader(r, v)
@@ -386,8 +383,4 @@ func Entity(r *http.Request, v interface{}) error {
 		}
 	}
 	return nil
-}
-
-func getLogger() gol.Logger {
-	return gol.GetLogger("melon/views")
 }

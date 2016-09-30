@@ -36,7 +36,6 @@ func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 	}
 	// Always run Stop() method on managed objects.
 	defer command.Environment.SetStopped()
-	logger := getLogger()
 	// Build server
 	if command.Server, err = command.configuration.ServerFactory().Build(command.Environment); err != nil {
 		logger.Errorf("could not create server: %v", err)

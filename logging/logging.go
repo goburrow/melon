@@ -69,11 +69,11 @@ func (factory *Factory) Configure(env *core.Environment) error {
 	var err error
 
 	if err = factory.configureLevels(); err != nil {
-		getLogger().Errorf("%v", err)
+		logger.Errorf("%v", err)
 		return err
 	}
 	if err = factory.configureAppenders(env); err != nil {
-		getLogger().Errorf("%v", err)
+		logger.Errorf("%v", err)
 		return err
 	}
 	env.Admin.AddTask(&logTask{})
@@ -127,6 +127,8 @@ func (factory *Factory) configureAppenders(environment *core.Environment) error 
 	return nil
 }
 
-func getLogger() gol.Logger {
-	return gol.GetLogger("melon/logging")
+var logger gol.Logger
+
+func init() {
+	logger = gol.GetLogger("melon/logging")
 }

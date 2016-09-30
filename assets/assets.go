@@ -6,7 +6,6 @@ package assets
 import (
 	"net/http"
 
-	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 )
 
@@ -32,7 +31,7 @@ func (bundle *Bundle) Initialize(bootstrap *core.Bootstrap) {
 
 // Run registers current Bundle to the server in the given environment.
 func (bundle *Bundle) Run(_ interface{}, env *core.Environment) error {
-	getLogger().Infof("registering AssetsBundle for path %s", bundle.urlPath)
+	logger.Infof("registering AssetsBundle for path %s", bundle.urlPath)
 
 	// Add slashes if necessary
 	p := addSlashes(bundle.urlPath)
@@ -57,8 +56,4 @@ func addSlashes(p string) string {
 		p = p + "/"
 	}
 	return p
-}
-
-func getLogger() gol.Logger {
-	return gol.GetLogger("melon/assets")
 }

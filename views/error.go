@@ -61,7 +61,7 @@ func (h *errorMapper) MapError(w http.ResponseWriter, r *http.Request, err error
 			w.WriteHeader(errMsg.Code)
 			err = writer.WriteResponse(w, r, errMsg)
 			if err != nil {
-				ctx.handler.logger.Errorf("response writer: %v", err)
+				logger.Errorf("response writer: %v", err)
 			}
 			return
 		}
