@@ -14,7 +14,7 @@ import (
 // User is data model for user.
 type User struct {
 	Name string `valid:"nonzero"`
-	Age  int    `valid:"min=1"`
+	Age  int    `valid:"min=13"`
 }
 
 var (
@@ -26,18 +26,6 @@ var (
 type resource struct {
 	mu    sync.RWMutex
 	users map[string]*User
-}
-
-func (s *resource) listUsers(w http.ResponseWriter, r *http.Request) {
-	s.mu.RLock()
-	list := make([]*User, len(s.users))
-	i := 0
-	for _, u := range s.users {
-		list[i] = u
-		i++
-	}
-	s.mu.RUnlock()
-	views.Serve(w, r, list)
 }
 
 func (s *resource) createUser(w http.ResponseWriter, r *http.Request) {
@@ -72,45 +60,17 @@ func (s *resource) getUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *resource) editUser(w http.ResponseWriter, r *http.Request) {
-	params := views.Params(r)
-	name := params["name"]
-	user := &User{}
-	if err := views.Entity(r, user); err != nil {
-		views.Error(w, r, err)
-		return
+// listUsers is to demonstrate the usage of views.HanlderFunc.
+func (s *resource) listUsers(r *http.Request) (interface{}, error) {
+	s.mu.RLock()
+	list := make([]*User, len(s.users))
+	i := 0
+	for _, u := range s.users {
+		list[i] = u
+		i++
 	}
-	// Name must be consistent
-	user.Name = name
-
-	s.mu.Lock()
-	_, ok := s.users[name]
-	if ok {
-		s.users[name] = user
-	}
-	s.mu.Unlock()
-	if ok {
-		views.Serve(w, r, "Updated.")
-	} else {
-		views.Error(w, r, errUserNotFound)
-	}
-}
-
-func (s *resource) deleteUser(w http.ResponseWriter, r *http.Request) {
-	params := views.Params(r)
-	name := params["name"]
-
-	s.mu.Lock()
-	_, ok := s.users[name]
-	if ok {
-		delete(s.users, name)
-	}
-	s.mu.Unlock()
-	if ok {
-		views.Serve(w, r, "Deleted.")
-	} else {
-		views.Error(w, r, errUserNotFound)
-	}
+	s.mu.RUnlock()
+	return list, nil
 }
 
 // Initialize adds support for RESTful API and debug endpoint in admin page.
@@ -124,17 +84,11 @@ func run(conf interface{}, env *core.Environment) error {
 	res := &resource{
 		users: make(map[string]*User),
 	}
-	// /users
 	env.Server.Register(
-		views.NewResource("GET", "/users", http.HandlerFunc(res.listUsers)),
-		views.NewResource("POST", "/users", http.HandlerFunc(res.createUser),
+		views.NewResource("POST", "/user", http.HandlerFunc(res.createUser),
 			views.WithTimerMetric("UsersCreate")),
-	)
-	// /user/:name
-	env.Server.Register(
 		views.NewResource("GET", "/user/:name", http.HandlerFunc(res.getUser)),
-		views.NewResource("PUT", "/user/:name", http.HandlerFunc(res.editUser)),
-		views.NewResource("DELETE", "/user/:name", http.HandlerFunc(res.deleteUser)),
+		views.NewResource("GET", "/user", views.HandlerFunc(res.listUsers)),
 	)
 	return nil
 }
@@ -142,12 +96,11 @@ func run(conf interface{}, env *core.Environment) error {
 // To run the application:
 //  $ go run restful.go server config.json
 //
-// And try these commands to create, retrieve and delete an user:
-//  curl -XPOST -H'Content-Type: application/json' -d'{"name":"foo","age":20}' 'http://localhost:8080/users'
+// And try these commands to create and retrieve an user:
+//  curl -XPOST -H'Content-Type: application/json' -d'{"name":"foo","age":20}' 'http://localhost:8080/user'
 //  curl -XGET 'http://localhost:8080/user/foo'
-//  curl -XDELETE 'http://localhost:8080/user/foo'
 //
-// Check out new links in admin page at http://localhost:8081
+// Check out new links for debug in admin page at http://localhost:8081
 func main() {
 	app := &melon.Application{initialize, run}
 	if err := melon.Run(app, os.Args[1:]); err != nil {

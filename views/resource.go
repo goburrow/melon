@@ -384,3 +384,31 @@ func Entity(r *http.Request, v interface{}) error {
 	}
 	return nil
 }
+
+// HandlerFunc is a http.Handler which allows users to write view handler like:
+//
+// 	func handle(r *http.Request) (interface{}, error) {
+// 		var req Req
+// 		err := views.Entity(r, &req)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		rsp := process(&req)
+// 		return rsp, nil
+// 	}
+//
+// And register that view:
+//
+// 	env.Server.Register(views.NewResource("POST", "/foo", views.HandlerFunc(handle)))
+//
+type HandlerFunc func(*http.Request) (interface{}, error)
+
+// ServeHTTP invokes Error if returned error is not nil or Serve for returned data.
+func (h HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	data, err := h(r)
+	if err != nil {
+		Error(w, r, err)
+		return
+	}
+	Serve(w, r, data)
+}
