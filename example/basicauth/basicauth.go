@@ -18,7 +18,7 @@ var authFunc = func(usr, pwd string) (auth.Principal, error) {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	p := auth.Auth(r)
+	p := auth.Must(r)
 	fmt.Fprintln(w, "Hello", p.Name())
 }
 

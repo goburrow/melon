@@ -25,7 +25,7 @@ func TestFilter(t *testing.T) {
 	auth := &stubAuthenticator{}
 	f := NewFilter(auth)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, Auth(r).Name())
+		fmt.Fprint(w, Must(r).Name())
 	})
 
 	rt := server.NewRouter()

@@ -20,7 +20,7 @@ func TestBasicAuthenticator(t *testing.T) {
 	f := NewFilter(auth)
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		p := Auth(r)
+		p := Must(r)
 		w.Write([]byte("hello " + p.Name()))
 	}
 

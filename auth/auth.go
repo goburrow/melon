@@ -116,10 +116,10 @@ func fromContext(ctx context.Context) Principal {
 	return nil
 }
 
-// Auth returns Principal assigned to the request.
+// Must returns Principal assigned to the request.
 // If no principal found in the request context, it will panic.
-// This should not happen if Filter is added to the server correctly.
-func Auth(r *http.Request) Principal {
+// This panic should not happen if Filter is added to the server correctly.
+func Must(r *http.Request) Principal {
 	p := fromContext(r.Context())
 	if p == nil {
 		panic("melon/auth: no principal")
