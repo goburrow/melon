@@ -1,6 +1,10 @@
 package views
 
-import "net/http"
+import (
+	"fmt"
+	"math/rand"
+	"net/http"
+)
 
 // ErrorMessage represents a HTTP error with status code and message.
 type ErrorMessage struct {
@@ -49,7 +53,11 @@ func (h *errorMapper) MapError(w http.ResponseWriter, r *http.Request, err error
 	case *ErrorMessage:
 		errMsg = v
 	default:
-		errMsg = NewServerError(err.Error())
+		// Unknown error type, treat it as a server error
+		id := rand.Int63()
+		logger.Errorf("error handling request %s (ID %016x): %v", r.URL.Path, id, err)
+		errMsg = NewServerError(fmt.Sprintf(
+			"error processing your request (ID %016x)", id))
 	}
 	// Use provider to writes error when possible
 	if ctx := fromContext(r.Context()); ctx != nil {
