@@ -73,3 +73,19 @@ func Continue(w http.ResponseWriter, r *http.Request, c []Filter) {
 		c[0].ServeHTTP(w, r, c[1:])
 	}
 }
+
+// If is a filter which executes the underlying filter only when requests/responses
+// meet specific condition.
+type If struct {
+	F Filter                                            // underlying filter
+	C func(w http.ResponseWriter, r *http.Request) bool // condition
+}
+
+// ServeHTTP skips filter F if contition C returns false.
+func (f *If) ServeHTTP(w http.ResponseWriter, r *http.Request, c []Filter) {
+	if f.C(w, r) {
+		f.F.ServeHTTP(w, r, c)
+	} else {
+		Continue(w, r, c)
+	}
+}

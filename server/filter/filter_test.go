@@ -59,3 +59,25 @@ func TestInsertFilter(t *testing.T) {
 		t.Fatalf("unexpected body: %v", recorder.Body.String())
 	}
 }
+
+func TesIf(t *testing.T) {
+	condTrue := func(http.ResponseWriter, *http.Request) bool {
+		return true
+	}
+	condFalse := func(http.ResponseWriter, *http.Request) bool {
+		return false
+	}
+
+	chain := NewChain()
+	chain.Add(&If{testFilter("1"), condFalse},
+		&If{testFilter("2"), condTrue},
+		&If{testFilter("3"), condFalse})
+	chain.Add(Last(endHandler))
+
+	recorder := httptest.NewRecorder()
+	chain.ServeHTTP(recorder, nil)
+	recorder.Flush()
+	if "2END" != recorder.Body.String() {
+		t.Fatalf("unexpected body: %v", recorder.Body.String())
+	}
+}
