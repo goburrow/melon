@@ -9,8 +9,8 @@ import (
 type DefaultFactory struct {
 	commonFactory
 
-	ApplicationConnectors []Connector `valid:"nonzero"`
-	AdminConnectors       []Connector `valid:"nonzero"`
+	ApplicationConnectors []Connector `valid:"notempty"`
+	AdminConnectors       []Connector `valid:"notempty"`
 }
 
 func newDefaultFactory() *DefaultFactory {

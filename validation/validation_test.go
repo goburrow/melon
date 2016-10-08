@@ -18,7 +18,7 @@ type inner1 struct {
 
 type inner2 struct {
 	C int      `valid:"min=1,max=10"`
-	D []string `valid:"nonzero"`
+	D []string `valid:"notempty"`
 	E []int
 }
 
@@ -27,7 +27,7 @@ func TestValidateSlice(t *testing.T) {
 	validator := factory.Validator()
 
 	type config struct {
-		X []inner1 `valid:"nonzero"`
+		X []inner1 `valid:"notempty"`
 		Y []inner2
 	}
 
@@ -50,7 +50,7 @@ func TestValidateStruct(t *testing.T) {
 
 	type config struct {
 		x inner2
-		Y []inner2 `valid:"nonzero"`
+		Y []inner2 `valid:"notempty"`
 	}
 
 	c := config{}

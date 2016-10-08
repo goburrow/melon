@@ -10,8 +10,8 @@ import (
 type SimpleFactory struct {
 	commonFactory
 
-	ApplicationContextPath string `valid:"nonzero"`
-	AdminContextPath       string `valid:"nonzero"`
+	ApplicationContextPath string `valid:"notempty"`
+	AdminContextPath       string `valid:"notempty"`
 	Connector              Connector
 }
 

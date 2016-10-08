@@ -8,10 +8,6 @@ import (
 	"github.com/goburrow/validator"
 )
 
-const (
-	validatorTag = "valid"
-)
-
 type Factory struct {
 	validator *validator.Validator
 }
@@ -19,9 +15,7 @@ type Factory struct {
 var _ core.ValidatorFactory = (*Factory)(nil)
 
 func (f *Factory) Initialize() {
-	v := validator.NewValidator()
-	v.SetTag(validatorTag)
-	f.validator = v
+	f.validator = validator.Default()
 }
 
 func (f *Factory) Validator() core.Validator {

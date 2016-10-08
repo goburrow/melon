@@ -9,7 +9,7 @@ in order to build a server stack quickly, including:
 * [goji](https://github.com/zenazn/goji): a robust web framework.
 * [gol](https://github.com/goburrow/gol): a simple hierarchical logging API.
 * [metrics](https://github.com/codahale/metrics): a minimalist instrumentation library.
-* [validator](https://github.com/go-validator/validator): extensible value validations.
+* [validator](https://github.com/goburrow/validator): extensible value validations.
 
 Features supported:
 

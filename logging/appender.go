@@ -107,7 +107,7 @@ func (factory *ConsoleAppenderFactory) Build(environment *core.Environment) (gol
 type FileAppenderFactory struct {
 	filteredAppenderFactory
 
-	CurrentLogFilename string `valid:"nonzero"`
+	CurrentLogFilename string `valid:"notempty"`
 
 	Archive                    bool
 	ArchivedLogFilenamePattern string

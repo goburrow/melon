@@ -32,7 +32,7 @@ func init() {
 // Each connector has its own listener which will be closed when closing the
 // server it belongs to. SetHandler() must be called before listening.
 type Connector struct {
-	Type string `valid:"nonzero"`
+	Type string `valid:"notempty"`
 	Addr string
 
 	CertFile string

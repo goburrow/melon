@@ -13,7 +13,7 @@ import (
 
 // User is data model for user.
 type User struct {
-	Name string `valid:"nonzero"`
+	Name string `valid:"notempty"`
 	Age  int    `valid:"min=13"`
 }
 
