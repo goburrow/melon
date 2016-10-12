@@ -7,7 +7,6 @@ server:
   - type: http
     addr: localhost:8081
   requestLog:
-    type: DefaultRequestLog
     appenders:
     - type: ConsoleAppender
     - type: FileAppender

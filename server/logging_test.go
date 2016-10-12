@@ -8,17 +8,18 @@ import (
 	slogging "github.com/goburrow/melon/server/logging"
 )
 
-func TestDefaultRequestLogFactory(t *testing.T) {
-	env := core.NewEnvironment()
-	factory := DefaultRequestLogFactory{}
+func TestRequestLogConfiguration(t *testing.T) {
 	appender := logging.AppenderConfiguration{}
 	appender.SetValue(&logging.ConsoleAppenderFactory{})
 
-	factory.Appenders = []logging.AppenderConfiguration{
-		appender,
+	config := RequestLogConfiguration{
+		Appenders: []logging.AppenderConfiguration{
+			appender,
+		},
 	}
 
-	filter, err := factory.Build(env)
+	env := core.NewEnvironment()
+	filter, err := config.Build(env)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,14 +32,12 @@ func TestDefaultRequestLogFactory(t *testing.T) {
 
 func TestNoRequestLogFactory(t *testing.T) {
 	env := core.NewEnvironment()
-	factory := DefaultRequestLogFactory{}
-	filter, err := factory.Build(env)
+	config := RequestLogConfiguration{}
+	filter, err := config.Build(env)
 	if err != nil {
 		t.Fatal(err)
 	}
-	switch filter.(type) {
-	case *noRequestLog:
-	default:
+	if filter != nil {
 		t.Fatalf("unexpected filter %#v", filter)
 	}
 }

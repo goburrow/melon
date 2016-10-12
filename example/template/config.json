@@ -2,7 +2,6 @@
   "server": {
     "type": "DefaultServer",
     "requestLog": {
-      "type": "DefaultRequestLog",
       "appenders": [
         {
           "type": "ConsoleAppender"

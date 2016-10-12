@@ -23,9 +23,6 @@ func init() {
 	dynamic.Register("SimpleServer", func() interface{} {
 		return newSimpleFactory()
 	})
-	dynamic.Register("DefaultRequestLog", func() interface{} {
-		return newDefaultRequestLogFactory()
-	})
 }
 
 // Connector utilizes graceful.Server.

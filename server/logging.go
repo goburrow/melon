@@ -3,41 +3,24 @@ package server
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 
 	"github.com/goburrow/gol"
 	"github.com/goburrow/gol/file/rotation"
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/logging"
-	"github.com/goburrow/melon/server/async"
 	"github.com/goburrow/melon/server/filter"
 	slogging "github.com/goburrow/melon/server/logging"
 )
 
-const (
-	requestLogBufferSize = 1024
-)
-
-// RequestLogFactory builds logging filter.
-type RequestLogFactory interface {
-	Build(*core.Environment) (filter.Filter, error)
-}
-
-// DefaultRequestLogFactory is the configuration for the default request log
-// factory. It utilized the configuration of logging appenders.
-type DefaultRequestLogFactory struct {
-	// TODO: Eliminate logging dependency
+// RequestLogConfiguration is the configuration for the server request log.
+// It utilized the configuration of logging appenders.
+type RequestLogConfiguration struct {
 	Appenders []logging.AppenderConfiguration
 }
 
-func newDefaultRequestLogFactory() *DefaultRequestLogFactory {
-	return &DefaultRequestLogFactory{}
-}
-
-var _ RequestLogFactory = (*DefaultRequestLogFactory)(nil)
-
-func (f *DefaultRequestLogFactory) Build(env *core.Environment) (filter.Filter, error) {
+// Build returns nil Filter if no appenders are set.
+func (f *RequestLogConfiguration) Build(_ *core.Environment) (filter.Filter, error) {
 	var writers []io.Writer
 
 	for _, appender := range f.Appenders {
@@ -60,11 +43,15 @@ func (f *DefaultRequestLogFactory) Build(env *core.Environment) (filter.Filter, 
 	}
 	if len(writers) == 0 {
 		// No request log
-		return &noRequestLog{}, nil
+		return nil, nil
 	}
-	asyncWriter := async.NewWriter(requestLogBufferSize, writers...)
-	env.Lifecycle.Manage(asyncWriter)
-	return slogging.NewFilter(asyncWriter), nil
+	var w io.Writer
+	if len(writers) > 1 {
+		w = io.MultiWriter(writers...)
+	} else {
+		w = writers[0]
+	}
+	return slogging.NewFilter(w), nil
 }
 
 func buildConsoleWriter(config *logging.ConsoleAppenderFactory) (io.Writer, error) {
@@ -98,14 +85,6 @@ func buildFileWriter(config *logging.FileAppenderFactory) (io.Writer, error) {
 		// TODO: Close file
 	}
 	return writer, nil
-}
-
-type noRequestLog struct{}
-
-var _ (filter.Filter) = (*noRequestLog)(nil)
-
-func (*noRequestLog) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
-	filter.Continue(w, r, chain)
 }
 
 var logger gol.Logger

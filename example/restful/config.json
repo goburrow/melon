@@ -14,7 +14,6 @@
       }
     ],
     "requestLog": {
-      "type": "DefaultRequestLog",
       "appenders": [
         {
           "type": "ConsoleAppender"
