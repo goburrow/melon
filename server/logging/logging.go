@@ -35,7 +35,7 @@ func NewFilter(writer io.Writer) *Filter {
 }
 
 func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
-	responseWriter := &responseWriter{writer: w, status: 200}
+	responseWriter := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 
 	start := now()
 	filter.Continue(responseWriter, r, chain)
@@ -84,17 +84,13 @@ func getRemoteAddr(r *http.Request) string {
 
 // responseWriter is a wrapper for http.ResponseWriter and store response status.
 type responseWriter struct {
-	writer http.ResponseWriter
+	http.ResponseWriter
 	status int
 	size   uint64
 }
 
-func (w *responseWriter) Header() http.Header {
-	return w.writer.Header()
-}
-
 func (w *responseWriter) Write(b []byte) (int, error) {
-	n, err := w.writer.Write(b)
+	n, err := w.ResponseWriter.Write(b)
 	if err == nil {
 		w.size += uint64(n)
 	}
@@ -103,12 +99,28 @@ func (w *responseWriter) Write(b []byte) (int, error) {
 
 func (w *responseWriter) WriteHeader(status int) {
 	w.status = status
-	w.writer.WriteHeader(status)
+	w.ResponseWriter.WriteHeader(status)
 }
 
-func (w *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if hijacker, ok := w.writer.(http.Hijacker); ok {
-		return hijacker.Hijack()
+// Flush implements http.Flusher.
+func (w *responseWriter) Flush() {
+	if fl, ok := w.ResponseWriter.(http.Flusher); ok {
+		fl.Flush()
 	}
-	return nil, nil, errors.New("accesslog: http.Hijack is not implemented")
+}
+
+// Hijack implements http.Hijacker.
+func (w *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := w.ResponseWriter.(http.Hijacker); ok {
+		return hj.Hijack()
+	}
+	return nil, nil, errors.New("not a Hijacker")
+}
+
+// CloseNotifiy implements http.CloseNotifier.
+func (w *responseWriter) CloseNotify() <-chan bool {
+	if cn, ok := w.ResponseWriter.(http.CloseNotifier); ok {
+		return cn.CloseNotify()
+	}
+	panic("not a CloseNotifier")
 }
