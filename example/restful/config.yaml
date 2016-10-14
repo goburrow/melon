@@ -11,6 +11,8 @@ server:
     - type: ConsoleAppender
     - type: FileAppender
       currentLogFilename: /tmp/melon-access.log
+  gzip:
+    enabled: true
 
 logging:
   level: DEBUG

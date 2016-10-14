@@ -19,6 +19,9 @@
           "type": "ConsoleAppender"
         }
       ]
+    },
+    "gzip": {
+      "enabled": true
     }
   },
   "logging": {
