@@ -72,10 +72,10 @@ func (factory *filteredAppenderFactory) Build(appender gol.Appender) (gol.Append
 	a := golfilter.NewAppender(appender)
 	a.SetThreshold(threshold)
 	if len(factory.Includes) > 0 {
-		a.SetIncludes(factory.Includes)
+		a.SetIncludes(factory.Includes...)
 	}
 	if len(factory.Excludes) > 0 {
-		a.SetExcludes(factory.Excludes)
+		a.SetExcludes(factory.Excludes...)
 	}
 	return a, nil
 }
