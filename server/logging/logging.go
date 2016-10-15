@@ -34,11 +34,11 @@ func NewFilter(writer io.Writer) *Filter {
 	return &Filter{writer: writer}
 }
 
-func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
+func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	responseWriter := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 
 	start := now()
-	filter.Continue(responseWriter, r, chain)
+	filter.Continue(responseWriter, r)
 	end := now()
 
 	remoteAddr := getRemoteAddr(r)

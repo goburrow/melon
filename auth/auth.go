@@ -77,7 +77,7 @@ func NewFilter(authenticator Authenticator, options ...Option) *Filter {
 	return f
 }
 
-func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
+func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p, err := f.authenticator.Authenticate(r)
 	if err != nil {
 		logger.Errorf("authenticate error: %v", err)
@@ -90,7 +90,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 		return
 	}
 	ctx := newContext(r.Context(), p)
-	filter.Continue(w, r.WithContext(ctx), chain)
+	filter.Continue(w, r.WithContext(ctx))
 }
 
 // Option is a Filter option.
@@ -103,14 +103,23 @@ func WithUnauthorizedHandler(h http.Handler) Option {
 	}
 }
 
-type principalKey struct{}
+// contextKey is a value for use with context.WithValue
+type contextKey struct {
+	name string
+}
+
+func (c *contextKey) String() string {
+	return "melon/auth context value " + c.name
+}
+
+var principalContextKey = &contextKey{"principal"}
 
 func newContext(ctx context.Context, p Principal) context.Context {
-	return context.WithValue(ctx, principalKey{}, p)
+	return context.WithValue(ctx, principalContextKey, p)
 }
 
 func fromContext(ctx context.Context) Principal {
-	if p, ok := ctx.Value(principalKey{}).(Principal); ok {
+	if p, ok := ctx.Value(principalContextKey).(Principal); ok {
 		return p
 	}
 	return nil

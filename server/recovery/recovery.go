@@ -29,7 +29,7 @@ func NewFilter() *Filter {
 	}
 }
 
-func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filter.Filter) {
+func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
 			f.panics.Add()
@@ -37,7 +37,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, chain []filte
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}()
-	filter.Continue(w, r, chain)
+	filter.Continue(w, r)
 }
 
 func stack() []byte {

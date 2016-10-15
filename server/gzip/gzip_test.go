@@ -18,8 +18,9 @@ func TestNoGZip(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 
-	f := NewFilter()
-	f.ServeHTTP(w, r, []filter.Filter{filter.Last(http.HandlerFunc(handler))})
+	chain := filter.NewChain()
+	chain.Add(NewFilter(), http.HandlerFunc(handler))
+	chain.ServeHTTP(w, r)
 	if 200 != w.Code {
 		t.Fatalf("unexpected status code: %v", w.Code)
 	}
@@ -36,8 +37,9 @@ func TestGZip(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	r.Header.Set("Accept-Encoding", "gzip")
 
-	f := NewFilter()
-	f.ServeHTTP(w, r, []filter.Filter{filter.Last(http.HandlerFunc(handler))})
+	chain := filter.NewChain()
+	chain.Add(NewFilter(), http.HandlerFunc(handler))
+	chain.ServeHTTP(w, r)
 	if 200 != w.Code {
 		t.Fatalf("unexpected status code: %v", w.Code)
 	}
@@ -58,9 +60,7 @@ func TestGZip(t *testing.T) {
 
 func TestGZipResponse(t *testing.T) {
 	chain := filter.NewChain()
-	chain.Add(NewFilter())
-
-	chain.Add(filter.Last(http.HandlerFunc(handler)))
+	chain.Add(NewFilter(), http.HandlerFunc(handler))
 
 	server := httptest.NewServer(chain)
 	defer server.Close()

@@ -13,40 +13,17 @@ import (
 )
 
 // Resource is a view resource.
-type Resource interface {
-	http.Handler
-
-	Method() string
-	Path() string
-	Options() []Option
-}
-
-// resource implements Resource.
-type resource struct {
-	http.Handler
-
+type Resource struct {
+	handler http.Handler
 	method  string
 	path    string
 	options []Option
 }
 
-func (r *resource) Method() string {
-	return r.method
-}
-
-func (r *resource) Path() string {
-	return r.path
-}
-
-func (r *resource) Options() []Option {
-	return r.options
-}
-
 // NewResource creates a new Resource.
-func NewResource(method, path string, handler http.Handler, options ...Option) Resource {
-	return &resource{
-		Handler: handler,
-
+func NewResource(method, path string, handler http.Handler, options ...Option) *Resource {
+	return &Resource{
+		handler: handler,
 		method:  method,
 		path:    path,
 		options: options,
@@ -111,17 +88,17 @@ func (h *resourceHandler) HandleResource(v interface{}) {
 		// FIMXE: support multiple error mappers.
 		h.errorMapper = r
 	}
-	if r, ok := v.(Resource); ok {
+	if r, ok := v.(*Resource); ok {
 		handler := &httpHandler{
-			handler:     r,
+			handler:     r.handler,
 			errorMapper: h.errorMapper,
 			validator:   h.validator,
 			providers:   newExplicitProviderMap(h.providers),
 		}
-		for _, opt := range r.Options() {
+		for _, opt := range r.options {
 			opt(handler)
 		}
-		h.router.Handle(r.Method(), r.Path(), handler)
+		h.router.Handle(r.method, r.path, handler)
 	}
 }
 
@@ -269,14 +246,23 @@ type handlerContext struct {
 	contentType string
 }
 
-type handlerContextKey struct{}
+// contextKey is a value for use with context.WithValue
+type contextKey struct {
+	name string
+}
+
+func (c *contextKey) String() string {
+	return "melon/views context value " + c.name
+}
+
+var handlerContextKey = &contextKey{"handler"}
 
 func newContext(ctx context.Context, handler *handlerContext) context.Context {
-	return context.WithValue(ctx, handlerContextKey{}, handler)
+	return context.WithValue(ctx, handlerContextKey, handler)
 }
 
 func fromContext(ctx context.Context) *handlerContext {
-	if ctx, ok := ctx.Value(handlerContextKey{}).(*handlerContext); ok {
+	if ctx, ok := ctx.Value(handlerContextKey).(*handlerContext); ok {
 		return ctx
 	}
 	return nil

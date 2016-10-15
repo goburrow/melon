@@ -140,7 +140,7 @@ type Router struct {
 func NewRouter() *Router {
 	mux := web.New()
 	chain := filter.NewChain()
-	chain.Add(filter.Last(mux))
+	chain.Add(mux)
 	return &Router{
 		serveMux:    mux,
 		filterChain: chain,

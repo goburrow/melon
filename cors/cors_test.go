@@ -5,21 +5,23 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/goburrow/melon/server"
+	"github.com/goburrow/melon/server/filter"
 )
 
-func success(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("pong"))
+func ping(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/ping" {
+		w.Write([]byte("pong"))
+	} else {
+		http.NotFound(w, r)
+	}
 }
 
 func TestPreflight(t *testing.T) {
 	f := NewFilter()
+	chain := filter.NewChain()
+	chain.Add(f, http.HandlerFunc(ping))
 
-	rt := server.NewRouter()
-	rt.AddFilter(f)
-	rt.Handle("GET", "/ping", success)
-
-	srv := httptest.NewServer(rt)
+	srv := httptest.NewServer(chain)
 	defer srv.Close()
 
 	req, err := http.NewRequest("OPTIONS", srv.URL, nil)
@@ -53,11 +55,10 @@ func TestSimple(t *testing.T) {
 		WithAllowCredentials(),
 		WithExposedHeaders("Accept", "content-length"))
 
-	rt := server.NewRouter()
-	rt.AddFilter(f)
-	rt.Handle("GET", "/ping", success)
+	chain := filter.NewChain()
+	chain.Add(f, http.HandlerFunc(ping))
 
-	srv := httptest.NewServer(rt)
+	srv := httptest.NewServer(chain)
 	defer srv.Close()
 
 	req, err := http.NewRequest("GET", srv.URL+"/ping", nil)

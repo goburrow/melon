@@ -19,7 +19,7 @@ func NewFilter() *Filter {
 	return &Filter{}
 }
 
-func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, c []filter.Filter) {
+func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ae := r.Header.Get("Accept-Encoding")
 	if ae != "" && strings.Contains(ae, "gzip") {
 		gzWriter := &responseWriter{
@@ -29,7 +29,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, c []filter.Fi
 		defer gzWriter.gz.Close()
 		w = gzWriter
 	}
-	filter.Continue(w, r, c)
+	filter.Continue(w, r)
 }
 
 type responseWriter struct {

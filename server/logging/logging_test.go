@@ -31,7 +31,7 @@ func TestResponseOK(t *testing.T) {
 		w.Write([]byte("ok"))
 	}
 
-	chain.Add(filter.Last(http.HandlerFunc(handler)))
+	chain.Add(http.HandlerFunc(handler))
 
 	server := httptest.NewServer(chain)
 	defer server.Close()
@@ -69,7 +69,7 @@ func TestResponseError(t *testing.T) {
 		w.Write([]byte("bad request"))
 	}
 
-	chain.Add(filter.Last(http.HandlerFunc(handler)))
+	chain.Add(http.HandlerFunc(handler))
 
 	server := httptest.NewServer(chain)
 	defer server.Close()

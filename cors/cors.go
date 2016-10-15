@@ -45,7 +45,7 @@ func NewFilter(options ...Option) *Filter {
 }
 
 // ServeHTTP adds additional headers for CORS.
-func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, c []filter.Filter) {
+func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 	origin = f.validateOrigin(origin)
 	if origin != "" {
@@ -58,7 +58,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request, c []filter.Fi
 			f.handleSimple(w.Header(), origin)
 		}
 	}
-	filter.Continue(w, r, c)
+	filter.Continue(w, r)
 }
 
 func (f *Filter) validateOrigin(origin string) string {
