@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/goburrow/melon/server"
+	"github.com/goburrow/melon/server/router"
 )
 
 type stubAuthenticator struct {
@@ -28,7 +28,7 @@ func TestFilter(t *testing.T) {
 		fmt.Fprint(w, Must(r).Name())
 	})
 
-	rt := server.NewRouter()
+	rt := router.New()
 	rt.AddFilter(f)
 	rt.Handle("GET", "/echo", handler)
 

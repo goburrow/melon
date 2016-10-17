@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/goburrow/melon/core"
-	"github.com/goburrow/melon/server"
+	"github.com/goburrow/melon/server/router"
 )
 
 var _ core.Bundle = (*Bundle)(nil)
@@ -22,7 +22,7 @@ func TestAssetsBundle(t *testing.T) {
 	defer os.Remove(dir)
 	// Setup environment
 	env := core.NewEnvironment()
-	handler := server.NewRouter()
+	handler := router.New()
 	env.Server.Router = handler
 	bundle := NewBundle(dir, "/static/")
 	err = bundle.Run(nil, env)

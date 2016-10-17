@@ -8,14 +8,14 @@ import (
 	"testing"
 
 	"github.com/goburrow/melon/core"
-	"github.com/goburrow/melon/server"
+	"github.com/goburrow/melon/server/router"
 )
 
 var _ core.Bundle = (*Bundle)(nil)
 
 func TestBundle(t *testing.T) {
 	env := core.NewEnvironment()
-	handler := server.NewRouter()
+	handler := router.New()
 	env.Admin.Router = handler
 
 	bundle := NewBundle()

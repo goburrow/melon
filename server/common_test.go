@@ -6,13 +6,14 @@ import (
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/logging"
 	slogging "github.com/goburrow/melon/server/logging"
+	"github.com/goburrow/melon/server/router"
 )
 
 func TestCommonFactory(t *testing.T) {
 	env := core.NewEnvironment()
 	factory := commonFactory{}
 
-	handler := NewRouter()
+	handler := router.New()
 	err := factory.AddFilters(env, handler)
 	if err != nil {
 		t.Fatal(err)

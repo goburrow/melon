@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/server/router"
 )
 
 // DefaultFactory allows multiple sets of application and admin connectors running
@@ -34,12 +35,12 @@ var _ core.ServerFactory = (*DefaultFactory)(nil)
 
 func (factory *DefaultFactory) Build(env *core.Environment) (core.Server, error) {
 	// Application
-	appHandler := NewRouter()
+	appHandler := router.New()
 	env.Server.Router = appHandler
 	env.Server.AddResourceHandler(newResourceHandler(appHandler))
 
 	// Admin
-	adminHandler := NewRouter()
+	adminHandler := router.New()
 	env.Admin.Router = adminHandler
 
 	err := factory.commonFactory.AddFilters(env, appHandler, adminHandler)

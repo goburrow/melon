@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/goburrow/melon/core"
+	"github.com/goburrow/melon/server/router"
 )
 
 // SimpleFactory creates a single-connector server.
@@ -30,24 +31,22 @@ var _ core.ServerFactory = (*SimpleFactory)(nil)
 
 func (factory *SimpleFactory) Build(env *core.Environment) (core.Server, error) {
 	// Both application and admin share same handler
-	appHandler := NewRouter()
-	appHandler.pathPrefix = factory.ApplicationContextPath
+	appHandler := router.New(router.WithPathPrefix(factory.ApplicationContextPath))
 	env.Server.Router = appHandler
 	env.Server.AddResourceHandler(newResourceHandler(appHandler))
 
-	adminHandler := NewRouter()
-	adminHandler.pathPrefix = factory.AdminContextPath
+	adminHandler := router.New(router.WithPathPrefix(factory.AdminContextPath))
 	env.Admin.Router = adminHandler
 
 	return factory.buildServer(env, appHandler, adminHandler)
 }
 
-func (factory *SimpleFactory) buildServer(env *core.Environment, handlers ...*Router) (core.Server, error) {
-	handler := NewRouter()
+func (factory *SimpleFactory) buildServer(env *core.Environment, handlers ...*router.Router) (core.Server, error) {
+	handler := router.New()
 	// Sub routers (e.g. /application and /admin)
 	for _, h := range handlers {
-		handler.serveMux.Handle(h.pathPrefix+"/*", h)
-		handler.serveMux.Handle(h.pathPrefix, http.RedirectHandler(h.pathPrefix+"/", http.StatusMovedPermanently))
+		handler.Handle("*", h.PathPrefix()+"/*", h)
+		handler.Handle("*", h.PathPrefix(), http.RedirectHandler(h.PathPrefix()+"/", http.StatusMovedPermanently))
 	}
 	// Default filters are only needed in the root handler.
 	if err := factory.commonFactory.AddFilters(env, handler); err != nil {

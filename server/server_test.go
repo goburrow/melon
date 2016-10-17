@@ -6,7 +6,6 @@ import (
 	"github.com/goburrow/melon/core"
 )
 
-var _ core.Router = (*Router)(nil)
 var _ core.ServerFactory = (*Factory)(nil)
 
 type stubFactory struct {

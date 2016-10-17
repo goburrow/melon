@@ -12,6 +12,7 @@ import (
 	"github.com/goburrow/melon/server/gzip"
 	slogging "github.com/goburrow/melon/server/logging"
 	"github.com/goburrow/melon/server/recovery"
+	"github.com/goburrow/melon/server/router"
 )
 
 // commonFactory is the shared configuration of DefaultFactory and
@@ -23,7 +24,7 @@ type commonFactory struct {
 
 // AddFilters adds request log and panic recovery to the filter chain
 // of the given handlers.
-func (f *commonFactory) AddFilters(env *core.Environment, handlers ...*Router) error {
+func (f *commonFactory) AddFilters(env *core.Environment, handlers ...*router.Router) error {
 	// Request log must be first as handler panic should be recorded.
 	requestLogFilter, err := f.RequestLog.Build(env)
 	if err != nil {

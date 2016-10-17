@@ -1,19 +1,16 @@
 /*
-Package server supports dynamic routes.
+Package server provides http server for melon application.
 */
 package server
 
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/goburrow/dynamic"
 	"github.com/goburrow/melon/core"
-	"github.com/goburrow/melon/server/filter"
 	"github.com/zenazn/goji/graceful"
-	"github.com/zenazn/goji/web"
 )
 
 func init() {
@@ -122,87 +119,6 @@ func (server *Server) addConnectors(handler http.Handler, connectors []Connector
 		connectors[i].SetHandler(handler)
 		server.Connectors = append(server.Connectors, &connectors[i])
 	}
-}
-
-// Router handles HTTP requests.
-// It implements core.Router
-type Router struct {
-	// serverMux is the HTTP request router.
-	serveMux *web.Mux
-	// filterChain is the builder for HTTP filters.
-	filterChain *filter.Chain
-
-	pathPrefix string
-	endpoints  []string
-}
-
-// NewRouter creates a new Router.
-func NewRouter() *Router {
-	mux := web.New()
-	chain := filter.NewChain()
-	chain.Add(mux)
-	return &Router{
-		serveMux:    mux,
-		filterChain: chain,
-	}
-}
-
-// Handle registers the handler for the given pattern.
-func (h *Router) Handle(method, pattern string, handler interface{}) {
-	var f func(web.PatternType, web.HandlerType)
-
-	switch method {
-	case "GET":
-		f = h.serveMux.Get
-	case "HEAD":
-		f = h.serveMux.Head
-	case "POST":
-		f = h.serveMux.Post
-	case "PUT":
-		f = h.serveMux.Put
-	case "DELETE":
-		f = h.serveMux.Delete
-	case "TRACE":
-		f = h.serveMux.Trace
-	case "OPTIONS":
-		f = h.serveMux.Options
-	case "CONNECT":
-		f = h.serveMux.Connect
-	case "PATCH":
-		f = h.serveMux.Patch
-	case "*":
-		f = h.serveMux.Handle
-	default:
-		panic("server: unsupported method " + method)
-	}
-	f(pattern, handler)
-
-	// log endpoint
-	endpoint := fmt.Sprintf("%-7s %s%s (%T)", method, h.pathPrefix, pattern, handler)
-	h.endpoints = append(h.endpoints, endpoint)
-}
-
-// PathPrefix returns server root context path.
-func (h *Router) PathPrefix() string {
-	return h.pathPrefix
-}
-
-func (h *Router) Endpoints() []string {
-	return h.endpoints
-}
-
-// ServeHTTP strips path prefix in the request and executes filter chain,
-// which should include ServeMux as the last one.
-func (h *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h.pathPrefix != "" {
-		r.URL.Path = strings.TrimPrefix(r.URL.Path, h.pathPrefix)
-	}
-	h.filterChain.ServeHTTP(w, r)
-}
-
-// AddFilter adds a filter middleware.
-func (h *Router) AddFilter(f filter.Filter) {
-	h.filterChain.Insert(f, h.filterChain.Length()-1)
 }
 
 // Factory is an union of DefaultFactory and SimpleFactory.

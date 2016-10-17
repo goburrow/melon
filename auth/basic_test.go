@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/goburrow/melon/server"
+	"github.com/goburrow/melon/server/router"
 )
 
 func TestBasicAuthenticator(t *testing.T) {
@@ -24,7 +24,7 @@ func TestBasicAuthenticator(t *testing.T) {
 		w.Write([]byte("hello " + p.Name()))
 	}
 
-	rt := server.NewRouter()
+	rt := router.New()
 	rt.AddFilter(f)
 	rt.Handle("GET", "/", handler)
 
