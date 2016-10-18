@@ -6,6 +6,7 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/goburrow/melon/server/filter"
@@ -88,7 +89,11 @@ func (h *Router) Endpoints() []string {
 // which should include ServeMux as the last one.
 func (h *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.pathPrefix != "" {
-		r.URL.Path = strings.TrimPrefix(r.URL.Path, h.pathPrefix)
+		p := strings.TrimPrefix(r.URL.Path, h.pathPrefix)
+		if p == "" {
+			p = "/"
+		}
+		r.URL.Path = p
 	}
 	h.filterChain.ServeHTTP(w, r)
 }
@@ -103,7 +108,16 @@ func (h *Router) AddFilter(f filter.Filter) {
 type Option func(r *Router)
 
 // WithPathPrefix returns an Option which sets path prefix for Router.
+// If there is no leading slash, it will be added to prefix.
 func WithPathPrefix(prefix string) Option {
+	prefix = strings.TrimSpace(prefix)
+	if prefix != "" {
+		// Clean and add leading slash if necessary
+		prefix = path.Clean(prefix)
+		if prefix[0] != '/' {
+			prefix = "/" + prefix
+		}
+	}
 	return func(r *Router) {
 		r.pathPrefix = prefix
 	}
