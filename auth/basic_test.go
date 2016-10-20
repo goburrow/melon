@@ -26,7 +26,7 @@ func TestBasicAuthenticator(t *testing.T) {
 
 	rt := router.New()
 	rt.AddFilter(f)
-	rt.Handle("GET", "/", handler)
+	rt.Handle("GET", "/", http.HandlerFunc(handler))
 
 	srv := httptest.NewServer(rt)
 	defer srv.Close()

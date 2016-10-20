@@ -8,6 +8,7 @@ import (
 	"github.com/goburrow/melon"
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/debug"
+	"github.com/goburrow/melon/server/router"
 	"github.com/goburrow/melon/views"
 )
 
@@ -48,7 +49,7 @@ func (s *resource) createUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *resource) getUser(w http.ResponseWriter, r *http.Request) {
-	params := views.Params(r)
+	params := router.PathParams(r)
 
 	s.mu.RLock()
 	user, ok := s.users[params["name"]]
@@ -87,7 +88,7 @@ func run(conf interface{}, env *core.Environment) error {
 	env.Server.Register(
 		views.NewResource("POST", "/user", http.HandlerFunc(res.createUser),
 			views.WithTimerMetric("UsersCreate")),
-		views.NewResource("GET", "/user/:name", http.HandlerFunc(res.getUser)),
+		views.NewResource("GET", "/user/{name}", http.HandlerFunc(res.getUser)),
 		views.NewResource("GET", "/user", views.HandlerFunc(res.listUsers)),
 	)
 	return nil

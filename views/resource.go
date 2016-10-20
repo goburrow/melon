@@ -9,7 +9,6 @@ import (
 
 	"github.com/codahale/metrics"
 	"github.com/goburrow/melon/core"
-	"github.com/zenazn/goji/web"
 )
 
 // Resource is a view resource.
@@ -159,7 +158,7 @@ type httpHandler struct {
 }
 
 // TODO: migrate to github.com/goji/goji when it supports Go 1.7.
-func (h *httpHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
+func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.metricRequests != "" {
 		h.metricRequests.Add()
 	}
@@ -173,7 +172,6 @@ func (h *httpHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request
 		handler:     h,
 		readers:     requestReaders,
 		writers:     responseWriters,
-		params:      c.URLParams,
 		contentType: contentType,
 	}
 	ctx := newContext(r.Context(), handlerCtx)
@@ -240,7 +238,6 @@ type handlerContext struct {
 	handler *httpHandler
 	readers []requestReader
 	writers []responseWriter
-	params  map[string]string
 
 	// contentType is expected response content type
 	contentType string
@@ -333,16 +330,6 @@ func Error(w http.ResponseWriter, r *http.Request, err error) {
 		return
 	}
 	ctx.handler.errorMapper.MapError(w, r, err)
-}
-
-// Params returns path parameters from request.
-func Params(r *http.Request) map[string]string {
-	ctx := fromContext(r.Context())
-	if ctx == nil {
-		logger.Errorf("no handler in request context: %v", r.Context())
-		return nil
-	}
-	return ctx.params
 }
 
 // Entity reads and validates entity v from request r.

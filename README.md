@@ -6,10 +6,10 @@ Melon is a partial port of [Dropwizard](http://dropwizard.io/) in Go.
 Besides of builtin Go packages, it utilizes a number of [libraries](https://github.com/goburrow/melon/blob/master/THIRDPARTY.md)
 in order to build a server stack quickly, including:
 
-* [goji](https://github.com/zenazn/goji): a robust web framework.
+* [mux](https://github.com/gorilla/mux): a popular HTTP multiplexer.
 * [gol](https://github.com/goburrow/gol): a simple hierarchical logging API.
 * [metrics](https://github.com/codahale/metrics): a minimalist instrumentation library.
-* [validator](https://github.com/goburrow/validator): extensible value validations.
+* [validator](https://github.com/goburrow/validator): an extensible value validator.
 
 Features supported:
 
@@ -29,6 +29,11 @@ Features supported:
 ## Examples
 See [example](https://github.com/goburrow/melon/tree/master/example)
 
+- [Hello World](example/helloworld/helloworld.go)
+- [Restful](example/restful/restful.go)
+- [HTML Template](example/template/template.go)
+- [Basic Authentication](example/basicauth/basicauth.go)
+
 ```
 INFO  [2015-02-04T12:00:01.289+10:00] melon/server: starting
     ______
@@ -41,14 +46,15 @@ INFO  [2015-02-04T12:00:01.289+10:00] melon/server: starting
           \/_____/
 
 INFO  [2015-02-04T12:00:01.289+10:00] melon/assets: registering AssetsBundle for path /static/
-DEBUG [2015-02-04T12:00:01.289+10:00] melon/server: resources = [*rest.XMLProvider,*main.usersResource,*main.userResource]
+DEBUG [2015-02-04T12:00:01.289+10:00] melon/server: resources = [*views.JSONProvider,*views.XMLProvider,*views.Resource,*views.Resource,*views.Resource,*views.Resource,*views.Resource]
 INFO  [2015-02-04T12:00:01.289+10:00] melon/server: endpoints =
 
-    GET     /users (*main.usersResource)
-    POST    /users (*main.usersResource)
-    GET     /user/:name (*main.userResource)
-    POST    /user/:name (*main.userResource)
-    DELETE  /user/:name (*main.userResource)
+    GET     /static/* (http.HandlerFunc)
+    GET     /users (*views.httpHandler)
+    POST    /users (*views.httpHandler)
+    GET     /user/{name} (*views.httpHandler)
+    PUT     /user/{name} (*views.httpHandler)
+    DELETE  /user/{name} (*views.httpHandler)
 
 INFO  [2015-02-04T12:00:01.290+10:00] melon/admin: tasks =
 

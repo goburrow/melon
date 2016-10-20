@@ -10,14 +10,14 @@ import (
 	"strings"
 
 	"github.com/goburrow/melon/server/filter"
-	"github.com/zenazn/goji/web"
+	"github.com/gorilla/mux"
 )
 
 // Router handles HTTP requests.
 // It implements core.Router
 type Router struct {
 	// serverMux is the HTTP request router.
-	serveMux *web.Mux
+	serveMux *mux.Router
 	// filterChain is the builder for HTTP filters.
 	filterChain *filter.Chain
 
@@ -27,12 +27,12 @@ type Router struct {
 
 // New creates a new Router.
 func New(options ...Option) *Router {
-	mux := web.New()
+	serveMux := mux.NewRouter()
 	chain := filter.NewChain()
-	chain.Add(mux)
+	chain.Add(serveMux)
 
 	r := &Router{
-		serveMux:    mux,
+		serveMux:    serveMux,
 		filterChain: chain,
 	}
 	for _, opt := range options {
@@ -42,35 +42,17 @@ func New(options ...Option) *Router {
 }
 
 // Handle registers the handler for the given pattern.
-func (h *Router) Handle(method, pattern string, handler interface{}) {
-	var f func(web.PatternType, web.HandlerType)
-
-	switch method {
-	case "GET":
-		f = h.serveMux.Get
-	case "HEAD":
-		f = h.serveMux.Head
-	case "POST":
-		f = h.serveMux.Post
-	case "PUT":
-		f = h.serveMux.Put
-	case "DELETE":
-		f = h.serveMux.Delete
-	case "TRACE":
-		f = h.serveMux.Trace
-	case "OPTIONS":
-		f = h.serveMux.Options
-	case "CONNECT":
-		f = h.serveMux.Connect
-	case "PATCH":
-		f = h.serveMux.Patch
-	case "*":
-		f = h.serveMux.Handle
-	default:
-		panic("server: unsupported method " + method)
+func (h *Router) Handle(method, pattern string, handler http.Handler) {
+	r := h.serveMux.NewRoute()
+	r.Handler(handler)
+	if method != "" && method != "*" {
+		r.Methods(method)
 	}
-	f(pattern, handler)
-
+	if strings.HasSuffix(pattern, "*") {
+		r.PathPrefix(pattern[:len(pattern)-1])
+	} else {
+		r.Path(pattern)
+	}
 	// log endpoint
 	endpoint := fmt.Sprintf("%-7s %s%s (%T)", method, h.pathPrefix, pattern, handler)
 	h.endpoints = append(h.endpoints, endpoint)
@@ -121,4 +103,9 @@ func WithPathPrefix(prefix string) Option {
 	return func(r *Router) {
 		r.pathPrefix = prefix
 	}
+}
+
+// PathParams returns path parameters from the path of the request.
+func PathParams(r *http.Request) map[string]string {
+	return mux.Vars(r)
 }

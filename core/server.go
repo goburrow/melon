@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 )
 
 // Server is a managed HTTP server handling incoming connections to both application and admin.
@@ -14,9 +15,8 @@ type Server interface {
 
 // Router allows users to register a http.Handler.
 type Router interface {
-	// Handle registers the handler for the given pattern.
-	// An implementation of ServerHandler must at least support http.Handler.
-	Handle(method, pattern string, handler interface{})
+	// Handle registers the HTTP handler for the given pattern.
+	Handle(method, pattern string, handler http.Handler)
 	// PathPrefix returns prefix path of this handler.
 	PathPrefix() string
 	// Endpoints returns registered HTTP endpoints.
@@ -80,7 +80,7 @@ func (env *ServerEnvironment) logResources() {
 	var buf bytes.Buffer
 	for i, component := range env.components {
 		if i > 0 {
-			fmt.Fprintf(&buf, ",")
+			buf.WriteByte(',')
 		}
 		fmt.Fprintf(&buf, "%T", component)
 	}
