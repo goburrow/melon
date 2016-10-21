@@ -5,4 +5,4 @@
 - https://github.com/goburrow/health
 - https://github.com/goburrow/validator
 - https://github.com/gorilla/mux
-- https://github.com/zanazn/goji/graceful
+- https://github.com/tylerb/graceful

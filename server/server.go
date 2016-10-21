@@ -4,13 +4,15 @@ Package server provides http server for melon application.
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/goburrow/dynamic"
 	"github.com/goburrow/melon/core"
-	"github.com/zenazn/goji/graceful"
+	"github.com/tylerb/graceful"
 )
 
 func init() {
@@ -22,41 +24,19 @@ func init() {
 	})
 }
 
-// Connector utilizes graceful.Server.
-// Each connector has its own listener which will be closed when closing the
-// server it belongs to. SetHandler() must be called before listening.
+// Connector represents http server configuration.
 type Connector struct {
 	Type string `valid:"notempty"`
 	Addr string
 
 	CertFile string
 	KeyFile  string
-
-	server graceful.Server
-}
-
-// SetHandler setup the server with the given handler.
-func (connector *Connector) SetHandler(handler http.Handler) {
-	connector.server.Handler = handler
-}
-
-// Listen creates and serves a listerner.
-func (connector *Connector) Listen() error {
-	connector.server.Addr = connector.Addr
-
-	switch connector.Type {
-	case "http":
-		return connector.server.ListenAndServe()
-	case "https":
-		return connector.server.ListenAndServeTLS(connector.CertFile, connector.KeyFile)
-	}
-	return fmt.Errorf("server: unsupported connector type %s", connector.Type)
 }
 
 // Server implements Server interface. Each server can have multiple
 // connectors (listeners).
 type Server struct {
-	Connectors []*Connector
+	connectors []*graceful.Server
 }
 
 var _ core.Server = (*Server)(nil)
@@ -68,37 +48,30 @@ func NewServer() *Server {
 
 // Start starts all connectors of the server.
 func (server *Server) Start() error {
-	// Handle SIGINT
-	graceful.HandleSignals()
-	graceful.PreHook(func() {
-		logger.Infof("stopping")
-	})
-	graceful.PostHook(func() {
-		logger.Infof("stopped")
-	})
-	defer graceful.Wait()
-
-	errorChan := make(chan error, len(server.Connectors))
+	defer logger.Infof("stopped")
+	errorChan := make(chan error, len(server.connectors))
 	defer close(errorChan)
 
 	wg := sync.WaitGroup{}
 	defer wg.Wait()
 
-	for _, connector := range server.Connectors {
-		logger.Infof("listening %s", connector.Addr)
+	for _, s := range server.connectors {
+		logger.Infof("listening %s", s.Server.Addr)
 		wg.Add(1)
-		go func(c *Connector) {
+		go func(s *graceful.Server) {
 			defer wg.Done()
-			errorChan <- c.Listen()
-		}(connector)
+			if s.Server.TLSConfig == nil {
+				errorChan <- s.ListenAndServe()
+			} else {
+				errorChan <- s.ListenAndServeTLSConfig(s.Server.TLSConfig)
+			}
+		}(s)
 	}
-	for _ = range server.Connectors {
+	for _ = range server.connectors {
 		select {
 		case err := <-errorChan:
 			if err != nil {
-				// FIXME: if ShutdownNow is called before connector.Listen, that listener
-				// will not be notified to close gracefully.
-				go graceful.ShutdownNow()
+				server.Stop()
 				return err
 			}
 		}
@@ -108,17 +81,50 @@ func (server *Server) Start() error {
 
 // Stop stops all running connectors of the server.
 func (server *Server) Stop() error {
-	graceful.Shutdown()
-	graceful.Wait()
+	for _, s := range server.connectors {
+		s.Stop(60 * time.Second)
+	}
 	return nil
 }
 
 // addConnectors adds a new connector to the server.
-func (server *Server) addConnectors(handler http.Handler, connectors []Connector) {
+func (server *Server) addConnectors(handler http.Handler, connectors []Connector) error {
 	for i := range connectors {
-		connectors[i].SetHandler(handler)
-		server.Connectors = append(server.Connectors, &connectors[i])
+		s, err := newHTTPServer(handler, &connectors[i])
+		if err != nil {
+			return err
+		}
+		gracefulServer := &graceful.Server{
+			Server:  s,
+			LogFunc: logger.Debugf,
+		}
+		server.connectors = append(server.connectors, gracefulServer)
 	}
+	return nil
+}
+
+func newHTTPServer(handler http.Handler, c *Connector) (*http.Server, error) {
+	httpServer := &http.Server{
+		Addr:    c.Addr,
+		Handler: handler,
+	}
+	switch c.Type {
+	case "", "http":
+		// Nothing to do
+	case "https":
+		cert, err := tls.LoadX509KeyPair(c.CertFile, c.KeyFile)
+		if err != nil {
+			return nil, err
+		}
+		httpServer.TLSConfig = &tls.Config{
+			MinVersion:   tls.VersionTLS12,
+			Certificates: []tls.Certificate{cert},
+			NextProtos:   []string{"h2"},
+		}
+	default:
+		return nil, fmt.Errorf("unsupported connector type: %v", c.Type)
+	}
+	return httpServer, nil
 }
 
 // Factory is an union of DefaultFactory and SimpleFactory.

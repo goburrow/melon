@@ -49,7 +49,13 @@ func (factory *DefaultFactory) Build(env *core.Environment) (core.Server, error)
 	}
 
 	server := NewServer()
-	server.addConnectors(appHandler, factory.ApplicationConnectors)
+	err = server.addConnectors(appHandler, factory.ApplicationConnectors)
+	if err != nil {
+		return nil, err
+	}
 	server.addConnectors(adminHandler, factory.AdminConnectors)
+	if err != nil {
+		return nil, err
+	}
 	return server, nil
 }

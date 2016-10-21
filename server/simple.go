@@ -49,10 +49,14 @@ func (factory *SimpleFactory) buildServer(env *core.Environment, handlers ...*ro
 		handler.Handle("*", h.PathPrefix(), http.RedirectHandler(h.PathPrefix()+"/", http.StatusMovedPermanently))
 	}
 	// Default filters are only needed in the root handler.
-	if err := factory.commonFactory.AddFilters(env, handler); err != nil {
+	err := factory.commonFactory.AddFilters(env, handler)
+	if err != nil {
 		return nil, err
 	}
 	server := NewServer()
-	server.addConnectors(handler, []Connector{factory.Connector})
+	err = server.addConnectors(handler, []Connector{factory.Connector})
+	if err != nil {
+		return nil, err
+	}
 	return server, nil
 }
