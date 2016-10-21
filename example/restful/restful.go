@@ -61,7 +61,7 @@ func (s *resource) getUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// listUsers is to demonstrate the usage of views.HanlderFunc.
+// listUsers is to demonstrate the usage of views.HandlerFunc.
 func (s *resource) listUsers(r *http.Request) (interface{}, error) {
 	s.mu.RLock()
 	list := make([]*User, len(s.users))

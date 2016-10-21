@@ -101,17 +101,6 @@ func (h *resourceHandler) HandleResource(v interface{}) {
 	}
 }
 
-func parseRequestLine(reqLine string) (method string, path string) {
-	idx := strings.Index(reqLine, " ")
-	if idx < 0 {
-		path = reqLine
-	} else {
-		method = reqLine[:idx]
-		path = reqLine[idx+1:]
-	}
-	return
-}
-
 // WithConsumes defines the MIME Types that a resource can accept.
 func WithConsumes(consumes ...string) Option {
 	return func(h *httpHandler) {
@@ -157,7 +146,8 @@ type httpHandler struct {
 	htmlTemplate string
 }
 
-// TODO: migrate to github.com/goji/goji when it supports Go 1.7.
+// ServeHTTP attaches handlerContext to request context. It also checks
+// Content-Type and Accept header to see if requested media type is supported.
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.metricRequests != "" {
 		h.metricRequests.Add()
