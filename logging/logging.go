@@ -12,6 +12,7 @@ import (
 	"github.com/goburrow/melon/core"
 
 	golasync "github.com/goburrow/gol/async"
+	// Package log forwards all std loggers to gol
 	_ "github.com/goburrow/gol/log"
 )
 
@@ -65,6 +66,7 @@ type Factory struct {
 // Factory implements core.LoggingFactory interface.
 var _ core.LoggingFactory = (*Factory)(nil)
 
+// Configure configures all logging appenders and their level.
 func (factory *Factory) Configure(env *core.Environment) error {
 	var err error
 

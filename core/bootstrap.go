@@ -41,7 +41,7 @@ func (bootstrap *Bootstrap) AddCommand(command Command) {
 	bootstrap.commands = append(bootstrap.commands, command)
 }
 
-// run runs all registered bundles
+// Run runs all registered bundles
 func (bootstrap *Bootstrap) Run(configuration interface{}, environment *Environment) error {
 	for _, bundle := range bootstrap.bundles {
 		if err := bundle.Run(configuration, environment); err != nil {

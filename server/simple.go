@@ -29,6 +29,7 @@ func newSimpleFactory() *SimpleFactory {
 
 var _ core.ServerFactory = (*SimpleFactory)(nil)
 
+// Build creates a new server listening on single port for both application and admin.
 func (factory *SimpleFactory) Build(env *core.Environment) (core.Server, error) {
 	// Both application and admin share same handler
 	appHandler := router.New(router.WithPathPrefix(factory.ApplicationContextPath))

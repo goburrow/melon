@@ -36,7 +36,7 @@ func TestPreflight(t *testing.T) {
 		t.Fatal(err)
 	}
 	if 200 != rsp.StatusCode {
-		t.Fatal("unexpected status code: %d", rsp.StatusCode)
+		t.Fatalf("unexpected status code: %d", rsp.StatusCode)
 	}
 	assertHeader(t, rsp.Header, "Access-Control-Allow-Origin", "*")
 	assertHeader(t, rsp.Header, "Access-Control-Allow-Methods", "GET, HEAD, POST")

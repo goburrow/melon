@@ -1,5 +1,6 @@
 package core
 
+// Configuration defines the interface of application configuration.
 type Configuration interface {
 	ServerFactory() ServerFactory
 	LoggingFactory() LoggingFactory

@@ -11,6 +11,7 @@ type Managed interface {
 	Stop() error
 }
 
+// LifecycleEnvironment is an environment context to manage Managed objects.
 type LifecycleEnvironment struct {
 	managedObjects []Managed
 }

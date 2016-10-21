@@ -1,3 +1,4 @@
+// Package gzip provides gzip support for melon server.
 package gzip
 
 import (

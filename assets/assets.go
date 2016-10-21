@@ -25,6 +25,7 @@ func NewBundle(dir, urlPath string) *Bundle {
 	}
 }
 
+// Initialize does not do anything.
 func (bundle *Bundle) Initialize(bootstrap *core.Bootstrap) {
 	// Do nothing
 }

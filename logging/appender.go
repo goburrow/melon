@@ -87,6 +87,7 @@ type ConsoleAppenderFactory struct {
 	Target string
 }
 
+// Build returns logging appender from given Target.
 func (factory *ConsoleAppenderFactory) Build(environment *core.Environment) (gol.Appender, error) {
 	var writer io.Writer
 	// TODO: Mutex wrapper for os.Stdout and os.Stderr
@@ -114,6 +115,7 @@ type FileAppenderFactory struct {
 	ArchivedFileCount          int
 }
 
+// Build returns file logging appender.
 func (factory *FileAppenderFactory) Build(environment *core.Environment) (gol.Appender, error) {
 	fa := golfile.NewAppender(factory.CurrentLogFilename)
 	if factory.Archive {
@@ -150,6 +152,7 @@ type SyslogAppenderFactory struct {
 	Facility string
 }
 
+// Build returns syslog appender.
 func (factory *SyslogAppenderFactory) Build(environment *core.Environment) (gol.Appender, error) {
 	sa := golsyslog.NewAppender()
 	sa.Network = factory.Network

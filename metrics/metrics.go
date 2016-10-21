@@ -7,6 +7,7 @@ import (
 	"expvar"
 	"net/http"
 
+	// Package metrics registers metrics to expvar
 	_ "github.com/codahale/metrics"
 	_ "github.com/codahale/metrics/runtime"
 	"github.com/goburrow/melon/core"
@@ -36,8 +37,7 @@ func (*metricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	val := expvar.Get(metricsVar)
 	if val == nil {
-		w.WriteHeader(http.StatusNotImplemented)
-		w.Write([]byte("No metrics."))
+		http.Error(w, "No metrics.", http.StatusNotImplemented)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -51,6 +51,7 @@ type Factory struct {
 
 var _ core.MetricsFactory = (*Factory)(nil)
 
+// Configure registers metrics handler to admin environment.
 func (factory *Factory) Configure(env *core.Environment) error {
 	env.Admin.AddHandler(&metricsHandler{})
 	// TODO: configure frequency in metrics.

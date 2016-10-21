@@ -37,12 +37,14 @@ type eventListener interface {
 	onStopped()
 }
 
+// SetStarting calls onStarting of all registered event listeners.
 func (env *Environment) SetStarting() {
 	for i := range env.eventListeners {
 		env.eventListeners[i].onStarting()
 	}
 }
 
+// SetStopped calls onStopped of all registered event listeners in descending order.
 func (env *Environment) SetStopped() {
 	for i := len(env.eventListeners) - 1; i >= 0; i-- {
 		env.eventListeners[i].onStopped()

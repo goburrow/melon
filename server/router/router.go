@@ -63,6 +63,7 @@ func (h *Router) PathPrefix() string {
 	return h.pathPrefix
 }
 
+// Endpoints returns all registered endpoints.
 func (h *Router) Endpoints() []string {
 	return h.endpoints
 }

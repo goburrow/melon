@@ -26,10 +26,12 @@ const (
 // For testing
 var now = time.Now
 
+// Filter is a middleware which logs all requests in Common Log Format.
 type Filter struct {
 	writer io.Writer
 }
 
+// NewFilter returns a new Filter writing to given writer.
 func NewFilter(writer io.Writer) *Filter {
 	return &Filter{writer: writer}
 }

@@ -68,4 +68,4 @@ INFO  [2015-02-04T12:00:01.290+10:00] melon/server: listening :8081
 ```
 
 ## Contributing
-The project still lacks of coffee and swears. Comments, issues and pull requests are welcome.
+Comments, issues and pull requests are always welcome.

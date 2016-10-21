@@ -42,6 +42,7 @@ type AdminHandler interface {
 	http.Handler
 }
 
+// AdminEnvironment is an environment context for administrating the application.
 type AdminEnvironment struct {
 	Router       Router
 	HealthChecks health.Registry
@@ -50,6 +51,7 @@ type AdminEnvironment struct {
 	tasks    []Task
 }
 
+// NewAdminEnvironment allocates and returns a new AdminEnvironment.
 func NewAdminEnvironment() *AdminEnvironment {
 	env := &AdminEnvironment{
 		HealthChecks: health.NewRegistry(),

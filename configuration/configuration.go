@@ -21,7 +21,7 @@ type Factory struct {
 	Configuration interface{}
 }
 
-// BuildConfiguration parse config file and returns the factory configuration.
+// Build parses configuration file and returns the factory configuration.
 func (factory *Factory) Build(bootstrap *core.Bootstrap) (interface{}, error) {
 	if len(bootstrap.Arguments) < 2 {
 		logger.Errorf("configuration file is not specified in command arguments: %v", bootstrap.Arguments)

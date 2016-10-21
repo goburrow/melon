@@ -132,6 +132,7 @@ type Factory struct {
 	dynamic.Type
 }
 
+// Build returns a server based on type which is either DefaultServer or SimpleServer.
 func (factory *Factory) Build(environment *core.Environment) (core.Server, error) {
 	if f, ok := factory.Value().(core.ServerFactory); ok {
 		return f.Build(environment)

@@ -29,6 +29,7 @@ func NewResource(method, path string, handler http.Handler, options ...Option) *
 	}
 }
 
+// Option add options to HTTP handlers.
 type Option func(h *httpHandler)
 
 // Bundle adds support for resources in views package, which are
@@ -44,6 +45,7 @@ func NewBundle(providers ...Provider) *Bundle {
 	}
 }
 
+// Initialize does nothing.
 func (u *Bundle) Initialize(b *core.Bootstrap) {
 }
 

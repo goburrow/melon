@@ -27,6 +27,7 @@ func NewBundle() *Bundle {
 	return &Bundle{}
 }
 
+// Initialize does nothing.
 func (b *Bundle) Initialize(bootstrap *core.Bootstrap) {
 }
 
