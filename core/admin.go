@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/goburrow/health"
+	"github.com/goburrow/melon/health"
 )
 
 const (

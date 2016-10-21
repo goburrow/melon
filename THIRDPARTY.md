@@ -2,7 +2,6 @@
 - https://github.com/ghodss/yaml
 - https://github.com/goburrow/dynamic
 - https://github.com/goburrow/gol
-- https://github.com/goburrow/health
 - https://github.com/goburrow/validator
 - https://github.com/gorilla/mux
 - https://github.com/tylerb/graceful
