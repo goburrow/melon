@@ -52,104 +52,107 @@ func ResultUnhealthy(message string, cause error) Result {
 	}
 }
 
-// HealthCheck is a health check for a component of your application.
-type HealthCheck interface {
+// Checker is a health check for a component of your application.
+type Checker interface {
 	// Check performs a check of the component.
 	Check() Result
 }
 
-type HealthCheckFunc func() Result
+// CheckerFunc is an adapter to use function as a Checker.
+type CheckerFunc func() Result
 
-func (f HealthCheckFunc) Check() Result {
+// Check runs checker function.
+func (f CheckerFunc) Check() Result {
 	return f()
 }
 
 // Registry is a registry for health checks.
 type Registry interface {
 	// Register registers an application health check.
-	Register(name string, healthCheck HealthCheck)
+	Register(name string, healthCheck Checker)
 	// Unregister unregisters an application health check.
 	Unregister(name string)
 	// Names returns name of all registered health checks.
 	Names() []string
-	// RunHealthCheck runs the health check with the given name.
-	RunHealthCheck(name string) Result
-	// RunHealthChecks runs the registered health checks and returns a map of the results.
-	RunHealthChecks() map[string]Result
+	// RunChecker runs the health check with the given name.
+	RunChecker(name string) Result
+	// RunCheckers runs the registered health checks and returns a map of the results.
+	RunCheckers() map[string]Result
 }
 
-// DefaultRegistry implements Registry interface.
-// This is made public so that user can extend and create a thread-safe or asynchronous version.
-type DefaultRegistry struct {
-	mu           sync.Mutex
-	healthChecks map[string]HealthCheck
+// defaultRegistry implements Registry interface.
+type defaultRegistry struct {
+	mu       sync.Mutex
+	checkers map[string]Checker
 }
 
 // NewRegistry creates a new health check registry.
 func NewRegistry() Registry {
-	return &DefaultRegistry{
-		healthChecks: make(map[string]HealthCheck),
+	return &defaultRegistry{
+		checkers: make(map[string]Checker),
 	}
 }
 
 // Register registers an application health check.
-func (registry *DefaultRegistry) Register(name string, healthCheck HealthCheck) {
+func (registry *defaultRegistry) Register(name string, healthCheck Checker) {
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
 
-	registry.healthChecks[name] = healthCheck
+	registry.checkers[name] = healthCheck
 }
 
 // Unregister unregisters an application health check.
-func (registry *DefaultRegistry) Unregister(name string) {
+func (registry *defaultRegistry) Unregister(name string) {
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
 
-	delete(registry.healthChecks, name)
+	delete(registry.checkers, name)
 }
 
 // Names returns name of all registered health checks.
-func (registry *DefaultRegistry) Names() []string {
+func (registry *defaultRegistry) Names() []string {
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
 
-	names := make([]string, 0, len(registry.healthChecks))
-	for name, _ := range registry.healthChecks {
+	names := make([]string, 0, len(registry.checkers))
+	for name := range registry.checkers {
 		names = append(names, name)
 	}
 	return names
 }
 
-// RunHealthCheck runs the health check with the given name.
-func (registry *DefaultRegistry) RunHealthCheck(name string) Result {
+// RunChecker runs the health check with the given name.
+func (registry *defaultRegistry) RunChecker(name string) Result {
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
 
-	health, ok := registry.healthChecks[name]
+	health, ok := registry.checkers[name]
 	if !ok {
 		return ResultUnhealthy("healthcheck: "+name+" not found", nil)
 	}
 	return health.Check()
 }
 
-// namedResult wraps result and name of health check
-type namedResult struct {
+// checkerResult wraps result and name of health check
+type checkerResult struct {
 	name   string
 	result Result
 }
 
-// RunHealthChecks runs all the registered health checks.
-func (registry *DefaultRegistry) RunHealthChecks() map[string]Result {
+// RunCheckers runs all the registered health checks.
+func (registry *defaultRegistry) RunCheckers() map[string]Result {
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
 
-	resultChan := make(chan *namedResult)
-	for name, healthCheck := range registry.healthChecks {
-		go runHealthCheck(resultChan, name, healthCheck)
+	resultChan := make(chan checkerResult)
+	defer close(resultChan)
+
+	for name, checker := range registry.checkers {
+		go runChecker(resultChan, name, checker)
 	}
 
-	results := make(map[string]Result, len(registry.healthChecks))
-	for i := len(registry.healthChecks); i > 0; i-- {
+	results := make(map[string]Result, len(registry.checkers))
+	for i := len(registry.checkers); i > 0; i-- {
 		select {
 		case r := <-resultChan:
 			results[r.name] = r.result
@@ -158,8 +161,8 @@ func (registry *DefaultRegistry) RunHealthChecks() map[string]Result {
 	return results
 }
 
-func runHealthCheck(c chan *namedResult, name string, health HealthCheck) {
-	r := &namedResult{name: name}
+func runChecker(c chan checkerResult, name string, checker Checker) {
+	r := checkerResult{name: name}
 	defer func() {
 		if v := recover(); v != nil {
 			if err, ok := v.(error); ok {
@@ -172,5 +175,5 @@ func runHealthCheck(c chan *namedResult, name string, health HealthCheck) {
 		}
 		c <- r
 	}()
-	r.result = health.Check()
+	r.result = checker.Check()
 }

@@ -154,7 +154,7 @@ func (handler *healthCheckHandler) Path() string {
 func (handler *healthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "must-revalidate,no-cache,no-store")
 
-	results := handler.registry.RunHealthChecks()
+	results := handler.registry.RunCheckers()
 	if len(results) == 0 {
 		http.Error(w, "No health checks registered.", http.StatusNotImplemented)
 		return

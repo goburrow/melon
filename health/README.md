@@ -34,7 +34,7 @@ func main() {
 	registry.Register("Component 1", component1)
 	registry.Register("Component 2", component2)
 
-	results := registry.RunHealthChecks()
+	results := registry.RunCheckers()
 	for name, result := range results {
 		fmt.Printf("%v: %+v\n", name, result)
 	}

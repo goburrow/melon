@@ -48,16 +48,16 @@ func (s *panicHealthCheck) Check() Result {
 }
 
 func TestRegister(t *testing.T) {
-	registry := NewRegistry().(*DefaultRegistry)
+	registry := NewRegistry().(*defaultRegistry)
 	registry.Register("1", &stubHealthCheck{healthy: true})
 
-	assertEquals(t, 1, len(registry.healthChecks))
+	assertEquals(t, 1, len(registry.checkers))
 	registry.Register("2", &stubHealthCheck{healthy: true})
-	assertEquals(t, 2, len(registry.healthChecks))
+	assertEquals(t, 2, len(registry.checkers))
 	registry.Unregister("3")
-	assertEquals(t, 2, len(registry.healthChecks))
+	assertEquals(t, 2, len(registry.checkers))
 	registry.Unregister("1")
-	assertEquals(t, 1, len(registry.healthChecks))
+	assertEquals(t, 1, len(registry.checkers))
 }
 
 func TestHealthy(t *testing.T) {
@@ -65,7 +65,7 @@ func TestHealthy(t *testing.T) {
 
 	health := &stubHealthCheck{healthy: true}
 	registry.Register("Component 1", health)
-	result := registry.RunHealthCheck("Component 1")
+	result := registry.RunChecker("Component 1")
 	assertEquals(t, true, result.Healthy())
 	assertEquals(t, "healthy", result.Message())
 }
@@ -75,7 +75,7 @@ func TestUnhealthy(t *testing.T) {
 
 	health := &stubHealthCheck{healthy: false}
 	registry.Register("Component 1", health)
-	result := registry.RunHealthCheck("Component 1")
+	result := registry.RunChecker("Component 1")
 	assertEquals(t, false, result.Healthy())
 	assertEquals(t, "unhealthy", result.Message())
 }
@@ -86,7 +86,7 @@ func TestMultipleHealthChecks(t *testing.T) {
 	registry.Register("Component 1", &stubHealthCheck{healthy: false})
 	registry.Register("Component 2", &stubHealthCheck{healthy: true})
 	registry.Register("Component 3", &stubHealthCheck{healthy: false})
-	results := registry.RunHealthChecks()
+	results := registry.RunCheckers()
 	assertEquals(t, 3, len(results))
 	assertEquals(t, false, results["Component 1"].Healthy())
 	assertEquals(t, true, results["Component 2"].Healthy())
@@ -110,16 +110,16 @@ func TestNames(t *testing.T) {
 func TestRecover(t *testing.T) {
 	registry := NewRegistry()
 	registry.Register("1", &stubHealthCheck{healthy: false})
-	registry.Register("2", &panicHealthCheck{message: "panic!"})
-	registry.Register("3", &panicHealthCheck{message: errors.New("panic!")})
+	registry.Register("2", &panicHealthCheck{message: "panic"})
+	registry.Register("3", &panicHealthCheck{message: errors.New("error")})
 	registry.Register("4", &stubHealthCheck{healthy: true})
 
-	results := registry.RunHealthChecks()
+	results := registry.RunCheckers()
 	assertEquals(t, 4, len(results))
 	assertEquals(t, false, results["1"].Healthy())
 	assertEquals(t, false, results["2"].Healthy())
-	assertEquals(t, "panic!", results["2"].Message())
+	assertEquals(t, "panic", results["2"].Message())
 	assertEquals(t, false, results["3"].Healthy())
-	assertEquals(t, "panic!", results["3"].Cause().Error())
+	assertEquals(t, "error", results["3"].Cause().Error())
 	assertEquals(t, true, results["4"].Healthy())
 }
