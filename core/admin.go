@@ -154,8 +154,7 @@ func (handler *healthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	results := handler.registry.RunHealthChecks()
 	if len(results) == 0 {
-		w.WriteHeader(http.StatusNotImplemented)
-		w.Write([]byte("No health checks registered."))
+		http.Error(w, "No health checks registered.", http.StatusNotImplemented)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
