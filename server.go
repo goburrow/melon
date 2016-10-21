@@ -13,7 +13,7 @@ const (
 
 // ServerCommand implements Command.
 type ServerCommand struct {
-	EnvironmentCommand
+	environmentCommand
 	Server core.Server
 }
 
@@ -31,7 +31,7 @@ func (command *ServerCommand) Description() string {
 func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 	var err error
 	// Create environment
-	if err = command.EnvironmentCommand.Run(bootstrap); err != nil {
+	if err = command.environmentCommand.Run(bootstrap); err != nil {
 		return err
 	}
 	// Always run Stop() method on managed objects.
@@ -59,7 +59,10 @@ func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
 		logger.Errorf("could not start server: %v", err)
 		return err
 	}
-	command.Server.Stop()
+	err = command.Server.Stop()
+	if err != nil {
+		logger.Warnf("could not stop server: %v", err)
+	}
 	return nil
 }
 
@@ -89,13 +92,13 @@ func readFileContents(file string, maxBytes int) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer f.Close()
 	n := maxBytes
 	if fi, err := f.Stat(); err == nil {
 		if int(fi.Size()) < n {
 			n = int(fi.Size())
 		}
 	}
-	defer f.Close()
 	buf := make([]byte, n)
 	n, err = f.Read(buf)
 	if err != nil {

@@ -14,14 +14,14 @@ type Application struct {
 // Application implements core.Application interface.
 var _ core.Application = (*Application)(nil)
 
-// Initializes the application bootstrap.
+// Initialize initializes the application bootstrap.
 func (app *Application) Initialize(b *core.Bootstrap) {
 	if app.InitializeFunc != nil {
 		app.InitializeFunc(b)
 	}
 }
 
-// When the application runs, this is called after the Bundles are run.
+// Run is called after executing of all registered Bundle.Run.
 // Override it to add handlers, tasks, etc. for your application.
 func (app *Application) Run(config interface{}, env *core.Environment) error {
 	if app.RunFunc != nil {

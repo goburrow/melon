@@ -20,20 +20,23 @@ type Configuration struct {
 // Configuration implements core.Configuration interface.
 var _ core.Configuration = (*Configuration)(nil)
 
+// ServerFactory returns default factory from server package.
 func (c *Configuration) ServerFactory() core.ServerFactory {
 	return &c.Server
 }
 
+// LoggingFactory returns default factory from logging package.
 func (c *Configuration) LoggingFactory() core.LoggingFactory {
 	return &c.Logging
 }
 
+// MetricsFactory returns default factory from metrics package.
 func (c *Configuration) MetricsFactory() core.MetricsFactory {
 	return &c.Metrics
 }
 
-// ConfigurationCommand parses configuration.
-type ConfigurationCommand struct {
+// configurationCommand parses configuration.
+type configurationCommand struct {
 	// Configuration is the original configuration provided by application.
 	Configuration interface{}
 
@@ -41,7 +44,8 @@ type ConfigurationCommand struct {
 	configuration core.Configuration
 }
 
-func (command *ConfigurationCommand) Run(bootstrap *core.Bootstrap) error {
+// Run loads and validates configuration provided by ConfigurationFactory in bootstrap.
+func (command *configurationCommand) Run(bootstrap *core.Bootstrap) error {
 	var err error
 	if command.Configuration, err = bootstrap.ConfigurationFactory.Build(bootstrap); err != nil {
 		return err
@@ -61,26 +65,30 @@ func (command *ConfigurationCommand) Run(bootstrap *core.Bootstrap) error {
 	return nil
 }
 
+// CheckCommand is a command for validating configuration files.
 type CheckCommand struct {
-	ConfigurationCommand
+	configurationCommand
 }
 
 var _ core.Command = (*CheckCommand)(nil)
 
+// Name returns name of this check command.
 func (c *CheckCommand) Name() string {
 	return "check"
 }
 
+// Description returns description of this check command.
 func (c *CheckCommand) Description() string {
 	return "parses and validates the configuration file"
 }
 
+// Run utilizes underlying configurationCommand to verify configuration file.
 func (c *CheckCommand) Run(bootstrap *core.Bootstrap) error {
-	if err := c.ConfigurationCommand.Run(bootstrap); err != nil {
+	if err := c.configurationCommand.Run(bootstrap); err != nil {
 		return err
 	}
 
-	logger.Debugf("configuration: %+v", c.ConfigurationCommand.Configuration)
+	logger.Debugf("configuration: %+v", c.configurationCommand.Configuration)
 	fmt.Println("Configuration is OK")
 	return nil
 }

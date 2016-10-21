@@ -4,15 +4,16 @@ import (
 	"github.com/goburrow/melon/core"
 )
 
-// EnvironmentCommand creates a new Environment from provided Bootstrap.
-type EnvironmentCommand struct {
-	ConfigurationCommand
+// environmentCommand creates a new Environment from provided Bootstrap.
+type environmentCommand struct {
+	configurationCommand
 	Environment *core.Environment
 }
 
-func (command *EnvironmentCommand) Run(bootstrap *core.Bootstrap) error {
+// Run creates new application Environment.
+func (command *environmentCommand) Run(bootstrap *core.Bootstrap) error {
 	// Parse configuration
-	if err := command.ConfigurationCommand.Run(bootstrap); err != nil {
+	if err := command.configurationCommand.Run(bootstrap); err != nil {
 		return err
 	}
 	// Create environment

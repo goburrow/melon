@@ -23,7 +23,7 @@ func printHelp(bootstrap *core.Bootstrap) {
 func Run(app core.Application, args []string) error {
 	bootstrap := core.NewBootstrap(app)
 	bootstrap.Arguments = args
-	bootstrap.ConfigurationFactory = &configuration.Factory{&Configuration{}}
+	bootstrap.ConfigurationFactory = &configuration.Factory{Configuration: &Configuration{}}
 	bootstrap.ValidatorFactory = &validation.Factory{}
 
 	// Register default server commands
