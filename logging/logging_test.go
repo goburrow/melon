@@ -4,7 +4,11 @@ import (
 	"testing"
 
 	"github.com/goburrow/gol"
+	"github.com/goburrow/melon/core"
 )
+
+// Factory implements core.LoggingFactory interface.
+var _ core.LoggingFactory = (*Factory)(nil)
 
 func TestGetLogLevel(t *testing.T) {
 	level, ok := getLogLevel("ALL")

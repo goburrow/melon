@@ -1,67 +1,67 @@
 /*
-Package configuration provides JSON and YAML support for Melon configuration.
+Package configuration provides JSON file support for application configuration.
 */
 package configuration
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/ghodss/yaml"
 	"github.com/goburrow/melon/core"
 )
 
 // Factory implements melon.ConfigurationFactory interface.
 type Factory struct {
-	// Configuration is the type/pointer of application configuration.
-	Configuration interface{}
+	// ref is the type/pointer of application configuration.
+	ref      interface{}
+	decoders map[string]func(io.Reader, interface{}) error
 }
 
-// Build parses configuration file and returns the factory configuration.
-func (factory *Factory) Build(bootstrap *core.Bootstrap) (interface{}, error) {
+// NewFactory creates a new core.ConfigurationFactory with given pointer to
+// configuration object.
+func NewFactory(ref interface{}) *Factory {
+	f := &Factory{
+		ref:      ref,
+		decoders: make(map[string]func(io.Reader, interface{}) error),
+	}
+	f.decoders[".js"] = unmarshalJSON
+	f.decoders[".json"] = unmarshalJSON
+	return f
+}
+
+func (f *Factory) SetDecoder(ext string, decode func(io.Reader, interface{}) error) {
+	f.decoders[ext] = decode
+}
+
+// BuildConfiguration parses configuration file and returns the factory configuration.
+func (f *Factory) BuildConfiguration(bootstrap *core.Bootstrap) (interface{}, error) {
 	if len(bootstrap.Arguments) < 2 {
-		logger.Errorf("configuration file is not specified in command arguments: %v", bootstrap.Arguments)
-		return nil, errors.New("configuration: no file specified")
+		return nil, fmt.Errorf("configuration: no file specified in command arguments")
 	}
-	if err := unmarshal(bootstrap.Arguments[1], factory.Configuration); err != nil {
-		logger.Errorf("%v", err)
-		return nil, err
+	if err := f.unmarshal(bootstrap.Arguments[1], f.ref); err != nil {
+		return nil, fmt.Errorf("configuration: %v", err)
 	}
-	return factory.Configuration, nil
+	return f.ref, nil
 }
 
 // unmarshal decodes the given file to output type.
-func unmarshal(path string, output interface{}) error {
-	f, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
+func (f *Factory) unmarshal(path string, output interface{}) error {
 	ext := filepath.Ext(path)
-	switch ext {
-	case ".json", ".js":
-		return unmarshalJSON(f, output)
-	case ".yaml", ".yml":
-		return unmarshalYAML(f, output)
-	default:
-		return fmt.Errorf("configuration: unsupported file type %s", ext)
+	decoder := f.decoders[ext]
+	if decoder == nil {
+		return fmt.Errorf("unsupported file extention %s", ext)
 	}
-}
-
-func unmarshalJSON(f *os.File, output interface{}) error {
-	decoder := json.NewDecoder(f)
-	return decoder.Decode(output)
-}
-
-func unmarshalYAML(f *os.File, output interface{}) error {
-	content, err := ioutil.ReadAll(f)
+	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal(content, output)
+	defer file.Close()
+	return decoder(file, output)
+}
+
+func unmarshalJSON(r io.Reader, output interface{}) error {
+	return json.NewDecoder(r).Decode(output)
 }

@@ -6,37 +6,39 @@ package assets
 import (
 	"net/http"
 
+	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 )
 
-// Bundle serves static asset files.
-// It implements core.Bundle interface
-type Bundle struct {
+// bundle serves static asset files.
+// it implements core.Bundle interface
+type bundle struct {
 	dir     string
 	urlPath string
 }
 
 // NewBundle allocates and returns a new Bundle.
 // urlPath must always start with "/".
-func NewBundle(dir, urlPath string) *Bundle {
-	return &Bundle{
+func NewBundle(dir, urlPath string) core.Bundle {
+	return &bundle{
 		dir:     dir,
 		urlPath: urlPath,
 	}
 }
 
 // Initialize does not do anything.
-func (bundle *Bundle) Initialize(bootstrap *core.Bootstrap) {
+func (b *bundle) Initialize(bootstrap *core.Bootstrap) {
 	// Do nothing
 }
 
 // Run registers current Bundle to the server in the given environment.
-func (bundle *Bundle) Run(_ interface{}, env *core.Environment) error {
-	logger.Infof("registering AssetsBundle for path %s", bundle.urlPath)
+func (b *bundle) Run(_ interface{}, env *core.Environment) error {
+	logger := gol.GetLogger("melon/assets")
+	logger.Infof("registering AssetsBundle for path %s", b.urlPath)
 
 	// Add slashes if necessary
-	p := addSlashes(bundle.urlPath)
-	handler := http.FileServer(http.Dir(bundle.dir))
+	p := addSlashes(b.urlPath)
+	handler := http.FileServer(http.Dir(b.dir))
 	// Strip path prefix if needed
 	if p != "/" {
 		handler = http.StripPrefix(p, handler)

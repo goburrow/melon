@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/server/filter"
 )
 
@@ -80,6 +81,7 @@ func NewFilter(authenticator Authenticator, options ...Option) *Filter {
 func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p, err := f.authenticator.Authenticate(r)
 	if err != nil {
+		logger := gol.GetLogger("melon/auth")
 		logger.Errorf("authenticate error: %v", err)
 		// TODO: error handler
 		http.Error(w, err.Error(), http.StatusInternalServerError)

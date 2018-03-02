@@ -73,8 +73,8 @@ func (env *AdminEnvironment) AddHandler(handler ...AdminHandler) {
 	env.handlers = append(env.handlers, handler...)
 }
 
-// onStarting registers all required HTTP handlers
-func (env *AdminEnvironment) onStarting() {
+// start registers all required HTTP handlers
+func (env *AdminEnvironment) start() {
 	env.Router.Handle("GET", "/", &adminIndex{
 		handlers:    env.handlers,
 		contextPath: env.Router.PathPrefix(),
@@ -90,9 +90,6 @@ func (env *AdminEnvironment) onStarting() {
 	}
 	env.logTasks()
 	env.logHealthChecks()
-}
-
-func (env *AdminEnvironment) onStopped() {
 }
 
 // logTasks prints all registered tasks to the log
@@ -115,6 +112,12 @@ func (env *AdminEnvironment) logHealthChecks() {
 		logger.Warnf(noHealthChecksWarning)
 	}
 	logger.Debugf("health checks = %v", names)
+}
+
+// Task is simply a HTTP Handler.
+type Task interface {
+	Name() string
+	http.Handler
 }
 
 // adminIndex is the home page of admin.

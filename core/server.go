@@ -6,11 +6,9 @@ import (
 	"net/http"
 )
 
-// Server is a managed HTTP server handling incoming connections to both application and admin.
-// A server can have multiple connectors (listeners on different ports) sharing
-// one ServerHandler.
-type Server interface {
-	Managed
+// ResourceHandler handles the given HTTP resources.
+type ResourceHandler interface {
+	HandleResource(interface{})
 }
 
 // Router allows users to register a http.Handler.
@@ -25,7 +23,7 @@ type Router interface {
 
 // ServerFactory builds Server with given configuration and environment.
 type ServerFactory interface {
-	Build(environment *Environment) (Server, error)
+	BuildServer(environment *Environment) (Managed, error)
 }
 
 // ServerEnvironment contains handlers for server and resources.
@@ -55,15 +53,12 @@ func (env *ServerEnvironment) AddResourceHandler(handler ...ResourceHandler) {
 	env.resourceHandlers = append(env.resourceHandlers, handler...)
 }
 
-func (env *ServerEnvironment) onStarting() {
+func (env *ServerEnvironment) start() {
 	for _, component := range env.components {
 		env.handle(component)
 	}
 	env.logResources()
 	env.logEndpoints()
-}
-
-func (env *ServerEnvironment) onStopped() {
 }
 
 func (env *ServerEnvironment) handle(component interface{}) {

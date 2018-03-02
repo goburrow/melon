@@ -8,22 +8,19 @@ import (
 	"github.com/goburrow/validator"
 )
 
-// Factory is a validator builder.
-type Factory struct {
+// factory is a validator builder.
+type factory struct {
 	validator *validator.Validator
 }
 
-var _ core.ValidatorFactory = (*Factory)(nil)
-
-// Initialize creates a new default validator.
-func (f *Factory) Initialize() {
-	f.validator = validator.Default()
+// NewFactory creates a new ValidatorFactory.
+func NewFactory() core.ValidatorFactory {
+	return &factory{
+		validator: validator.Default(),
+	}
 }
 
 // Validator returns validator of this factory.
-func (f *Factory) Validator() core.Validator {
-	if f.validator == nil {
-		f.Initialize()
-	}
-	return f.validator
+func (f *factory) BuildValidator(bootstrap *core.Bootstrap) (core.Validator, error) {
+	return f.validator, nil
 }

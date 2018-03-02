@@ -37,58 +37,55 @@ func (c *Configuration) MetricsFactory() core.MetricsFactory {
 
 // configurationCommand parses configuration.
 type configurationCommand struct {
-	// Configuration is the original configuration provided by application.
-	Configuration interface{}
-
-	// configuration is the interface used internally.
-	configuration core.Configuration
+	// validator is created by bootstrap.ValidatorFactory.
+	validator core.Validator
+	// configuration is created by bootstrap.ConfigurationFactory.
+	configuration interface{}
 }
 
 // Run loads and validates configuration provided by ConfigurationFactory in bootstrap.
 func (command *configurationCommand) Run(bootstrap *core.Bootstrap) error {
 	var err error
-	if command.Configuration, err = bootstrap.ConfigurationFactory.Build(bootstrap); err != nil {
+	command.validator, err = bootstrap.ValidatorFactory.BuildValidator(bootstrap)
+	if err != nil {
 		return err
 	}
-	if err = bootstrap.ValidatorFactory.Validator().Validate(command.Configuration); err != nil {
-		logger.Errorf("configuration is invalid: %v", err)
+	command.configuration, err = bootstrap.ConfigurationFactory.BuildConfiguration(bootstrap)
+	if err != nil {
 		return err
+	}
+	err = command.validator.Validate(command.configuration)
+	if err != nil {
+		return fmt.Errorf("configuration is invalid: %v", err)
 	}
 	// Configuration provided must implement core.Configuration interface.
-	var ok bool
-	if command.configuration, ok = command.Configuration.(core.Configuration); !ok {
-		logger.Errorf(
-			"configuration does not implement core.Configuration interface %[1]v %[1]T",
-			command.Configuration)
-		return fmt.Errorf("configuration: unsupported type %T", command.Configuration)
+	if _, ok := command.configuration.(core.Configuration); !ok {
+		return fmt.Errorf("configuration does not implement core.Configuration interface %[1]v %[1]T", command.configuration)
 	}
 	return nil
 }
 
-// CheckCommand is a command for validating configuration files.
-type CheckCommand struct {
+// checkCommand is a command for validating configuration files.
+type checkCommand struct {
 	configurationCommand
 }
 
-var _ core.Command = (*CheckCommand)(nil)
-
 // Name returns name of this check command.
-func (c *CheckCommand) Name() string {
+func (c *checkCommand) Name() string {
 	return "check"
 }
 
 // Description returns description of this check command.
-func (c *CheckCommand) Description() string {
+func (c *checkCommand) Description() string {
 	return "parses and validates the configuration file"
 }
 
 // Run utilizes underlying configurationCommand to verify configuration file.
-func (c *CheckCommand) Run(bootstrap *core.Bootstrap) error {
+func (c *checkCommand) Run(bootstrap *core.Bootstrap) error {
 	if err := c.configurationCommand.Run(bootstrap); err != nil {
+		fmt.Println(err)
 		return err
 	}
-
-	logger.Debugf("configuration: %+v", c.configurationCommand.Configuration)
-	fmt.Println("Configuration is OK")
+	fmt.Println("configuration is OK")
 	return nil
 }

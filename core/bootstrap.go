@@ -2,7 +2,7 @@ package core
 
 // Bootstrap contains everything required to bootstrap a command
 type Bootstrap struct {
-	Application Application
+	Application Bundle
 	Arguments   []string
 
 	ConfigurationFactory ConfigurationFactory
@@ -10,14 +10,6 @@ type Bootstrap struct {
 
 	bundles  []Bundle
 	commands []Command
-}
-
-// NewBootstrap allocates and returns a new Bootstrap.
-func NewBootstrap(app Application) *Bootstrap {
-	bootstrap := &Bootstrap{
-		Application: app,
-	}
-	return bootstrap
 }
 
 // Bundles returns registered bundles.
@@ -49,4 +41,41 @@ func (bootstrap *Bootstrap) Run(configuration interface{}, environment *Environm
 		}
 	}
 	return nil
+}
+
+// Bundle is a group of functionality.
+type Bundle interface {
+	// Initialize initializes the bundle.
+	Initialize(bootstrap *Bootstrap)
+	// Run runs bundle with the given configuration and environment.
+	Run(configuration interface{}, environment *Environment) error
+}
+
+// Command is a basic CLI command
+type Command interface {
+	Name() string
+	Description() string
+	Run(bootstrap *Bootstrap) error
+}
+
+// Configuration defines the interface of application configuration.
+type Configuration interface {
+	ServerFactory() ServerFactory
+	LoggingFactory() LoggingFactory
+	MetricsFactory() MetricsFactory
+}
+
+// ConfigurationFactory creates a configuration for the application.
+type ConfigurationFactory interface {
+	BuildConfiguration(bootstrap *Bootstrap) (interface{}, error)
+}
+
+// Validator validates objects.
+type Validator interface {
+	Validate(interface{}) error
+}
+
+// ValidatorFactory contains Validator.
+type ValidatorFactory interface {
+	BuildValidator(bootstrap *Bootstrap) (Validator, error)
 }

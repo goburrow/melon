@@ -6,11 +6,13 @@ import (
 	"github.com/goburrow/melon/core"
 )
 
+var _ core.ServerFactory = (*SimpleFactory)(nil)
+
 func TestSimpleFactory(t *testing.T) {
 	env := core.NewEnvironment()
 	factory := &SimpleFactory{}
 
-	s, err := factory.Build(env)
+	s, err := factory.BuildServer(env)
 	if err != nil {
 		t.Fatal(err)
 	}

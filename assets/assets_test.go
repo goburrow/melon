@@ -12,8 +12,6 @@ import (
 	"github.com/goburrow/melon/server/router"
 )
 
-var _ core.Bundle = (*Bundle)(nil)
-
 func TestAssetsBundle(t *testing.T) {
 	dir, err := ioutil.TempDir("", "assets")
 	if err != nil {

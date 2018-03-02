@@ -31,10 +31,8 @@ func newDefaultFactory() *DefaultFactory {
 	}
 }
 
-var _ core.ServerFactory = (*DefaultFactory)(nil)
-
 // Build creates a server listening on diffent ports for application and admin.
-func (factory *DefaultFactory) Build(env *core.Environment) (core.Server, error) {
+func (factory *DefaultFactory) BuildServer(env *core.Environment) (core.Managed, error) {
 	// Application
 	appHandler := router.New()
 	env.Server.Router = appHandler
@@ -49,7 +47,7 @@ func (factory *DefaultFactory) Build(env *core.Environment) (core.Server, error)
 		return nil, err
 	}
 
-	server := NewServer()
+	server := newServer()
 	err = server.addConnectors(appHandler, factory.ApplicationConnectors)
 	if err != nil {
 		return nil, err

@@ -5,8 +5,12 @@ import (
 )
 
 func TestFactory(t *testing.T) {
-	factory := &Factory{}
-	if factory.Validator() == nil {
+	factory := NewFactory()
+	validator, err := factory.BuildValidator(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if validator == nil {
 		t.Fatal("nil validator")
 	}
 }
@@ -23,8 +27,8 @@ type inner2 struct {
 }
 
 func TestValidateSlice(t *testing.T) {
-	factory := &Factory{}
-	validator := factory.Validator()
+	factory := NewFactory()
+	validator, _ := factory.BuildValidator(nil)
 
 	type config struct {
 		X []inner1 `valid:"notempty"`
@@ -45,8 +49,8 @@ func TestValidateSlice(t *testing.T) {
 }
 
 func TestValidateStruct(t *testing.T) {
-	factory := &Factory{}
-	validator := factory.Validator()
+	factory := NewFactory()
+	validator, _ := factory.BuildValidator(nil)
 
 	type config struct {
 		x inner2

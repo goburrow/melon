@@ -5,10 +5,23 @@ import (
 	"os"
 
 	"github.com/goburrow/melon"
+	"github.com/goburrow/melon/configuration/yaml"
 	"github.com/goburrow/melon/core"
 )
 
-func serveHTTP(w http.ResponseWriter, r *http.Request) {
+type app struct{}
+
+func (a *app) Initialize(bootstrap *core.Bootstrap) {
+	// Enable YAML config file support
+	bootstrap.AddBundle(yaml.NewBundle())
+}
+
+func (a *app) Run(conf interface{}, env *core.Environment) error {
+	env.Server.Router.Handle("GET", "/", a)
+	return nil
+}
+
+func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello world"))
 }
 
@@ -23,11 +36,7 @@ func serveHTTP(w http.ResponseWriter, r *http.Request) {
 //   http://localhost:8080/application
 //   http://localhost:8080/admin
 func main() {
-	app := &melon.Application{
-		RunFunc: func(conf interface{}, env *core.Environment) error {
-			env.Server.Router.Handle("GET", "/", http.HandlerFunc(serveHTTP))
-			return nil
-		},
+	if err := melon.Run(&app{}, os.Args[1:]); err != nil {
+		panic(err)
 	}
-	melon.Run(app, os.Args[1:])
 }

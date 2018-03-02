@@ -22,8 +22,6 @@ const (
 type metricsHandler struct {
 }
 
-var _ core.AdminHandler = (*metricsHandler)(nil)
-
 func (handler *metricsHandler) Name() string {
 	return "Metrics"
 }
@@ -49,10 +47,8 @@ type Factory struct {
 	Frequency string
 }
 
-var _ core.MetricsFactory = (*Factory)(nil)
-
 // Configure registers metrics handler to admin environment.
-func (factory *Factory) Configure(env *core.Environment) error {
+func (factory *Factory) ConfigureMetrics(env *core.Environment) error {
 	env.Admin.AddHandler(&metricsHandler{})
 	// TODO: configure frequency in metrics.
 	return nil

@@ -56,6 +56,6 @@ func (a *app) Run(conf interface{}, env *core.Environment) error {
 //  curl -H'Accept: application/json' 'http://localhost:8080'
 func main() {
 	if err := melon.Run(&app{}, os.Args[1:]); err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }

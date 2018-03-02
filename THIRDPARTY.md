@@ -4,4 +4,3 @@
 - https://github.com/goburrow/gol
 - https://github.com/goburrow/validator
 - https://github.com/gorilla/mux
-- https://github.com/tylerb/graceful

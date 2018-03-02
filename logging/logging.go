@@ -63,11 +63,8 @@ type Factory struct {
 	Appenders []AppenderConfiguration
 }
 
-// Factory implements core.LoggingFactory interface.
-var _ core.LoggingFactory = (*Factory)(nil)
-
 // Configure configures all logging appenders and their level.
-func (factory *Factory) Configure(env *core.Environment) error {
+func (factory *Factory) ConfigureLogging(env *core.Environment) error {
 	var err error
 
 	if err = factory.configureLevels(); err != nil {

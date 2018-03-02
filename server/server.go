@@ -4,6 +4,7 @@ Package server provides http server for melon application.
 package server
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/goburrow/dynamic"
 	"github.com/goburrow/melon/core"
-	"github.com/tylerb/graceful"
 )
 
 func init() {
@@ -33,45 +33,43 @@ type Connector struct {
 	KeyFile  string
 }
 
-// Server implements Server interface. Each server can have multiple
+// server implements core.Managed interface. Each server can have multiple
 // connectors (listeners).
-type Server struct {
-	connectors []*graceful.Server
+type server struct {
+	connectors []*http.Server
 }
 
-var _ core.Server = (*Server)(nil)
-
-// NewServer allocates and returns a new Server.
-func NewServer() *Server {
-	return &Server{}
+// newServer allocates and returns a new Server.
+func newServer() *server {
+	return &server{}
 }
 
 // Start starts all connectors of the server.
-func (server *Server) Start() error {
+func (s *server) Start() error {
 	defer logger.Infof("stopped")
-	errorChan := make(chan error, len(server.connectors))
+	errorChan := make(chan error, len(s.connectors))
 	defer close(errorChan)
 
 	wg := sync.WaitGroup{}
 	defer wg.Wait()
 
-	for _, s := range server.connectors {
-		logger.Infof("listening %s", s.Server.Addr)
+	for _, conn := range s.connectors {
 		wg.Add(1)
-		go func(s *graceful.Server) {
+		go func(srv *http.Server) {
+			logger.Infof("listening %s", srv.Addr)
 			defer wg.Done()
-			if s.Server.TLSConfig == nil {
-				errorChan <- s.ListenAndServe()
+			if srv.TLSConfig == nil {
+				errorChan <- srv.ListenAndServe()
 			} else {
-				errorChan <- s.ListenAndServeTLSConfig(s.Server.TLSConfig)
+				errorChan <- srv.ListenAndServeTLS("", "")
 			}
-		}(s)
+		}(conn)
 	}
-	for _ = range server.connectors {
+	for _ = range s.connectors {
 		select {
 		case err := <-errorChan:
 			if err != nil {
-				server.Stop()
+				s.Stop()
 				return err
 			}
 		}
@@ -80,25 +78,22 @@ func (server *Server) Start() error {
 }
 
 // Stop stops all running connectors of the server.
-func (server *Server) Stop() error {
-	for _, s := range server.connectors {
-		s.Stop(60 * time.Second)
+func (s *server) Stop() error {
+	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
+	for _, conn := range s.connectors {
+		conn.Shutdown(ctx)
 	}
 	return nil
 }
 
 // addConnectors adds a new connector to the server.
-func (server *Server) addConnectors(handler http.Handler, connectors []Connector) error {
+func (s *server) addConnectors(handler http.Handler, connectors []Connector) error {
 	for i := range connectors {
-		s, err := newHTTPServer(handler, &connectors[i])
+		srv, err := newHTTPServer(handler, &connectors[i])
 		if err != nil {
 			return err
 		}
-		gracefulServer := &graceful.Server{
-			Server:  s,
-			LogFunc: logger.Debugf,
-		}
-		server.connectors = append(server.connectors, gracefulServer)
+		s.connectors = append(s.connectors, srv)
 	}
 	return nil
 }
@@ -133,9 +128,9 @@ type Factory struct {
 }
 
 // Build returns a server based on type which is either DefaultServer or SimpleServer.
-func (factory *Factory) Build(environment *core.Environment) (core.Server, error) {
+func (factory *Factory) BuildServer(environment *core.Environment) (core.Managed, error) {
 	if f, ok := factory.Value().(core.ServerFactory); ok {
-		return f.Build(environment)
+		return f.BuildServer(environment)
 	}
 	return nil, fmt.Errorf("server: unsupported server %#v", factory.Value())
 }

@@ -71,7 +71,7 @@ func TestFileLogging(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer environment.SetStopped()
+	defer environment.Stop()
 	if appender == nil {
 		t.Fatalf("file appender is not created %#v", factory)
 	}
@@ -99,7 +99,7 @@ func TestFileLoggingArchive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer environment.SetStopped()
+	defer environment.Stop()
 	if appender == nil {
 		t.Fatalf("file appender is not created %#v", factory)
 	}
@@ -116,7 +116,7 @@ func TestSyslogLogging(t *testing.T) {
 		}
 		t.Fatal(err)
 	}
-	defer environment.SetStopped()
+	defer environment.Stop()
 	if appender == nil {
 		t.Fatalf("syslog appender is not created %#v", factory)
 	}

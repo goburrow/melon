@@ -38,12 +38,12 @@ func TestLifecycle(t *testing.T) {
 	lifecycle.Manage(&writerManaged{"1", &buf})
 	lifecycle.Manage(&writerManaged{"2", &buf})
 
-	lifecycle.onStarting()
+	lifecycle.start()
 	if "12" != buf.String() {
 		t.Fatalf("unexpected starting order %s", buf.String())
 	}
 	buf.Reset()
-	lifecycle.onStopped()
+	lifecycle.stop()
 	if "21" != buf.String() {
 		t.Fatalf("unexpected stopping order %s", buf.String())
 	}
@@ -56,7 +56,7 @@ func TestPanicManagedObject(t *testing.T) {
 	lifecycle.Manage(&panicManaged{})
 	lifecycle.Manage(&writerManaged{"2", &buf})
 
-	lifecycle.onStopped()
+	lifecycle.stop()
 	if "21" != buf.String() {
 		t.Fatalf("unexpected stopping order %s", buf.String())
 	}

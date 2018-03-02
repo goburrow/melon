@@ -11,57 +11,81 @@ const (
 	maxBannerSize = 50 * 1024 // 50KB
 )
 
-// ServerCommand implements Command.
-type ServerCommand struct {
-	environmentCommand
-	Server core.Server
+// serverCommand implements Command.
+type serverCommand struct {
+	configurationCommand
 }
 
-// Name returns name of the ServerCommand.
-func (command *ServerCommand) Name() string {
+// Name returns name of the serverCommand.
+func (command *serverCommand) Name() string {
 	return "server"
 }
 
-// Description returns description of the ServerCommand.
-func (command *ServerCommand) Description() string {
+// Description returns description of the serverCommand.
+func (command *serverCommand) Description() string {
 	return "runs the application as an HTTP server"
 }
 
 // Run runs the command with the given bootstrap.
-func (command *ServerCommand) Run(bootstrap *core.Bootstrap) error {
-	var err error
+func (command *serverCommand) Run(bootstrap *core.Bootstrap) error {
+	// Parse configuration
+	err := command.configurationCommand.Run(bootstrap)
+	if err != nil {
+		logger.Errorf("could not run server: %v", err)
+		return err
+	}
 	// Create environment
-	if err = command.environmentCommand.Run(bootstrap); err != nil {
+	environment := core.NewEnvironment()
+	environment.Validator = command.configurationCommand.validator
+	defer environment.Stop()
+	// Config other factories that affect this environment.
+	configuration := command.configurationCommand.configuration.(core.Configuration)
+	err = configuration.LoggingFactory().ConfigureLogging(environment)
+	if err != nil {
+		logger.Errorf("could not run server: %v", err)
+		return err
+	}
+	err = configuration.MetricsFactory().ConfigureMetrics(environment)
+	if err != nil {
+		logger.Errorf("could not run server: %v", err)
 		return err
 	}
 	// Always run Stop() method on managed objects.
-	defer command.Environment.SetStopped()
 	// Build server
-	if command.Server, err = command.configuration.ServerFactory().Build(command.Environment); err != nil {
-		logger.Errorf("could not create server: %v", err)
+	server, err := configuration.ServerFactory().BuildServer(environment)
+	if err != nil {
+		logger.Errorf("could not run server: %v", err)
 		return err
 	}
 	// Now can start everything
 	printBanner(logger)
 	// Run all bundles in bootstrap
-	if err = bootstrap.Run(command.Configuration, command.Environment); err != nil {
+	err = bootstrap.Run(command.configurationCommand.configuration, environment)
+	if err != nil {
 		logger.Errorf("could not run bootstrap: %v", err)
 		return err
 	}
 	// Run application
-	if err = bootstrap.Application.Run(command.Configuration, command.Environment); err != nil {
+	err = bootstrap.Application.Run(command.configurationCommand.configuration, environment)
+	if err != nil {
 		logger.Errorf("could not run application: %v", err)
 		return err
 	}
-	command.Environment.SetStarting()
+	err = environment.Start()
+	if err != nil {
+		logger.Errorf("could not start environment: %v", err)
+		return err
+	}
 	// Start is blocking
-	if err = command.Server.Start(); err != nil {
+	err = server.Start()
+	if err != nil {
 		logger.Errorf("could not start server: %v", err)
 		return err
 	}
-	err = command.Server.Stop()
+	err = server.Stop()
 	if err != nil {
 		logger.Warnf("could not stop server: %v", err)
+		return err
 	}
 	return nil
 }
