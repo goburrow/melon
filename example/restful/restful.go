@@ -32,20 +32,20 @@ type app struct {
 
 // Initialize adds support for RESTful API and debug endpoint in admin page.
 func (a *app) Initialize(b *core.Bootstrap) {
-	a.users = make(map[string]*User)
 	// YAML config file
 	b.AddBundle(yaml.NewBundle())
 	// Support RESTful API
 	b.AddBundle(views.NewBundle(views.NewJSONProvider(), views.NewXMLProvider()))
 	b.AddBundle(debug.NewBundle())
+
+	a.users = make(map[string]*User)
 }
 
 func (a *app) Run(conf interface{}, env *core.Environment) error {
 	env.Server.Register(
-		views.NewResource("POST", "/user", http.HandlerFunc(a.createUser),
-			views.WithTimerMetric("UsersCreate")),
+		views.NewResource("POST", "/user", http.HandlerFunc(a.createUser), views.WithTimerMetric("UserCreate")),
+		views.NewResource("GET", "/user", views.HandlerFunc(a.listUsers), views.WithTimerMetric("UserList")),
 		views.NewResource("GET", "/user/{name}", http.HandlerFunc(a.getUser)),
-		views.NewResource("GET", "/user", views.HandlerFunc(a.listUsers)),
 	)
 	return nil
 }

@@ -11,8 +11,6 @@ import (
 	"github.com/goburrow/melon/server/router"
 )
 
-var _ core.Bundle = (*Bundle)(nil)
-
 func TestBundle(t *testing.T) {
 	env := core.NewEnvironment()
 	handler := router.New()

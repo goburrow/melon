@@ -5,7 +5,6 @@ import (
 
 	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/logging"
-	slogging "github.com/goburrow/melon/server/logging"
 	"github.com/goburrow/melon/server/router"
 )
 
@@ -35,9 +34,7 @@ func TestRequestLogConfiguration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	switch filter.(type) {
-	case *slogging.Filter:
-	default:
+	if filter == nil {
 		t.Fatalf("unexpected filter %#v", filter)
 	}
 }

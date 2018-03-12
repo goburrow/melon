@@ -26,17 +26,17 @@ const (
 // For testing
 var now = time.Now
 
-// Filter is a middleware which logs all requests in Common Log Format.
-type Filter struct {
+// logFilter is a middleware which logs all requests in Common Log Format.
+type logFilter struct {
 	writer io.Writer
 }
 
-// NewFilter returns a new Filter writing to given writer.
-func NewFilter(writer io.Writer) *Filter {
-	return &Filter{writer: writer}
+// NewFilter returns a new Filter logging all HTTP requests in Common Log Format to given writer.
+func NewFilter(writer io.Writer) filter.Filter {
+	return &logFilter{writer: writer}
 }
 
-func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (f *logFilter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	responseWriter := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 
 	start := now()

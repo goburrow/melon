@@ -10,6 +10,7 @@ import (
 	"runtime"
 
 	"github.com/codahale/metrics"
+	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/server/filter"
 )
 
@@ -18,22 +19,23 @@ const (
 	stackMax  = 50
 )
 
-// Filter handles panics.
-type Filter struct {
+// recoveryFilter handles panics.
+type recoveryFilter struct {
 	panics metrics.Counter
 }
 
-func NewFilter() *Filter {
-	return &Filter{
+// NewFilter returns a Filter whichs recovers and logs panics from HTTP handler.
+func NewFilter() filter.Filter {
+	return &recoveryFilter{
 		panics: metrics.Counter("HTTP.Panics"),
 	}
 }
 
-func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (f *recoveryFilter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
 			f.panics.Add()
-			logger.Errorf("%v\n%s", err, stack())
+			core.GetLogger("melon/server").Errorf("%v\n%s", err, stack())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}()

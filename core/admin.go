@@ -94,24 +94,22 @@ func (env *AdminEnvironment) start() {
 
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logTasks() {
-	if !logger.InfoEnabled() {
-		return
-	}
 	var buf bytes.Buffer
 	for _, task := range env.tasks {
 		fmt.Fprintf(&buf, "    %-7s %s%s/%s (%T)\n", "POST",
 			env.Router.PathPrefix(), tasksPath, task.Name(), task)
 	}
-	logger.Infof("tasks =\n\n%s", buf.String())
+	GetLogger("melon").Infof("tasks =\n\n%s", buf.String())
 }
 
 // logTasks prints all registered tasks to the log
 func (env *AdminEnvironment) logHealthChecks() {
 	names := env.HealthChecks.Names()
+	logger := GetLogger("melon")
+	logger.Debugf("health checks = %v", names)
 	if len(names) <= 0 {
 		logger.Warnf(noHealthChecksWarning)
 	}
-	logger.Debugf("health checks = %v", names)
 }
 
 // Task is simply a HTTP Handler.

@@ -6,7 +6,6 @@ package assets
 import (
 	"net/http"
 
-	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 )
 
@@ -17,7 +16,7 @@ type bundle struct {
 	urlPath string
 }
 
-// NewBundle allocates and returns a new Bundle.
+// NewBundle returns a new Bundle serving static asset files.
 // urlPath must always start with "/".
 func NewBundle(dir, urlPath string) core.Bundle {
 	return &bundle{
@@ -33,8 +32,7 @@ func (b *bundle) Initialize(bootstrap *core.Bootstrap) {
 
 // Run registers current Bundle to the server in the given environment.
 func (b *bundle) Run(_ interface{}, env *core.Environment) error {
-	logger := gol.GetLogger("melon/assets")
-	logger.Infof("registering AssetsBundle for path %s", b.urlPath)
+	core.GetLogger("melon/assets").Infof("registering AssetsBundle for path %s", b.urlPath)
 
 	// Add slashes if necessary
 	p := addSlashes(b.urlPath)

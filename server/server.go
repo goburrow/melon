@@ -46,33 +46,26 @@ func newServer() *server {
 
 // Start starts all connectors of the server.
 func (s *server) Start() error {
-	defer logger.Infof("stopped")
-	errorChan := make(chan error, len(s.connectors))
-	defer close(errorChan)
-
 	wg := sync.WaitGroup{}
 	defer wg.Wait()
 
 	for _, conn := range s.connectors {
 		wg.Add(1)
 		go func(srv *http.Server) {
-			logger.Infof("listening %s", srv.Addr)
 			defer wg.Done()
+			logger().Infof("listening %s", srv.Addr)
+			var err error
 			if srv.TLSConfig == nil {
-				errorChan <- srv.ListenAndServe()
+				err = srv.ListenAndServe()
 			} else {
-				errorChan <- srv.ListenAndServeTLS("", "")
+				err = srv.ListenAndServeTLS("", "")
+			}
+			if err == http.ErrServerClosed {
+				logger().Infof("closed %s", srv.Addr)
+			} else if err != nil {
+				logger().Errorf("could not listen %s: %v", srv.Addr, err)
 			}
 		}(conn)
-	}
-	for _ = range s.connectors {
-		select {
-		case err := <-errorChan:
-			if err != nil {
-				s.Stop()
-				return err
-			}
-		}
 	}
 	return nil
 }
@@ -132,5 +125,9 @@ func (factory *Factory) BuildServer(environment *core.Environment) (core.Managed
 	if f, ok := factory.Value().(core.ServerFactory); ok {
 		return f.BuildServer(environment)
 	}
-	return nil, fmt.Errorf("server: unsupported server %#v", factory.Value())
+	return nil, fmt.Errorf("unsupported server %#v", factory.Value())
+}
+
+func logger() core.Logger {
+	return core.GetLogger("melon/server")
 }

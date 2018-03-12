@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	loggerName      = "melon/logging"
 	asyncBufferSize = 1024
 )
 
@@ -65,16 +64,20 @@ type Factory struct {
 
 // Configure configures all logging appenders and their level.
 func (factory *Factory) ConfigureLogging(env *core.Environment) error {
-	var err error
-
-	if err = factory.configureLevels(); err != nil {
-		logger.Errorf("%v", err)
+	err := factory.configureLevels()
+	if err != nil {
+		core.GetLogger("melon/logging").Errorf("could not configure logging: %v", err)
 		return err
 	}
-	if err = factory.configureAppenders(env); err != nil {
-		logger.Errorf("%v", err)
+	err = factory.configureAppenders(env)
+	if err != nil {
+		core.GetLogger("melon/logging").Errorf("could not configure logging: %v", err)
 		return err
 	}
+	// Overwrite application logger factory
+	core.SetLoggerFactory(func(name string) core.Logger {
+		return gol.GetLogger(name)
+	})
 	env.Admin.AddTask(&logTask{})
 	return nil
 }
@@ -84,7 +87,7 @@ func (factory *Factory) configureLevels() error {
 	if factory.Level != "" {
 		logLevel, ok := getLogLevel(factory.Level)
 		if !ok {
-			return fmt.Errorf("logging: unsupported level %s", factory.Level)
+			return fmt.Errorf("unsupported level %s", factory.Level)
 		}
 		setLogLevel(gol.RootLoggerName, logLevel)
 	}
@@ -92,7 +95,7 @@ func (factory *Factory) configureLevels() error {
 	for k, v := range factory.Loggers {
 		logLevel, ok := getLogLevel(v)
 		if !ok {
-			return fmt.Errorf("logging: unsupported level %s", v)
+			return fmt.Errorf("unsupported level %s", v)
 		}
 		setLogLevel(k, logLevel)
 	}
@@ -111,23 +114,17 @@ func (factory *Factory) configureAppenders(environment *core.Environment) error 
 			}
 			appenders = append(appenders, appender)
 		} else {
-			return fmt.Errorf("logging: unsupported appender %#v", appenderFactory.Value())
+			return fmt.Errorf("unsupported appender %#v", appenderFactory.Value())
 		}
 	}
 	// Override default appender of the root logger
 	if len(appenders) > 0 {
 		logger, ok := gol.GetLogger(gol.RootLoggerName).(*gol.DefaultLogger)
 		if !ok {
-			return fmt.Errorf("logging: logger is not gol.DefaultLogger %T", logger)
+			return fmt.Errorf("logger is not gol.DefaultLogger %T", logger)
 		}
 		a := golasync.NewAppenderWithBufSize(asyncBufferSize, appenders...)
 		a.Start()
 	}
 	return nil
-}
-
-var logger gol.Logger
-
-func init() {
-	logger = gol.GetLogger("melon/logging")
 }

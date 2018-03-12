@@ -69,9 +69,6 @@ func (env *ServerEnvironment) handle(component interface{}) {
 }
 
 func (env *ServerEnvironment) logResources() {
-	if !logger.DebugEnabled() {
-		return
-	}
 	var buf bytes.Buffer
 	for i, component := range env.components {
 		if i > 0 {
@@ -79,16 +76,13 @@ func (env *ServerEnvironment) logResources() {
 		}
 		fmt.Fprintf(&buf, "%T", component)
 	}
-	logger.Debugf("resources = [%v]", buf.String())
+	GetLogger("melon").Debugf("resources = [%v]", buf.String())
 }
 
 func (env *ServerEnvironment) logEndpoints() {
-	if !logger.InfoEnabled() {
-		return
-	}
 	var buf bytes.Buffer
 	for _, e := range env.Router.Endpoints() {
 		fmt.Fprintf(&buf, "    %s\n", e)
 	}
-	logger.Infof("endpoints =\n\n%s", buf.String())
+	GetLogger("melon").Infof("endpoints =\n\n%s", buf.String())
 }

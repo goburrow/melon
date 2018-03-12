@@ -18,21 +18,21 @@ const (
 	expvarPath = "/debug/vars"
 )
 
-// Bundle adds pprof into admin environment.
-type Bundle struct {
+// bundle adds pprof into admin environment.
+type bundle struct {
 }
 
-// NewBundle allocates and returns a new Bundle.
-func NewBundle() *Bundle {
-	return &Bundle{}
+// NewBundle allocates and returns a new debug bundle which will add /debug endpoint to application.
+func NewBundle() core.Bundle {
+	return &bundle{}
 }
 
 // Initialize does nothing.
-func (b *Bundle) Initialize(bootstrap *core.Bootstrap) {
+func (b *bundle) Initialize(bootstrap *core.Bootstrap) {
 }
 
 // Run registers /debug/vars and /debug/pprof/.
-func (b *Bundle) Run(conf interface{}, env *core.Environment) error {
+func (b *bundle) Run(conf interface{}, env *core.Environment) error {
 	env.Admin.AddHandler(&expvarHandler{})
 
 	pprofIndexHandler := &pprofHandler{}

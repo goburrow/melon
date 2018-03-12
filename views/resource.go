@@ -32,25 +32,25 @@ func NewResource(method, path string, handler http.Handler, options ...Option) *
 // Option add options to HTTP handlers.
 type Option func(h *httpHandler)
 
-// Bundle adds support for resources in views package, which are
+// bundle adds support for resources in views package, which are
 // Resource, Provider and ErrorMapper.
-type Bundle struct {
+type bundle struct {
 	providers []Provider
 }
 
 // NewBundle allocates and returns a new Bundle which will register provided providers.
-func NewBundle(providers ...Provider) *Bundle {
-	return &Bundle{
+func NewBundle(providers ...Provider) core.Bundle {
+	return &bundle{
 		providers: providers,
 	}
 }
 
 // Initialize does nothing.
-func (u *Bundle) Initialize(b *core.Bootstrap) {
+func (u *bundle) Initialize(b *core.Bootstrap) {
 }
 
 // Run registers the view handler
-func (u *Bundle) Run(conf interface{}, env *core.Environment) error {
+func (u *bundle) Run(conf interface{}, env *core.Environment) error {
 	handler := newResourceHandler(env)
 	for _, p := range u.providers {
 		env.Server.Register(p)
@@ -291,13 +291,13 @@ func (c *handlerContext) findWriter(w http.ResponseWriter, r *http.Request, data
 func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
 	ctx := fromContext(r.Context())
 	if ctx == nil {
-		logger.Errorf("no handler in request context: %v", r.Context())
+		logger().Errorf("no handler in request context: %v", r.Context())
 		return
 	}
 	writer, contentType := ctx.findWriter(w, r, data)
 	if writer == nil {
 		// FIXME: Hanlde unknown type
-		logger.Warnf("no response writer for %T", data)
+		logger().Warnf("no response writer for %T", data)
 		ctx.handler.errorMapper.MapError(w, r, errInternalServerError)
 		return
 	}
@@ -308,7 +308,7 @@ func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
 	// write data
 	err := writer.WriteResponse(w, r, data)
 	if err != nil {
-		logger.Errorf("response writer: %v", err)
+		logger().Errorf("response writer: %v", err)
 		// FIXME: response might have been written
 		ctx.handler.errorMapper.MapError(w, r, errInternalServerError)
 	}
@@ -318,7 +318,7 @@ func Serve(w http.ResponseWriter, r *http.Request, data interface{}) {
 func Error(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := fromContext(r.Context())
 	if ctx == nil {
-		logger.Errorf("no handler in request context: %v", r.Context())
+		logger().Errorf("no handler in request context: %v", r.Context())
 		return
 	}
 	ctx.handler.errorMapper.MapError(w, r, err)
@@ -329,7 +329,7 @@ func Entity(r *http.Request, v interface{}) error {
 	ctx := fromContext(r.Context())
 	if ctx == nil {
 		// Invalid state
-		logger.Errorf("no handler in request context: %v", r.Context())
+		logger().Errorf("no handler in request context: %v", r.Context())
 		return errInternalServerError
 	}
 	reader := ctx.findReader(r, v)
@@ -376,4 +376,8 @@ func (h HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	Serve(w, r, data)
+}
+
+func logger() core.Logger {
+	return core.GetLogger("melon/views")
 }

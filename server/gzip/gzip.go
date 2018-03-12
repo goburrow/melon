@@ -9,18 +9,19 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/server/filter"
 )
 
-// Filter is a filter which compress http responses using gzip.
-type Filter struct{}
+// gzipFilter is a filter which compress http responses using gzip.
+type gzipFilter struct{}
 
-// NewFilter allocates and returns a new Filter.
-func NewFilter() *Filter {
-	return &Filter{}
+// NewFilter allocates and returns a new Filter which compresses HTTP responses using gzip.
+func NewFilter() filter.Filter {
+	return &gzipFilter{}
 }
 
-func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (f *gzipFilter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ae := r.Header.Get("Accept-Encoding")
 	if ae != "" && strings.Contains(ae, "gzip") {
 		gzWriter := &responseWriter{
@@ -38,14 +39,14 @@ type responseWriter struct {
 
 	gz *gzip.Writer
 
-	wroteHeader bool
+	headerWritten bool
 }
 
 func (w *responseWriter) Write(p []byte) (int, error) {
 	if w.Header().Get("Content-Type") == "" {
 		w.Header().Set("Content-Type", http.DetectContentType(p))
 	}
-	if !w.wroteHeader {
+	if !w.headerWritten {
 		w.WriteHeader(http.StatusOK)
 	}
 	return w.gz.Write(p)
@@ -58,14 +59,14 @@ func (w *responseWriter) WriteHeader(status int) {
 	w.Header().Del("Content-Length")
 
 	w.ResponseWriter.WriteHeader(status)
-	w.wroteHeader = true
+	w.headerWritten = true
 }
 
 // Flush implements http.Flusher.
 func (w *responseWriter) Flush() {
 	err := w.gz.Flush()
 	if err != nil {
-		logger.Warnf("gzip response writer flush: %v", err)
+		core.GetLogger("melon/server").Warnf("gzip response writer flush: %v", err)
 	}
 
 	if fl, ok := w.ResponseWriter.(http.Flusher); ok {

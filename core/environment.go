@@ -33,7 +33,7 @@ func (env *LifecycleEnvironment) start() {
 	for _, m := range env.managedObjects {
 		// Panic from a managed object will stop the application.
 		if err := m.Start(); err != nil {
-			logger.Errorf("error starting managed object %#v: %v", m, err)
+			GetLogger("melon").Errorf("error starting managed object %#v: %v", m, err)
 		}
 	}
 }
@@ -51,9 +51,9 @@ func stopManagedObject(m Managed) {
 	var err error
 	defer func() {
 		if err != nil {
-			logger.Errorf("error stopping managed object %#v: %v", m, err)
+			GetLogger("melon").Errorf("error stopping managed object %#v: %v", m, err)
 		} else if r := recover(); r != nil {
-			logger.Errorf("panic stopping managed object %#v: %v", m, r)
+			GetLogger("melon").Errorf("panic stopping managed object %#v: %v", m, r)
 		}
 	}()
 	err = m.Stop()

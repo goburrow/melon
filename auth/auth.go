@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/goburrow/gol"
+	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/server/filter"
 )
 
@@ -58,15 +58,15 @@ func (h *unauthorizedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	http.Error(w, unauthorizedMessage, http.StatusUnauthorized)
 }
 
-// Filter authenticates all requests.
-type Filter struct {
+// authFilter authenticates all requests.
+type authFilter struct {
 	authenticator       Authenticator
 	unauthorizedHandler http.Handler
 }
 
-// NewFilter creates a new Filter with given authenticator.
-func NewFilter(authenticator Authenticator, options ...Option) *Filter {
-	f := &Filter{
+// NewFilter creates a new Filter authenticating all HTTP requests with given authenticator.
+func NewFilter(authenticator Authenticator, options ...Option) filter.Filter {
+	f := &authFilter{
 		authenticator: authenticator,
 	}
 	for _, opt := range options {
@@ -78,11 +78,10 @@ func NewFilter(authenticator Authenticator, options ...Option) *Filter {
 	return f
 }
 
-func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (f *authFilter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p, err := f.authenticator.Authenticate(r)
 	if err != nil {
-		logger := gol.GetLogger("melon/auth")
-		logger.Errorf("authenticate error: %v", err)
+		core.GetLogger("melon/auth").Errorf("authenticate error: %v", err)
 		// TODO: error handler
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -96,11 +95,11 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Option is a Filter option.
-type Option func(f *Filter)
+type Option func(f *authFilter)
 
 // WithUnauthorizedHandler sets unauthorized handler to the filter.
 func WithUnauthorizedHandler(h http.Handler) Option {
-	return func(f *Filter) {
+	return func(f *authFilter) {
 		f.unauthorizedHandler = h
 	}
 }

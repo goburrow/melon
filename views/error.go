@@ -55,7 +55,7 @@ func (h *errorMapper) MapError(w http.ResponseWriter, r *http.Request, err error
 	default:
 		// Unknown error type, treat it as a server error
 		id := rand.Int63()
-		logger.Errorf("error handling request %s (ID %016x): %v", r.URL.Path, id, err)
+		logger().Errorf("error handling request %s (ID %016x): %v", r.URL.Path, id, err)
 		errMsg = NewServerError(fmt.Sprintf(
 			"error processing your request (ID %016x)", id))
 	}
@@ -69,7 +69,7 @@ func (h *errorMapper) MapError(w http.ResponseWriter, r *http.Request, err error
 			w.WriteHeader(errMsg.Code)
 			err = writer.WriteResponse(w, r, errMsg)
 			if err != nil {
-				logger.Errorf("response writer: %v", err)
+				logger().Errorf("response writer: %v", err)
 			}
 			return
 		}

@@ -15,10 +15,10 @@ var (
 )
 
 // Option adds option for Filter.
-type Option func(f *Filter)
+type Option func(f *corsFilter)
 
-// Filter provides Cross-Origin Resource Sharing support.
-type Filter struct {
+// corsFilter provides Cross-Origin Resource Sharing support.
+type corsFilter struct {
 	allowedOrigins []string
 	allowedMethods []string
 	allowedHeaders []string
@@ -28,10 +28,10 @@ type Filter struct {
 	allowCredentials bool
 }
 
-// NewFilter creates a new Filter with given options.
+// NewFilter creates a new Filter providing support for Cross-Origin Resource Sharing.
 // By default, it allows all origins and method GET, HEAD and POST.
-func NewFilter(options ...Option) *Filter {
-	f := &Filter{
+func NewFilter(options ...Option) filter.Filter {
+	f := &corsFilter{
 		allowedOrigins: defaultOrigins,
 		allowedMethods: defaultMethods,
 		allowedHeaders: defaultHeaders,
@@ -45,7 +45,7 @@ func NewFilter(options ...Option) *Filter {
 }
 
 // ServeHTTP adds additional headers for CORS.
-func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (f *corsFilter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 	origin = f.validateOrigin(origin)
 	if origin != "" {
@@ -61,7 +61,7 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filter.Continue(w, r)
 }
 
-func (f *Filter) validateOrigin(origin string) string {
+func (f *corsFilter) validateOrigin(origin string) string {
 	if origin != "" {
 		for _, v := range f.allowedOrigins {
 			if v == origin || v == "*" {
@@ -72,7 +72,7 @@ func (f *Filter) validateOrigin(origin string) string {
 	return ""
 }
 
-func (f *Filter) handlePreflight(rsp http.Header, req http.Header, origin string) bool {
+func (f *corsFilter) handlePreflight(rsp http.Header, req http.Header, origin string) bool {
 	reqMethod := req.Get("Access-Control-Request-Method")
 	if !inArray(f.allowedMethods, reqMethod) {
 		return false
@@ -101,14 +101,14 @@ func (f *Filter) handlePreflight(rsp http.Header, req http.Header, origin string
 	return true
 }
 
-func (f *Filter) handleSimple(rsp http.Header, origin string) {
+func (f *corsFilter) handleSimple(rsp http.Header, origin string) {
 	f.setCommonHeaders(rsp, origin)
 	if f.exposedHeaders != "" {
 		rsp.Set("Access-Control-Expose-Headers", f.exposedHeaders)
 	}
 }
 
-func (f *Filter) setCommonHeaders(rsp http.Header, origin string) {
+func (f *corsFilter) setCommonHeaders(rsp http.Header, origin string) {
 	rsp.Set("Access-Control-Allow-Origin", origin)
 	if origin != "*" {
 		rsp.Add("Vary", "Origin")
@@ -129,14 +129,14 @@ func inArray(arr []string, item string) bool {
 
 // WithAllowedOrigins sets origins allowed in Origin header.
 func WithAllowedOrigins(origins ...string) Option {
-	return func(f *Filter) {
+	return func(f *corsFilter) {
 		f.allowedOrigins = origins
 	}
 }
 
 // WithAllowedMethods sets methods allowed in Access-Control-Request-Method header.
 func WithAllowedMethods(methods ...string) Option {
-	return func(f *Filter) {
+	return func(f *corsFilter) {
 		f.allowedMethods = methods
 	}
 }
@@ -147,7 +147,7 @@ func WithAllowedHeaders(headers ...string) Option {
 	for i, v := range headers {
 		allowedHeaders[i] = http.CanonicalHeaderKey(v)
 	}
-	return func(f *Filter) {
+	return func(f *corsFilter) {
 		f.allowedHeaders = allowedHeaders
 	}
 }
@@ -158,21 +158,21 @@ func WithExposedHeaders(headers ...string) Option {
 	for i, v := range headers {
 		exposedHeaders[i] = http.CanonicalHeaderKey(v)
 	}
-	return func(f *Filter) {
+	return func(f *corsFilter) {
 		f.exposedHeaders = strings.Join(exposedHeaders, ", ")
 	}
 }
 
 // WithAllowCredentials sets value "true" for Access-Control-Allow-Credentials header in CORS responses.
 func WithAllowCredentials() Option {
-	return func(f *Filter) {
+	return func(f *corsFilter) {
 		f.allowCredentials = true
 	}
 }
 
 // WithMaxAge sets value for Access-Control-Max-Age header in the responses of CORS preflight requests.
 func WithMaxAge(seconds string) Option {
-	return func(f *Filter) {
+	return func(f *corsFilter) {
 		f.maxAge = seconds
 	}
 }

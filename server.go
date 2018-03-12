@@ -2,8 +2,8 @@ package melon
 
 import (
 	"os"
+	"os/signal"
 
-	"github.com/goburrow/gol"
 	"github.com/goburrow/melon/core"
 )
 
@@ -31,7 +31,7 @@ func (command *serverCommand) Run(bootstrap *core.Bootstrap) error {
 	// Parse configuration
 	err := command.configurationCommand.Run(bootstrap)
 	if err != nil {
-		logger.Errorf("could not run server: %v", err)
+		logger().Errorf("could not run server: %v", err)
 		return err
 	}
 	// Create environment
@@ -42,61 +42,70 @@ func (command *serverCommand) Run(bootstrap *core.Bootstrap) error {
 	configuration := command.configurationCommand.configuration.(core.Configuration)
 	err = configuration.LoggingFactory().ConfigureLogging(environment)
 	if err != nil {
-		logger.Errorf("could not run server: %v", err)
+		logger().Errorf("could not run server: %v", err)
 		return err
 	}
 	err = configuration.MetricsFactory().ConfigureMetrics(environment)
 	if err != nil {
-		logger.Errorf("could not run server: %v", err)
+		logger().Errorf("could not run server: %v", err)
 		return err
 	}
 	// Always run Stop() method on managed objects.
 	// Build server
 	server, err := configuration.ServerFactory().BuildServer(environment)
 	if err != nil {
-		logger.Errorf("could not run server: %v", err)
+		logger().Errorf("could not run server: %v", err)
 		return err
 	}
 	// Now can start everything
-	printBanner(logger)
+	printBanner()
 	// Run all bundles in bootstrap
 	err = bootstrap.Run(command.configurationCommand.configuration, environment)
 	if err != nil {
-		logger.Errorf("could not run bootstrap: %v", err)
+		logger().Errorf("could not run bootstrap: %v", err)
 		return err
 	}
 	// Run application
 	err = bootstrap.Application.Run(command.configurationCommand.configuration, environment)
 	if err != nil {
-		logger.Errorf("could not run application: %v", err)
+		logger().Errorf("could not run application: %v", err)
 		return err
 	}
 	err = environment.Start()
 	if err != nil {
-		logger.Errorf("could not start environment: %v", err)
+		logger().Errorf("could not start environment: %v", err)
 		return err
 	}
+	// Handle signal
+	sigCh := make(chan os.Signal, 1)
+	defer close(sigCh)
+	signal.Notify(sigCh, os.Interrupt)
+	go func() {
+		for sig := range sigCh {
+			logger().Debugf("received signal %v", sig)
+			err := server.Stop()
+			if err != nil {
+				logger().Errorf("could not stop server: %v", err)
+			}
+			return
+		}
+	}()
 	// Start is blocking
 	err = server.Start()
 	if err != nil {
-		logger.Errorf("could not start server: %v", err)
-		return err
-	}
-	err = server.Stop()
-	if err != nil {
-		logger.Warnf("could not stop server: %v", err)
+		logger().Errorf("could not start server: %v", err)
 		return err
 	}
 	return nil
 }
 
 // printBanner prints application banner to the given logger
-func printBanner(logger gol.Logger) {
+func printBanner() {
 	banner := readBanner()
 	if banner == "" {
-		logger.Infof("starting")
+		logger().Infof("starting")
 	} else {
-		logger.Infof("starting\n%s", banner)
+		logger().Infof("starting\n%s", banner)
 	}
 }
 

@@ -6,15 +6,29 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goburrow/gol"
+	"github.com/goburrow/melon/core"
 	"github.com/goburrow/melon/server/filter"
 )
 
-var _ filter.Filter = (*Filter)(nil)
+type nopLogger struct{}
+
+func (n nopLogger) Debugf(format string, args ...interface{}) {
+}
+
+func (n nopLogger) Infof(format string, args ...interface{}) {
+}
+
+func (n nopLogger) Warnf(format string, args ...interface{}) {
+}
+
+func (n nopLogger) Errorf(format string, args ...interface{}) {
+}
 
 func init() {
 	// Disable logger to reduce spam
-	gol.GetLogger("melon/server").(*gol.DefaultLogger).SetLevel(gol.Off)
+	core.SetLoggerFactory(func(_ string) core.Logger {
+		return nopLogger{}
+	})
 }
 
 func TestPanicHandler(t *testing.T) {
